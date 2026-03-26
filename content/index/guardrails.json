@@ -1,0 +1,23 @@
+{
+  "version": "1.1",
+  "guardrails": [
+    {"id": "G1", "condition": "any_sensitive_data AND NOT audit-logging", "action": "ADD audit-logging", "rationale": "Sensitive data requires traceability"},
+    {"id": "G2", "condition": "handles-health AND NOT bias-monitoring", "action": "ADD bias-monitoring", "rationale": "Health data has demographic bias risks"},
+    {"id": "G3", "condition": "handles-financial AND influences-decisions AND NOT fallback-patterns", "action": "ADD fallback-patterns", "rationale": "Financial decisions need safe failure modes"},
+    {"id": "G4", "condition": "is-agentic AND NOT human-oversight", "action": "ADD human-oversight", "rationale": "Autonomous systems need oversight"},
+    {"id": "G5", "condition": "generates-code AND NOT output-sanitization", "action": "ADD output-sanitization", "rationale": "Generated code is execution risk"},
+    {"id": "G6", "condition": "jurisdiction-eu AND NOT explainability", "action": "ADD explainability", "rationale": "EU AI Act requires explainability"},
+    {"id": "G7", "condition": "jurisdiction-eu AND NOT bias-monitoring", "action": "ADD bias-monitoring", "rationale": "EU AI Act mandates non-discrimination"},
+    {"id": "G8", "condition": "handles-minors AND NOT human-oversight", "action": "ADD human-oversight", "rationale": "Systems affecting children require review"},
+    {"id": "G9", "condition": "multi-model-pipeline AND NOT monitoring", "action": "ADD monitoring", "rationale": "Multi-model compounding failures"},
+    {"id": "G10", "condition": "risk_tier=HIGH AND NOT monitoring", "action": "ADD monitoring", "rationale": "High-risk systems need monitoring"},
+    {"id": "G11", "condition": "risk_tier=HIGH AND NOT fallback-patterns", "action": "ADD fallback-patterns", "rationale": "High-risk systems must fail safely"},
+    {"id": "G12", "condition": "uses-llm AND NOT uses-thirdparty-api AND supply-chain SELECTED", "action": "REMOVE supply-chain", "rationale": "Self-hosted models skip third-party controls"},
+    {"id": "G13", "condition": "jurisdiction-us-regulated AND NOT audit-logging", "action": "ADD audit-logging", "rationale": "US regulated industries need audit trails"},
+    {"id": "G14", "condition": "jurisdiction-us-regulated AND NOT human-oversight", "action": "ADD human-oversight", "rationale": "US regulated industries need human review"},
+    {"id": "G15", "condition": "generates-code AND NOT human-oversight", "action": "ADD human-oversight", "rationale": "Code generation needs human review"}
+  ],
+  "constraints": [
+    {"id": "C1", "rule": "is-internal AND is-external cannot both be true", "resolution": "Treat as is-external, log warning"}
+  ]
+}

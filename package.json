@@ -1,0 +1,35 @@
+{
+  "name": "@aigis/cli",
+  "version": "1.0.0",
+  "description": "AI governance guardrails for coding agents. Framework-aligned security and compliance patterns from NIST AI RMF, OWASP Top 10 for LLMs, and ISO/IEC 42001.",
+  "main": "bin/aigis.js",
+  "bin": {
+    "aigis": "./bin/aigis.js"
+  },
+  "keywords": [
+    "ai",
+    "governance",
+    "security",
+    "compliance",
+    "llm",
+    "owasp",
+    "nist",
+    "iso42001",
+    "guardrails",
+    "coding-agent"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aigis-ai/aigis"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "chalk": "^4.1.2",
+    "gray-matter": "^4.0.3"
+  }
+}

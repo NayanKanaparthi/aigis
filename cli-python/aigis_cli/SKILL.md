@@ -8,21 +8,17 @@ description: AI governance skill for coding agents. Provides framework-aligned s
 Use the aigis CLI for governance patterns when building or auditing AI/LLM features.
 
 ## Quick start — new feature
-\`\`\`bash
-# 1. Classify your system to get relevant controls
-aigis classify --traits uses-llm,accepts-user-input,processes-pii,is-external --json
+1. aigis classify --traits <relevant-traits> --json
+2. For EACH file in the implement_files list, one at a time:
+   a. aigis get <file-id>
+   b. Implement the patterns in the code
+   c. aigis verify <file-id>
+   d. Fix any FAIL or PARTIAL items until all checks pass
+   e. Move to the next file
+3. After all files pass, generate required templates:
+   aigis template <template-id>
 
-# 2. Fetch implementation patterns for each recommended file
-aigis get input-validation pii-handling prompt-security audit-logging
-
-# 3. Write code applying the patterns from the fetched files
-
-# 4. After writing code, run verification
-aigis verify input-validation pii-handling prompt-security audit-logging
-
-# 5. If risk tier is HIGH or MEDIUM, generate compliance docs
-aigis template ai-impact-assessment intended-purpose-doc
-\`\`\`
+IMPORTANT: Do NOT fetch all implement files at once. Work through them one at a time. Implement fully and verify before moving to the next.
 
 ## Quick start — audit existing project
 \`\`\`bash

@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aigis-cli"
+version = "1.0.0"
+description = "AI governance guardrails for coding agents. Framework-aligned security and compliance patterns from NIST AI RMF, OWASP Top 10 for LLMs, and ISO/IEC 42001."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["ai", "governance", "security", "compliance", "llm", "owasp", "nist", "iso42001", "guardrails", "coding-agent"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+    "click>=8.0",
+    "rich>=13.0",
+    "python-frontmatter>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["build>=1.0"]
+
+[project.scripts]
+aigis = "aigis_cli.cli:cli"
+
+[project.urls]
+Homepage = "https://github.com/NayanKanaparthi/aigis"
+Repository = "https://github.com/NayanKanaparthi/aigis"
+
+[tool.setuptools.packages.find]
+include = ["aigis_cli*"]
+
+[tool.setuptools.package-data]
+aigis_cli = [
+    "content/**/*.md",
+    "content/**/*.json",
+    "SKILL.md",
+]

@@ -4,7 +4,9 @@ AI governance guardrails for coding agents. Curated, agent-consumable security a
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/npm/v/@aigis-ai/cli)](https://www.npmjs.com/package/@aigis-ai/cli)
+[![PyPI](https://img.shields.io/pypi/v/aigis-cli)](https://pypi.org/project/aigis-cli/)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
+[![Python](https://img.shields.io/badge/python-%3E%3D3.9-blue)](https://www.python.org/)
 
 ## The problem
 
@@ -27,9 +29,23 @@ Rework cycle                           Ships compliant on first pass
 
 ## Quick start
 
+Install the CLI with **npm** (JavaScript / Node.js) or **pip** (Python). Both packages expose the same `aigis` command and behavior.
+
+**JavaScript developers — npm**
+
 ```bash
 npm install -g @aigis-ai/cli
+```
 
+**Python developers — pip**
+
+```bash
+pip install aigis-cli
+```
+
+**After installing (either toolchain)**
+
+```bash
 # Set up for your IDE
 aigis init cursor        # or: claude-code, windsurf, copilot
 
@@ -167,6 +183,10 @@ Control IDs are in each file's YAML frontmatter, enabling compliance teams to tr
 
 ## Architecture
 
+The governance content lives under `content/` and is shared by both CLIs.
+
+**npm package** [`@aigis-ai/cli`](https://www.npmjs.com/package/@aigis-ai/cli) (Node.js)
+
 ```
 @aigis-ai/cli
 ├── bin/aigis.js        # CLI entry point (commander.js)
@@ -184,6 +204,18 @@ Control IDs are in each file's YAML frontmatter, enabling compliance teams to tr
 │   └── index/          # Taxonomy, frameworks index, guardrails, audit scan
 ├── SKILL.md            # Portable agent skill file
 └── package.json
+```
+
+**PyPI package** [`aigis-cli`](https://pypi.org/project/aigis-cli/) (Python)
+
+```
+cli-python/
+├── pyproject.toml
+└── aigis_cli/          # click + rich + python-frontmatter; mirrors the JS CLI
+    ├── cli.py
+    ├── classify.py, fetch.py, keywords.py, search.py, annotate.py, init_ide.py
+    ├── content/        # same markdown + JSON as above (bundled as package data)
+    └── SKILL.md
 ```
 
 No network calls. No telemetry. No LLM API calls. No databases. Everything runs locally, reads local files, prints to stdout.

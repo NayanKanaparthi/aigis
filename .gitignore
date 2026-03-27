@@ -1,3 +1,9 @@
 node_modules/
 .DS_Store
 *.log
+
+# Python package (cli-python/)
+cli-python/dist/
+cli-python/build/
+cli-python/*.egg-info/
+cli-python/**/__pycache__/

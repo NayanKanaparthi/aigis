@@ -3,7 +3,7 @@
 AI governance guardrails for coding agents. Curated, agent-consumable security and compliance patterns from NIST AI RMF, OWASP Top 10 for LLMs, and ISO/IEC 42001.
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![npm](https://img.shields.io/npm/v/@aigis/cli)](https://www.npmjs.com/package/@aigis/cli)
+[![npm](https://img.shields.io/npm/v/@aigis-ai/cli)](https://www.npmjs.com/package/@aigis-ai/cli)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
 
 ## The problem
@@ -28,7 +28,7 @@ Rework cycle                           Ships compliant on first pass
 ## Quick start
 
 ```bash
-npm install -g @aigis/cli
+npm install -g @aigis-ai/cli
 
 # Set up for your IDE
 aigis init cursor        # or: claude-code, windsurf, copilot
@@ -168,7 +168,7 @@ Control IDs are in each file's YAML frontmatter, enabling compliance teams to tr
 ## Architecture
 
 ```
-@aigis/cli
+@aigis-ai/cli
 ├── bin/aigis.js        # CLI entry point (commander.js)
 ├── lib/
 │   ├── classify.js     # Classification engine + guardrails

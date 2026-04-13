@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aigis-cli"
-version = "1.0.2"
+version = "1.0.3"
 description = "AI governance guardrails for coding agents. Framework-aligned security and compliance patterns from NIST AI RMF, OWASP Top 10 for LLMs, and ISO/IEC 42001."
 readme = "README.md"
 requires-python = ">=3.9"

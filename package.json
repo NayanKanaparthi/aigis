@@ -1,6 +1,6 @@
 {
   "name": "@aigis-ai/cli",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "AI governance guardrails for coding agents. Framework-aligned security and compliance patterns from NIST AI RMF, OWASP Top 10 for LLMs, and ISO/IEC 42001.",
   "main": "bin/aigis.js",
   "bin": {
@@ -22,7 +22,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aigis-ai/aigis.git"
+    "url": "git+https://github.com/NayanKanaparthi/aigis.git"
+  },
+  "homepage": "https://github.com/NayanKanaparthi/aigis#readme",
+  "bugs": {
+    "url": "https://github.com/NayanKanaparthi/aigis/issues"
   },
   "engines": {
     "node": ">=18"

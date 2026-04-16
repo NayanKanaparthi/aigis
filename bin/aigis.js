@@ -156,8 +156,8 @@ program
 program
   .command('audit')
   .description('Audit an existing codebase for governance gaps')
-  .option('--scan', 'Get structured scan prompt for the agent')
-  .option('--traits <traits>', 'Run audit with detected traits (bundles classify + all checklists)')
+  .option('--scan', 'Get structured discovery prompt (Phases 1-3: inventory, trait detection, classify handoff)')
+  .option('--traits <traits>', 'Run scoped audit: classify + checklists only for recommended areas. Prints deterministic denominator.')
   .option('--json', 'Output as JSON')
   .action((opts) => {
     if (opts.scan) {
@@ -170,33 +170,62 @@ program
       const traits = opts.traits.split(',').map(t => t.trim());
       const classification = classify(traits);
 
+      // Count checks per scoped area by parsing checklist rows (format: "| V<n> | ...").
+      // This gives the deterministic denominator the agent must score against.
+      const checklistsByArea = {};
+      const perAreaCounts = {};
+      let totalChecks = 0;
+      for (const f of classification.implement_files) {
+        const checklist = verify([f]);
+        checklistsByArea[f] = checklist;
+        const rowMatches = checklist.match(/^\| V\d+\b/gm) || [];
+        perAreaCounts[f] = rowMatches.length;
+        totalChecks += rowMatches.length;
+      }
+      const areasCsv = classification.implement_files.join(', ');
+      const scoreLineTemplate = `Score: <P> / ${totalChecks} total checks across ${classification.implement_files.length} recommended areas (areas: ${areasCsv})`;
+
       if (opts.json) {
-        const checklists = {};
-        for (const f of classification.implement_files) {
-          checklists[f] = verify([f]);
-        }
-        console.log(JSON.stringify({ classification, checklists }, null, 2));
+        console.log(JSON.stringify({
+          classification,
+          checklists: checklistsByArea,
+          score_template: {
+            total_checks: totalChecks,
+            recommended_areas_count: classification.implement_files.length,
+            recommended_areas: classification.implement_files,
+            per_area_check_count: perAreaCounts,
+            score_line_template: scoreLineTemplate,
+          },
+        }, null, 2));
         return;
       }
 
       // Formatted audit output
       const tierColor = classification.risk_tier === 'HIGH' ? chalk.red : classification.risk_tier === 'MEDIUM' ? chalk.yellow : chalk.green;
-      console.log(chalk.bold('═══ AIGIS GOVERNANCE AUDIT ═══\n'));
+      console.log(chalk.bold('═══ AIGIS GOVERNANCE AUDIT (SCOPED) ═══\n'));
       console.log(`${chalk.bold('Risk tier:')} ${tierColor.bold(classification.risk_tier)}`);
-      console.log(`${chalk.bold('Controls to assess:')} ${classification.implement_files.length} areas\n`);
+      console.log(`${chalk.bold('Recommended areas:')} ${classification.implement_files.length}`);
+      console.log(`${chalk.bold('Areas:')} ${areasCsv}`);
+      console.log(`${chalk.bold('Total checks (deterministic denominator):')} ${totalChecks}\n`);
 
       console.log(chalk.bold('Instructions for agent:'));
       console.log(chalk.dim('Evaluate the existing codebase against each check below.'));
-      console.log(chalk.dim('Mark PASS / FAIL / PARTIAL with evidence (file:line or "not found").\n'));
+      console.log(chalk.dim('Mark PASS / FAIL / PARTIAL with evidence (file:line or "not found").'));
+      console.log(chalk.dim('At the end of your report, emit this exact line (replace <P> with the PASS count):'));
+      console.log(chalk.dim(`  ${scoreLineTemplate}\n`));
 
       for (const f of classification.implement_files) {
-        const checklist = verify([f]);
-        console.log(checklist);
+        console.log(checklistsByArea[f]);
         console.log('');
       }
 
+      console.log(chalk.bold('═══ SCORING ═══'));
+      console.log(`Denominator: ${totalChecks} total checks across ${classification.implement_files.length} recommended areas.`);
+      console.log(`Areas: ${areasCsv}`);
+      console.log(`Emit at end of report: ${chalk.bold(scoreLineTemplate)}`);
+
       if (classification.templates.length > 0) {
-        console.log(chalk.bold('Required documentation:'));
+        console.log('\n' + chalk.bold('Required documentation:'));
         for (const t of classification.templates) {
           console.log(chalk.yellow(`  aigis template ${t}`));
         }

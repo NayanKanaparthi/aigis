@@ -1,13 +1,17 @@
 ---
 id: audit-scan
 title: Aigis codebase audit scan prompt
-version: "1.1"
-purpose: Structured instructions for an agent to scan an existing codebase, detect system traits, identify governance gaps, and produce a compliance report
+version: "2.0"
+purpose: Structured instructions for an agent to scan a codebase and detect system traits. Control-by-control evaluation is produced separately by `aigis audit --traits <detected>` so the denominator is deterministic.
 ---
 
-# AIGIS CODEBASE AUDIT
+# AIGIS CODEBASE AUDIT (DISCOVERY)
 
-Follow these instructions exactly. Complete every section. Do not skip any check.
+This prompt covers three phases: project inventory, trait detection, and classify handoff.
+
+**Control-by-control evaluation (formerly Phases 4-5) is no longer in this prompt.** Once Phase 3 identifies the traits, run `aigis audit --traits <detected-traits>` to get the scoped checklist. That command emits only the pattern areas recommended by `classify` and prints an explicit total-check denominator, so two runs on the same system produce the same scoring scope.
+
+Complete every section in order.
 
 ---
 
@@ -188,216 +192,26 @@ Record the output:
 
 ---
 
-## PHASE 4: EXISTING CONTROLS ASSESSMENT
+## PHASE 4: SCOPED CONTROL EVALUATION (handoff)
 
-For each implement file recommended by the classification, check whether the patterns are ALREADY implemented in the codebase. This is the gap analysis.
+Do not evaluate controls inline with this prompt. The scoped checklist is produced by a separate command that uses the classify output from Phase 3.
 
-### 4.1 Input validation (if recommended)
-
-| # | Control | What to look for in the code | Status | Evidence |
-|---|---------|------------------------------|--------|----------|
-| V1 | Input length check | A function or middleware that checks character count or token count of user input BEFORE it reaches the LLM call | PASS / FAIL / PARTIAL | [file:line or "not found"] |
-| V2 | System/user prompt separation | LLM calls using structured messages array with role: "system" and role: "user" as separate objects, NOT string concatenation | PASS / FAIL / PARTIAL | [file:line] |
-| V3 | Character sanitization | A function stripping control characters, null bytes, zero-width Unicode from user input before LLM processing | PASS / FAIL / PARTIAL | [file:line] |
-| V4 | Output schema validation | LLM response being parsed and validated against a defined schema (pydantic, zod, ajv, JSON schema) before downstream use | PASS / FAIL / PARTIAL | [file:line] |
-| V5 | Injection pattern detection | Any pattern matching or classification of user input for known injection phrases, even if just logging | PASS / FAIL / PARTIAL | [file:line] |
-
-### 4.2 Output sanitization (if recommended)
-
-| # | Control | What to look for | Status | Evidence |
-|---|---------|------------------|--------|----------|
-| V1 | HTML encoding of LLM output | LLM output being escaped/encoded before rendering in any web context | PASS / FAIL / PARTIAL | |
-| V2 | Parameterized DB queries | Any database operations using LLM output use parameterized queries, not string interpolation | PASS / FAIL / PARTIAL | |
-| V3 | Code execution sandboxing | If LLM generates code that is executed, it runs in a sandbox (subprocess, vm, container) not eval/exec | PASS / FAIL / PARTIAL | |
-| V4 | Content type validation | LLM response content type is checked before use (is it valid JSON? is it a number? is it within allowed enum?) | PASS / FAIL / PARTIAL | |
-
-### 4.3 PII handling (if recommended)
-
-| # | Control | What to look for | Status | Evidence |
-|---|---------|------------------|--------|----------|
-| V1 | PII redaction before LLM | A function detecting and replacing PII (regex, NER model, or library) that runs BEFORE user data is sent to the LLM | PASS / FAIL / PARTIAL | |
-| V2 | Data minimization | Only specific needed fields are extracted and sent to the LLM, not entire database records or user profiles | PASS / FAIL / PARTIAL | |
-| V3 | Output PII filtering | LLM response is scanned for PII before being returned to the user or stored | PASS / FAIL / PARTIAL | |
-| V4 | Separated data stores | PII is stored in a different location or with different access controls than the data the LLM can access | PASS / FAIL / PARTIAL | |
-| V5 | Redacted logging | Log entries containing LLM inputs/outputs have PII redacted or hashed, not stored in plaintext | PASS / FAIL / PARTIAL | |
-
-### 4.4 Prompt security (if recommended)
-
-| # | Control | What to look for | Status | Evidence |
-|---|---------|------------------|--------|----------|
-| V1 | No secrets in prompts | System prompts do not contain API keys, passwords, database credentials, or tokens | PASS / FAIL / PARTIAL | |
-| V2 | Minimal prompt content | System prompts contain behavioral instructions only, not detailed business logic, pricing, or internal processes | PASS / FAIL / PARTIAL | |
-| V3 | Leakage detection | There is some check on LLM output for system prompt content echoing back | PASS / FAIL / PARTIAL | |
-| V4 | Server-side rule enforcement | Business rules (output length, topic restrictions, format requirements) are enforced in code, not just in the prompt | PASS / FAIL / PARTIAL | |
-
-### 4.5 Human oversight (if recommended)
-
-| # | Control | What to look for | Status | Evidence |
-|---|---------|------------------|--------|----------|
-| V1 | Tool allowlist | If LLM has tools/functions, they are defined as an explicit list (not dynamically generated or unrestricted) | PASS / FAIL / PARTIAL | |
-| V2 | Write operation approval | Database writes, API calls, emails, or other state-changing actions triggered by LLM require human confirmation or are logged with review capability | PASS / FAIL / PARTIAL | |
-| V3 | Action rate limiting | There are limits on how many actions the LLM can take per time window | PASS / FAIL / PARTIAL | |
-| V4 | Override mechanism | API responses or UI include a way for humans to override or escalate AI decisions | PASS / FAIL / PARTIAL | |
-| V5 | Confidence gating | Low-confidence outputs are flagged or routed to human review rather than auto-processed | PASS / FAIL / PARTIAL | |
-
-### 4.6 Supply chain (if recommended)
-
-| # | Control | What to look for | Status | Evidence |
-|---|---------|------------------|--------|----------|
-| V1 | Model version pinning | LLM API calls specify an exact model version (e.g., "gpt-4o-2024-11-20") not a floating alias (e.g., "gpt-4o") | PASS / FAIL / PARTIAL | |
-| V2 | Version tracking in logs | Model version is recorded in logs or response metadata for every LLM call | PASS / FAIL / PARTIAL | |
-| V3 | Regression test suite | There are tests that evaluate LLM output quality that could be run against a new model version | PASS / FAIL / PARTIAL | |
-| V4 | Fallback provider | There is a secondary LLM provider or fallback behavior defined for when the primary provider fails | PASS / FAIL / PARTIAL | |
-
-### 4.7 Data integrity (if recommended)
-
-| # | Control | What to look for | Status | Evidence |
-|---|---------|------------------|--------|----------|
-| V1 | Data provenance tracking | Documents or data entering the system have their source, ingestion time, and checksums recorded | PASS / FAIL / PARTIAL | |
-| V2 | Pre-embedding validation | Data is validated (source check, content check, freshness check) before being embedded into a vector store | PASS / FAIL / PARTIAL | |
-| V3 | Training data versioning | Fine-tuning or training datasets are versioned and checksummed | PASS / FAIL / PARTIAL | |
-| V4 | Distribution monitoring | There is monitoring for changes in embedding or output distributions after data updates | PASS / FAIL / PARTIAL | |
-| V5 | Batch rollback capability | There is a mechanism to roll back a batch of ingested data if it's found to be compromised | PASS / FAIL / PARTIAL | |
-
-### 4.8 RAG security (if recommended)
-
-| # | Control | What to look for | Status | Evidence |
-|---|---------|------------------|--------|----------|
-| V1 | Vector DB access control | Vector database queries include access control filters (department, role, classification level) | PASS / FAIL / PARTIAL | |
-| V2 | Tenant isolation | In multi-tenant systems, vector queries always filter by tenant ID | PASS / FAIL / PARTIAL | |
-| V3 | Retrieved content validation | Retrieved results are filtered by relevance score threshold and checked for suspicious content | PASS / FAIL / PARTIAL | |
-| V4 | Embedding endpoint protection | The embedding generation endpoint has authentication and rate limiting | PASS / FAIL / PARTIAL | |
-| V5 | Permission inheritance | Embeddings carry the access permissions of their source documents | PASS / FAIL / PARTIAL | |
-
-### 4.9 Confidence scoring (if recommended)
-
-| # | Control | What to look for | Status | Evidence |
-|---|---------|------------------|--------|----------|
-| V1 | Confidence metadata | AI responses include a confidence score or level (high/medium/low) in the output | PASS / FAIL / PARTIAL | |
-| V2 | Grounding verification | For RAG systems, there is a check that LLM claims are supported by retrieved sources | PASS / FAIL / PARTIAL | |
-| V3 | Recommendation framing | AI output is presented as a suggestion/recommendation, not as a definitive fact, in any user-facing display | PASS / FAIL / PARTIAL | |
-| V4 | Source attribution | When RAG is used, the response includes references to the source documents | PASS / FAIL / PARTIAL | |
-
-### 4.10 Rate limiting (if recommended)
-
-| # | Control | What to look for | Status | Evidence |
-|---|---------|------------------|--------|----------|
-| V1 | Per-user rate limits | LLM endpoints have rate limiting per user or per API key | PASS / FAIL / PARTIAL | |
-| V2 | Token budget | There are daily or per-request token limits configured | PASS / FAIL / PARTIAL | |
-| V3 | Cost monitoring | There is monitoring or alerting on LLM API costs | PASS / FAIL / PARTIAL | |
-| V4 | Request timeout | LLM calls have a timeout configured | PASS / FAIL / PARTIAL | |
-
-### 4.11 Audit logging (if recommended)
-
-| # | Control | What to look for | Status | Evidence |
-|---|---------|------------------|--------|----------|
-| V1 | Structured log entries | Every LLM interaction produces a structured log with trace ID, timestamp, model version, token counts | PASS / FAIL / PARTIAL | |
-| V2 | Trace ID propagation | A trace/correlation ID is generated per request and passed through all components | PASS / FAIL / PARTIAL | |
-| V3 | Decision logging | AI-influenced decisions are logged with the decision, confidence, and context | PASS / FAIL / PARTIAL | |
-| V4 | No raw PII in logs | Log entries do not contain unredacted personal information | PASS / FAIL / PARTIAL | |
-
-### 4.12 Bias monitoring (if recommended)
-
-| # | Control | What to look for | Status | Evidence |
-|---|---------|------------------|--------|----------|
-| V1 | Fairness metadata in logs | Logs include fields that enable fairness analysis (claim type, region, channel, input language) without collecting protected characteristics directly | PASS / FAIL / PARTIAL | |
-| V2 | Distribution monitoring | There is analysis or dashboarding of output distributions across different segments | PASS / FAIL / PARTIAL | |
-| V3 | Periodic fairness reporting | There is a scheduled process or script that generates fairness reports | PASS / FAIL / PARTIAL | |
-| V4 | Override pattern analysis | Human override rates are tracked and analyzed for patterns across segments | PASS / FAIL / PARTIAL | |
-
-### 4.13 Fallback patterns (if recommended)
-
-| # | Control | What to look for | Status | Evidence |
-|---|---------|------------------|--------|----------|
-| V1 | Default safe response | There is a defined fallback response returned when the LLM fails or returns invalid output | PASS / FAIL / PARTIAL | |
-| V2 | Circuit breaker | There is a circuit breaker that stops calling the LLM after repeated failures | PASS / FAIL / PARTIAL | |
-| V3 | Kill switch | There is a mechanism to disable the AI system without deploying new code (feature flag, config toggle, environment variable) | PASS / FAIL / PARTIAL | |
-| V4 | Exception handling | All LLM calls are wrapped in try/catch with defined fallback behavior (no unhandled crashes) | PASS / FAIL / PARTIAL | |
-
-### 4.14 Monitoring (if recommended)
-
-| # | Control | What to look for | Status | Evidence |
-|---|---------|------------------|--------|----------|
-| V1 | Key metrics tracking | Latency, error rate, token usage, and/or cost are being tracked via monitoring tools or custom dashboards | PASS / FAIL / PARTIAL | |
-| V2 | Drift detection | There is comparison of recent output distributions against a baseline | PASS / FAIL / PARTIAL | |
-| V3 | User feedback mechanism | Users can flag bad AI outputs (thumbs down, disagree button, feedback form) | PASS / FAIL / PARTIAL | |
-| V4 | Incident logging | There is a structured process for logging and tracking AI-related incidents | PASS / FAIL / PARTIAL | |
-
-### 4.15 Explainability (if recommended)
-
-| # | Control | What to look for | Status | Evidence |
-|---|---------|------------------|--------|----------|
-| V1 | Decision explanations | The system generates human-readable explanations for its AI-driven outputs | PASS / FAIL / PARTIAL | |
-| V2 | Model card | There is documentation describing the model's purpose, limitations, and performance characteristics | PASS / FAIL / PARTIAL | |
-| V3 | Audit-friendly records | Decisions are stored in a format suitable for compliance review with full context | PASS / FAIL / PARTIAL | |
-| V4 | Appeal mechanism | Users or affected individuals have a way to appeal or request review of AI decisions | PASS / FAIL / PARTIAL | |
-
----
-
-## PHASE 5: GAP REPORT
-
-Compile the results into a structured report:
-
-### 5.1 Summary
+Run:
 
 ```
-Project: [project name]
-Scan date: [date]
-Risk tier: [from Phase 3]
-Traits detected: [list]
-
-Overall score: [X] / [total checks] PASS
-Critical gaps: [count of FAIL on high-priority controls]
-Partial implementations: [count of PARTIAL]
+aigis audit --traits <detected-traits>
 ```
 
-### 5.2 Critical gaps (FAIL — must fix)
+That command:
 
-List every check that received FAIL, ordered by priority:
+- Includes only the pattern areas that `classify` recommended for this trait set. Areas that are not recommended are not printed at all (no "N/A" placeholders, no agent-side skipping).
+- Prints the deterministic total-check count for this scope at the top and repeats it at the bottom.
+- Prints the exact `Score: <pass> / <total> total checks across <N> recommended areas (areas: ...)` line you should emit once you have filled in the checklists.
 
-1. OWASP-mapped controls first (these are active security vulnerabilities)
-2. NIST MEASURE controls second (these are evaluation and testing gaps)
-3. NIST MANAGE controls third (these are operational monitoring gaps)
-4. ISO documentation requirements last (these are compliance documentation gaps)
+Use the output of `aigis audit --traits` as your Phase 4 worksheet. Fill every row with PASS / FAIL / PARTIAL and file:line evidence. Then emit the prescribed score line, followed by:
 
-For each gap:
-- Control ID and description
-- What is missing
-- Which implement file to reference: `aigis get <file-id>`
-- Specific pattern(s) to implement
-- Estimated effort (small: <1 hour, medium: 1-4 hours, large: 4+ hours)
+- A list of FAIL items in priority order (OWASP controls first, then NIST MEASURE, then NIST MANAGE, then ISO documentation).
+- A list of PARTIAL items.
+- The exact `aigis template ...` commands from your classification output for any required compliance documentation.
 
-### 5.3 Partial implementations (PARTIAL — needs improvement)
-
-List every check that received PARTIAL:
-- What exists currently
-- What is missing or insufficient
-- Specific improvement needed
-
-### 5.4 Passed controls (PASS — no action needed)
-
-List every check that received PASS with evidence, for compliance documentation.
-
-### 5.5 Recommended implementation order
-
-Based on the gaps identified, provide a prioritized implementation plan:
-
-1. **Immediate (security vulnerabilities):** Input validation, output sanitization, PII handling gaps
-2. **Short-term (operational risk):** Audit logging, fallback patterns, rate limiting gaps
-3. **Medium-term (compliance):** Monitoring, bias monitoring, explainability gaps
-4. **Documentation:** Templates to generate (list specific `aigis template` commands)
-
-### 5.6 Commands to run
-
-Provide the exact aigis commands for the developer:
-
-```
-# Fetch patterns for all identified gaps:
-aigis get [list of files with FAIL or PARTIAL checks]
-
-# After implementing fixes, verify:
-aigis verify [same list]
-
-# Generate required compliance documentation:
-aigis template [list from classification]
-```
+(End of discovery prompt.)

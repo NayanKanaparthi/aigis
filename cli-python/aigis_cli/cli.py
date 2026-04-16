@@ -134,8 +134,8 @@ def template(templates: tuple[str, ...]) -> None:
 
 # ── audit ───────────────────────────────────────────────────────────
 @cli.command()
-@click.option("--scan", is_flag=True, help="Get structured scan prompt for the agent")
-@click.option("--traits", "traits_str", default=None, help="Run audit with detected traits")
+@click.option("--scan", is_flag=True, help="Get structured discovery prompt (Phases 1-3: inventory, trait detection, classify handoff)")
+@click.option("--traits", "traits_str", default=None, help="Run scoped audit: classify + checklists only for recommended areas. Prints deterministic denominator.")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 def audit(scan: bool, traits_str: str | None, as_json: bool) -> None:
     """Audit an existing codebase for governance gaps."""
@@ -144,33 +144,69 @@ def audit(scan: bool, traits_str: str | None, as_json: bool) -> None:
         return
 
     if traits_str:
+        import re
         traits = [t.strip() for t in traits_str.split(",")]
         classification = run_classify(traits)
 
+        # Count checks per scoped area by parsing checklist rows (format: "| V<n> | ...").
+        # Deterministic denominator the agent must score against.
+        checklists_by_area: dict[str, str] = {}
+        per_area_counts: dict[str, int] = {}
+        total_checks = 0
+        for f in classification["implement_files"]:
+            checklist = fetch_verify([f])
+            checklists_by_area[f] = checklist
+            row_matches = re.findall(r"^\| V\d+\b", checklist, flags=re.MULTILINE)
+            per_area_counts[f] = len(row_matches)
+            total_checks += len(row_matches)
+        areas_csv = ", ".join(classification["implement_files"])
+        score_line_template = (
+            f"Score: <P> / {total_checks} total checks across "
+            f"{len(classification['implement_files'])} recommended areas (areas: {areas_csv})"
+        )
+
         if as_json:
-            checklists = {}
-            for f in classification["implement_files"]:
-                checklists[f] = fetch_verify([f])
-            click.echo(json.dumps({"classification": classification, "checklists": checklists}, indent=2))
+            click.echo(json.dumps({
+                "classification": classification,
+                "checklists": checklists_by_area,
+                "score_template": {
+                    "total_checks": total_checks,
+                    "recommended_areas_count": len(classification["implement_files"]),
+                    "recommended_areas": classification["implement_files"],
+                    "per_area_check_count": per_area_counts,
+                    "score_line_template": score_line_template,
+                },
+            }, indent=2))
             return
 
         tier = classification["risk_tier"]
         tier_color = "red" if tier == "HIGH" else "yellow" if tier == "MEDIUM" else "green"
-        console.print("[bold]═══ AIGIS GOVERNANCE AUDIT ═══[/bold]\n")
+        console.print("[bold]═══ AIGIS GOVERNANCE AUDIT (SCOPED) ═══[/bold]\n")
         console.print(f"[bold]Risk tier:[/bold] [bold {tier_color}]{tier}[/bold {tier_color}]")
-        console.print(f"[bold]Controls to assess:[/bold] {len(classification['implement_files'])} areas\n")
+        console.print(f"[bold]Recommended areas:[/bold] {len(classification['implement_files'])}")
+        console.print(f"[bold]Areas:[/bold] {areas_csv}")
+        console.print(f"[bold]Total checks (deterministic denominator):[/bold] {total_checks}\n")
 
         console.print("[bold]Instructions for agent:[/bold]")
         console.print("[dim]Evaluate the existing codebase against each check below.[/dim]")
-        console.print('[dim]Mark PASS / FAIL / PARTIAL with evidence (file:line or "not found").\n[/dim]')
+        console.print('[dim]Mark PASS / FAIL / PARTIAL with evidence (file:line or "not found").[/dim]')
+        console.print("[dim]At the end of your report, emit this exact line (replace <P> with the PASS count):[/dim]")
+        console.print(f"[dim]  {score_line_template}[/dim]\n")
 
         for f in classification["implement_files"]:
-            checklist = fetch_verify([f])
-            click.echo(checklist)
+            click.echo(checklists_by_area[f])
             click.echo()
 
+        console.print("[bold]═══ SCORING ═══[/bold]")
+        console.print(
+            f"Denominator: {total_checks} total checks across "
+            f"{len(classification['implement_files'])} recommended areas."
+        )
+        console.print(f"Areas: {areas_csv}")
+        console.print(f"Emit at end of report: [bold]{score_line_template}[/bold]")
+
         if classification["templates"]:
-            console.print("[bold]Required documentation:[/bold]")
+            console.print("\n[bold]Required documentation:[/bold]")
             for t in classification["templates"]:
                 console.print(f"[yellow]  aigis template {t}[/yellow]")
         return

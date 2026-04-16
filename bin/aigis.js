@@ -118,12 +118,18 @@ program
   .command('get')
   .description('Fetch implementation pattern files')
   .option('--all', 'Fetch all implement files')
-  .option('--lang <language>', 'Filter code to py or js only')
+  .option('--lang <language>', 'Filter code blocks to one language. Accepts py, python, js, javascript, ts, typescript, go, rust.')
+  .option('--context <context>', 'Filter patterns by system context. Accepts web, agentic, rag, batch. Patterns not listed for that context in content/index/context-rules.json are removed.')
   .option('--no-frontmatter', 'Strip YAML frontmatter')
   .argument('[files...]', 'File IDs to fetch')
   .action((files, opts) => {
-    const content = get(files, opts);
-    console.log(content);
+    try {
+      const content = get(files, opts);
+      console.log(content);
+    } catch (err) {
+      console.error(chalk.red(err.message));
+      process.exit(1);
+    }
   });
 
 // ============================================================

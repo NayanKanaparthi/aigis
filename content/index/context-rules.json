@@ -1,0 +1,90 @@
+{
+  "_doc": "Context rules for `aigis get --context <name>`. A rule declares that a specific pattern heading in a file applies only to the listed contexts. Patterns NOT listed here apply to every context. The filter removes a pattern block (header through next pattern-header or section break) when the requested context is not in the pattern's context list. Manifest-driven so we don't have to inline-tag every code block; can be evolved per Step 4's content rewrite.",
+  "_schema_rule": {
+    "file": "implement file id (without .md)",
+    "pattern_heading_prefix": "heading text prefix at level 3 (### ...) to match",
+    "contexts": ["list of context names where this pattern applies"]
+  },
+  "_known_contexts": ["web", "agentic", "rag", "batch"],
+
+  "rules": [
+    {
+      "file": "input-validation",
+      "pattern_heading_prefix": "Pattern 5",
+      "contexts": ["web", "agentic"],
+      "reason": "Injection pattern detection is most relevant when input comes from users (web API) or tool calls (agentic). Batch pipelines with vetted inputs often skip this."
+    },
+    {
+      "file": "human-oversight",
+      "pattern_heading_prefix": "Pattern 1",
+      "contexts": ["agentic"],
+      "reason": "Tool allowlist pattern only applies to agentic systems that expose tools/functions."
+    },
+    {
+      "file": "human-oversight",
+      "pattern_heading_prefix": "Pattern 2",
+      "contexts": ["agentic"],
+      "reason": "Approval gates for mutating operations apply only when the system executes actions, not when it only recommends."
+    },
+    {
+      "file": "rag-security",
+      "pattern_heading_prefix": "Pattern 1",
+      "contexts": ["rag"],
+      "reason": "Vector DB access control is RAG-specific."
+    },
+    {
+      "file": "rag-security",
+      "pattern_heading_prefix": "Pattern 2",
+      "contexts": ["rag"],
+      "reason": "Tenant isolation applies to RAG multi-tenant systems."
+    },
+    {
+      "file": "rag-security",
+      "pattern_heading_prefix": "Pattern 3",
+      "contexts": ["rag"],
+      "reason": "Retrieval validation is RAG-specific."
+    },
+    {
+      "file": "rag-security",
+      "pattern_heading_prefix": "Pattern 4",
+      "contexts": ["rag"],
+      "reason": "Embedding endpoint protection is RAG-specific."
+    },
+    {
+      "file": "rag-security",
+      "pattern_heading_prefix": "Pattern 5",
+      "contexts": ["rag"],
+      "reason": "Permission inheritance on embeddings is RAG-specific."
+    },
+    {
+      "file": "data-integrity",
+      "pattern_heading_prefix": "Pattern 2",
+      "contexts": ["rag", "batch"],
+      "reason": "Pre-embedding validation only applies to systems that ingest into a vector store or training pipeline."
+    },
+    {
+      "file": "data-integrity",
+      "pattern_heading_prefix": "Pattern 3",
+      "contexts": ["batch"],
+      "reason": "Dataset versioning is primarily for fine-tuning / batch training pipelines."
+    },
+    {
+      "file": "data-integrity",
+      "pattern_heading_prefix": "Pattern 4",
+      "contexts": ["rag", "batch"],
+      "reason": "Distribution monitoring applies to systems with embeddings or training datasets."
+    },
+    {
+      "file": "data-integrity",
+      "pattern_heading_prefix": "Pattern 5",
+      "contexts": ["rag", "batch"],
+      "reason": "Batch rollback capability applies to ingestion / training pipelines."
+    },
+    {
+      "file": "rate-limiting",
+      "pattern_heading_prefix": "Pattern 1",
+      "contexts": ["web"],
+      "reason": "Per-user rate limits apply primarily to user-facing APIs."
+    }
+  ]
+}

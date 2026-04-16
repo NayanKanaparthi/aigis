@@ -106,14 +106,20 @@ def classify(description: str | None, traits_str: str | None,
 @cli.command("get")
 @click.argument("files", nargs=-1)
 @click.option("--all", "all_files", is_flag=True, help="Fetch all implement files")
-@click.option("--lang", type=click.Choice(["py", "js"]), default=None, help="Filter code to py or js only")
+@click.option("--lang", default=None, help="Filter code blocks to one language. Accepts py, python, js, javascript, ts, typescript, go, rust.")
+@click.option("--context", default=None, help="Filter patterns by system context. Accepts web, agentic, rag, batch.")
 @click.option("--no-frontmatter", "no_frontmatter", is_flag=True, help="Strip YAML frontmatter")
 def get_cmd(files: tuple[str, ...], all_files: bool, lang: str | None,
-            no_frontmatter: bool) -> None:
+            context: str | None, no_frontmatter: bool) -> None:
     """Fetch implementation pattern files."""
-    content = fetch_get(list(files) or None, all_files=all_files,
-                        strip_fm=not no_frontmatter, lang=lang)
-    click.echo(content)
+    try:
+        content = fetch_get(list(files) or None, all_files=all_files,
+                            strip_fm=not no_frontmatter, lang=lang,
+                            context=context)
+        click.echo(content)
+    except ValueError as e:
+        console.print(f"[red]{e}[/red]")
+        sys.exit(1)
 
 
 # ── verify ──────────────────────────────────────────────────────────

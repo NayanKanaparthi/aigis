@@ -131,11 +131,46 @@ program
 // ============================================================
 program
   .command('verify')
-  .description('Fetch verification checklists')
+  .description('Fetch verification checklists, or run deterministic auto-verify with --auto')
   .argument('<files...>', 'File IDs to verify')
-  .action((files) => {
-    const content = verify(files);
-    console.log(content);
+  .option('--auto <path>', 'Run deterministic scanner against the project at <path> instead of returning the blank checklist')
+  .option('--json', 'Output auto-verify results as JSON (only with --auto)')
+  .action((files, opts) => {
+    if (!opts.auto) {
+      // Backward-compatible behavior: fetch the blank checklist markdown
+      const content = verify(files);
+      console.log(content);
+      return;
+    }
+
+    // Auto-verify path
+    const { autoVerifyArea, formatTextReport } = require('../lib/auto-verify');
+    const projectDir = require('path').resolve(opts.auto);
+    if (!require('fs').existsSync(projectDir)) {
+      console.error(chalk.red(`Project path does not exist: ${projectDir}`));
+      process.exit(1);
+    }
+
+    const results = [];
+    for (const area of files) {
+      try {
+        const r = autoVerifyArea(area, projectDir);
+        results.push(r);
+      } catch (e) {
+        console.error(chalk.red(`Error verifying "${area}": ${e.message}`));
+        process.exit(1);
+      }
+    }
+
+    if (opts.json) {
+      console.log(JSON.stringify(results.length === 1 ? results[0] : results, null, 2));
+      return;
+    }
+
+    for (const r of results) {
+      console.log(formatTextReport(r));
+      if (results.length > 1) console.log('\n' + '─'.repeat(60) + '\n');
+    }
   });
 
 // ============================================================

@@ -119,9 +119,38 @@ def get_cmd(files: tuple[str, ...], all_files: bool, lang: str | None,
 # ── verify ──────────────────────────────────────────────────────────
 @cli.command()
 @click.argument("files", nargs=-1, required=True)
-def verify(files: tuple[str, ...]) -> None:
-    """Fetch verification checklists."""
-    click.echo(fetch_verify(list(files)))
+@click.option("--auto", "auto_path", default=None, help="Run deterministic scanner against the project at this path instead of returning the blank checklist")
+@click.option("--json", "as_json", is_flag=True, help="Output auto-verify results as JSON (only with --auto)")
+def verify(files: tuple[str, ...], auto_path: str | None, as_json: bool) -> None:
+    """Fetch verification checklists, or run deterministic auto-verify with --auto."""
+    if not auto_path:
+        click.echo(fetch_verify(list(files)))
+        return
+
+    from pathlib import Path
+    from .auto_verify import auto_verify_area, format_text_report
+
+    proj = Path(auto_path).resolve()
+    if not proj.exists():
+        console.print(f"[red]Project path does not exist: {proj}[/red]")
+        sys.exit(1)
+
+    results = []
+    for area in files:
+        try:
+            results.append(auto_verify_area(area, str(proj)))
+        except Exception as e:
+            console.print(f"[red]Error verifying '{area}': {e}[/red]")
+            sys.exit(1)
+
+    if as_json:
+        click.echo(json.dumps(results[0] if len(results) == 1 else results, indent=2))
+        return
+
+    for i, r in enumerate(results):
+        click.echo(format_text_report(r))
+        if len(results) > 1 and i < len(results) - 1:
+            click.echo("\n" + "─" * 60 + "\n")
 
 
 # ── template ────────────────────────────────────────────────────────

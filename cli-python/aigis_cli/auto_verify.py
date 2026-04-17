@@ -298,9 +298,109 @@ def _injection_log_only(files: list[dict[str, Any]], ctx: dict[str, Any]) -> dic
     return {"flagged": flagged or partial, "evidence": evidence, "notes": notes}
 
 
+def _pii_incomplete_classes(files: list[dict[str, Any]], ctx: dict[str, Any]) -> dict[str, Any]:
+    REQUIRED = ["ssn", "email", "phone", "credit_card", "address"]
+    CLASS_TOKENS = {
+        "ssn": ["ssn", "social_security", "socialsecurity", "socsec"],
+        "email": ["email", "e_mail", "e-mail"],
+        "phone": ["phone", "phone_number", "telephone", "mobile"],
+        "credit_card": ["credit_card", "creditcard", "card", "card_number", "cardnumber", "pan", "cc_number", "payment_card"],
+        "address": ["address", "street", "postal_address", "mailing_address"],
+    }
+    present = {c: False for c in REQUIRED}
+    evidence: list[dict[str, Any]] = []
+
+    for f in files:
+        content = f["content"]
+        for cls in REQUIRED:
+            if present[cls]:
+                continue
+            for token in CLASS_TOKENS[cls]:
+                upper = token.upper()
+                patterns = [
+                    re.compile(r'["\'`]' + re.escape(token) + r'["\'`]\s*:'),
+                    re.compile(r"\b" + re.escape(token) + r"\s*[:=]\s*re\.compile", re.IGNORECASE),
+                    re.compile(r"\b" + re.escape(upper) + r"_PATTERN"),
+                    re.compile(r"\[" + re.escape(upper) + r"_REDACTED\]"),
+                    re.compile(r"\[REDACTED_" + re.escape(upper) + r"\]"),
+                    re.compile(r"\b(?:redact|mask|scrub)_" + re.escape(token) + r"\b", re.IGNORECASE),
+                ]
+                matched = False
+                for pat in patterns:
+                    m = pat.search(content)
+                    if m:
+                        present[cls] = True
+                        line = content.count("\n", 0, m.start()) + 1
+                        snippet = (content.split("\n")[line - 1] if line - 1 < len(content.split("\n")) else "").strip()[:120]
+                        evidence.append({"file": f["path"], "line": line, "snippet": f"{cls}: {snippet}"})
+                        matched = True
+                        break
+                if matched:
+                    break
+
+    missing = [c for c in REQUIRED if not present[c]]
+    flagged = bool(missing)
+    if flagged:
+        notes = (
+            f"PII redactor is missing pattern coverage for: {', '.join(missing)}. "
+            f"Aigis V1 literal wording ('redaction called') is met, but inputs containing "
+            f"{' or '.join(missing)} will reach the LLM (and logs) unredacted. "
+            f"Add all 5 required classes: {', '.join(REQUIRED)}."
+        )
+    else:
+        notes = "All 5 required PII classes detected in the code."
+    return {"flagged": flagged, "evidence": evidence, "notes": notes}
+
+
+def _rate_limit_no_retry_after(files: list[dict[str, Any]], ctx: dict[str, Any]) -> dict[str, Any]:
+    site_log: list[dict[str, Any]] = []
+    evidence: list[dict[str, Any]] = []
+
+    response_site_re = re.compile(
+        r"status_code\s*=\s*429|HTTPException\s*\(\s*(?:status_code\s*=\s*)?429"
+        r"|status\(429\)|response\.status\s*=\s*429"
+    )
+    retry_after_re = re.compile(r"Retry-After|retry_after|retryAfter", re.IGNORECASE)
+
+    for f in files:
+        lines = f["content"].split("\n")
+        for m in response_site_re.finditer(f["content"]):
+            line = f["content"].count("\n", 0, m.start()) + 1
+            start = max(0, line - 6)
+            end = min(len(lines), line + 15)
+            window = "\n".join(lines[start:end])
+            has_header = bool(retry_after_re.search(window))
+            site_log.append({"file": f["path"], "line": line, "hasHeader": has_header})
+            if not has_header:
+                evidence.append({
+                    "file": f["path"],
+                    "line": line,
+                    "snippet": (lines[line - 1] if line - 1 < len(lines) else "").strip()
+                               + "  // no Retry-After within surrounding 20 lines",
+                })
+
+    flagged = bool(site_log) and all(not s["hasHeader"] for s in site_log)
+    partial = any(not s["hasHeader"] for s in site_log) and any(s["hasHeader"] for s in site_log)
+    if not site_log:
+        notes = "No 429 response sites found."
+    elif flagged:
+        notes = (
+            f"{len(site_log)} site(s) returning 429 found; none set a Retry-After header. "
+            f"Aigis V1 literal wording ('per-user rate limit') is met, but clients have no "
+            f"retry-backoff signal. Add Retry-After computed from the actual bucket TTL."
+        )
+    elif partial:
+        notes = "Some 429 sites set Retry-After, others do not. Review the ones without."
+    else:
+        notes = "All 429 response sites set a Retry-After header."
+    return {"flagged": flagged or partial, "evidence": evidence, "notes": notes}
+
+
 _SPECIAL_REGISTRY = {
     "kill_switch_restart_latched": _kill_switch_restart_latched,
     "injection_log_only": _injection_log_only,
+    "pii_incomplete_classes": _pii_incomplete_classes,
+    "rate_limit_no_retry_after": _rate_limit_no_retry_after,
 }
 
 

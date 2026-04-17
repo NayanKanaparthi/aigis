@@ -327,7 +327,13 @@
         "require": "any"
       }
     },
-    "overclaim": {},
+    "overclaim": {
+      "V1": {
+        "desc": "PII pattern coverage is incomplete (fewer than the 5 required classes: ssn, email, phone, credit_card, address)",
+        "recognizer": "pii_incomplete_classes",
+        "also_auto": "V1"
+      }
+    },
     "judgment": {
       "V2": "Data minimization (only necessary fields sent to LLM) requires agent review of request schema.",
       "V4": "Separated PII storage is architectural.",
@@ -386,7 +392,13 @@
         "require": "any"
       }
     },
-    "overclaim": {},
+    "overclaim": {
+      "V1": {
+        "desc": "Rate limiter exists but 429 responses do not include Retry-After header",
+        "recognizer": "rate_limit_no_retry_after",
+        "also_auto": "V1"
+      }
+    },
     "judgment": {
       "V3": "Cost monitoring / alerting is typically external infrastructure; regex can't detect 'alerts are configured'."
     }

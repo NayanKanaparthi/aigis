@@ -1,6 +1,6 @@
 {
   "name": "@aigis-ai/cli",
-  "version": "1.0.3",
+  "version": "2.0.0-alpha.1",
   "description": "AI governance guardrails for coding agents. Framework-aligned security and compliance patterns from NIST AI RMF, OWASP Top 10 for LLMs, and ISO/IEC 42001.",
   "main": "bin/aigis.js",
   "bin": {

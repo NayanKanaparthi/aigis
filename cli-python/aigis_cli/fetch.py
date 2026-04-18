@@ -155,14 +155,14 @@ def get(file_ids: list[str] | None, *, all_files: bool = False,
         strip_fm: bool = True, lang: str | None = None,
         context: str | None = None) -> str:
     if all_files:
-        file_ids = list_dir("implement")
+        file_ids = list_dir("skills/areas")
 
     if not file_ids:
         raise ValueError('Provide file IDs or use --all. Run "aigis search --list" to see available files.')
 
     outputs: list[str] = []
     for fid in file_ids:
-        content = read_file("implement", fid)
+        content = read_file("skills/areas", fid)
         if not strip_fm:
             content = strip_frontmatter(content)
         if lang:
@@ -201,3 +201,19 @@ def get_template(template_ids: list[str]) -> str:
 
 def get_audit_scan() -> str:
     return read_file("index", "audit-scan")
+
+
+def get_core() -> str:
+    return read_file("skills", "core")
+
+
+def get_workflow(type_: str) -> str:
+    if not type_:
+        raise ValueError(
+            'Provide a workflow type. Run "aigis workflow --list" to see available workflows.'
+        )
+    return read_file("skills/workflows", type_)
+
+
+def list_workflows() -> list[str]:
+    return list_dir("skills/workflows")

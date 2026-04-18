@@ -8,7 +8,7 @@ from rich.console import Console
 
 from . import __version__
 from .classify import classify as run_classify
-from .fetch import get as fetch_get, get_audit_scan, get_template, verify as fetch_verify
+from .fetch import get as fetch_get, get_audit_scan, get_template, get_workflow, list_workflows, verify as fetch_verify
 from .keywords import detect_traits_from_text
 from .search import list_all, search as run_search
 from .annotate import annotate as add_annotation, clear_annotation, list_annotations
@@ -165,6 +165,37 @@ def verify(files: tuple[str, ...], auto_path: str | None, as_json: bool) -> None
 def template(templates: tuple[str, ...]) -> None:
     """Fetch compliance documentation templates."""
     click.echo(get_template(list(templates)))
+
+
+# ── workflow ────────────────────────────────────────────────────────
+@cli.command()
+@click.argument("type_", metavar="TYPE", required=False, default=None)
+@click.option("--list", "list_workflows_flag", is_flag=True, help="List available workflows")
+def workflow(type_: str | None, list_workflows_flag: bool) -> None:
+    """Fetch the canonical file layout + wiring contracts for a project type."""
+    if list_workflows_flag:
+        items = list_workflows()
+        if not items:
+            console.print("[dim]No workflow skills found.[/dim]")
+            return
+        console.print("[bold]Available workflows:[/bold]\n")
+        for w in items:
+            console.print(f"  {w}")
+        console.print("[dim]\nFetch one with: aigis workflow <type>[/dim]")
+        return
+    if not type_:
+        console.print("[red]Provide a workflow type or pass --list.[/red]")
+        console.print("[dim]  aigis workflow fastapi-llm[/dim]")
+        console.print("[dim]  aigis workflow --list\n[/dim]")
+        sys.exit(1)
+    try:
+        click.echo(get_workflow(type_))
+    except Exception as exc:
+        console.print(f"[red]{exc}[/red]")
+        items = list_workflows()
+        if items:
+            console.print(f"[dim]\nAvailable workflows: {', '.join(items)}[/dim]")
+        sys.exit(1)
 
 
 # ── audit ───────────────────────────────────────────────────────────

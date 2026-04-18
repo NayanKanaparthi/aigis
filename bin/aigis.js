@@ -3,7 +3,7 @@
 const { Command } = require('commander');
 const chalk = require('chalk');
 const { classify } = require('../lib/classify');
-const { get, getTemplate, getAuditScan } = require('../lib/fetch');
+const { get, getTemplate, getAuditScan, getWorkflow, listWorkflows } = require('../lib/fetch');
 const { verify } = require('../lib/fetch');
 const { search, listAll } = require('../lib/search');
 const { annotate, listAnnotations, clearAnnotation } = require('../lib/annotate');
@@ -15,7 +15,7 @@ const program = new Command();
 program
   .name('aigis')
   .description('AI governance guardrails for coding agents')
-  .version('1.0.3');
+  .version('2.0.0-alpha.1');
 
 // ============================================================
 // aigis classify
@@ -84,7 +84,7 @@ program
       console.log('');
     }
 
-    console.log(chalk.bold(`Implement files (${result.implement_files.length}):`));
+    console.log(chalk.bold(`Recommended areas (${result.implement_files.length}):`));
     for (const f of result.implement_files) {
       console.log(chalk.green(`  aigis get ${f}`));
     }
@@ -109,6 +109,12 @@ program
     }
 
     console.log(chalk.dim(`\nControls: ${result.controls.owasp.length} OWASP, ${result.controls.nist.length} NIST, ${result.controls.iso.length} ISO`));
+
+    // Workflow suggestion. Step 5 ships only fastapi-llm; future workflows will
+    // be matched heuristically against the trait set.
+    console.log(chalk.bold('\nSuggested workflow:'));
+    console.log(chalk.green('  aigis workflow fastapi-llm'));
+    console.log(chalk.dim('  (canonical file layout + wiring contracts; see `aigis workflow --list` for others)'));
   });
 
 // ============================================================
@@ -189,6 +195,44 @@ program
   .action((templates) => {
     const content = getTemplate(templates);
     console.log(content);
+  });
+
+// ============================================================
+// aigis workflow
+// ============================================================
+program
+  .command('workflow')
+  .description('Fetch the canonical file layout + wiring contracts for a project type')
+  .argument('[type]', 'Workflow type (e.g. fastapi-llm). Omit + use --list to see available.')
+  .option('--list', 'List available workflows')
+  .action((type, opts) => {
+    if (opts.list) {
+      const workflows = listWorkflows();
+      if (workflows.length === 0) {
+        console.log(chalk.dim('No workflow skills found.'));
+        return;
+      }
+      console.log(chalk.bold('Available workflows:\n'));
+      for (const w of workflows) console.log(`  ${w}`);
+      console.log(chalk.dim('\nFetch one with: aigis workflow <type>'));
+      return;
+    }
+    if (!type) {
+      console.error(chalk.red('Provide a workflow type or pass --list.'));
+      console.log(chalk.dim('  aigis workflow fastapi-llm'));
+      console.log(chalk.dim('  aigis workflow --list\n'));
+      process.exit(1);
+    }
+    try {
+      console.log(getWorkflow(type));
+    } catch (err) {
+      console.error(chalk.red(err.message));
+      const workflows = listWorkflows();
+      if (workflows.length > 0) {
+        console.log(chalk.dim('\nAvailable workflows: ' + workflows.join(', ')));
+      }
+      process.exit(1);
+    }
   });
 
 // ============================================================

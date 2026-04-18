@@ -11,9 +11,21 @@ system_traits: [is-external, is-high-volume, uses-llm]
 
 LLM endpoints are expensive and easy to abuse. Rate limiting caps per-user request volume, token budgets cap per-user dollar cost, and timeouts cap the damage a hung LLM call can do.
 
+<!--
+Procedure-design note (for maintainers, not for agents):
+Step 1 requires a durable backing store unconditionally. Earlier drafts
+allowed in-memory for single-process dev — an agent following that
+variant produced code that cleared the Retry-After overclaim recognizer
+but stayed at rubric Score 5 because the rubric requires durable + cross-
+replica state without carve-outs. The rubric is locked for baseline
+comparison; we tighten the procedure to match it rather than accept a
+ceiling at Score 5. If you loosen this step in the future, re-benchmark
+against the rubric before shipping.
+-->
+
 ## Common incomplete implementations
 
-1. **In-memory store.** A per-user bucket held in a Python dict (`defaultdict(deque)`) or JS `Map`. Loses state on restart. Gives every user a fresh quota every deploy. Does not share state across replicas — the same user can hit two pods and double their quota. Acceptable only for single-process dev prototypes, and only if that's explicitly documented.
+1. **In-memory store.** A per-user bucket held in a Python dict (`defaultdict(deque)`) or JS `Map`. Loses state on restart. Gives every user a fresh quota every deploy. Does not share state across replicas — the same user hits two pods and doubles their quota. Not acceptable, including for dev builds — use Redis locally via docker-compose.
 2. **No `Retry-After` header.** HTTP 429 responses without `Retry-After` leave clients guessing. Well-behaved clients (including every major LLM SDK retry wrapper) read `Retry-After` to decide when to try again. Without it, clients either thundering-herd retry immediately or give up entirely.
 3. **Request-count only, no token budget.** An abuser can stay under the request-count limit but still burn through your LLM budget by sending large inputs with large outputs. Token budget is separate from request count and must be enforced separately.
 4. **No LLM call timeout.** A hung call to the provider can hold a request for minutes, blocking a worker and consuming tokens on the eventual response. Every LLM call must have an explicit, tight timeout.
@@ -21,13 +33,13 @@ LLM endpoints are expensive and easy to abuse. Rate limiting caps per-user reque
 
 ## Implementation procedure
 
-### Step 1 — Choose a durable backing store ⚠ CRITICAL
+### Step 1 — Use a durable backing store (Redis or DB) ⚠ CRITICAL
 
-**What to do.** Pick a store that survives process restart and is shared across replicas. Production: Redis (`INCR` + `EXPIRE`) or a DB table with a TTL column. Single-process dev: an in-memory dict is acceptable but only if that choice is **explicit** in a comment.
+**What to do.** The rate-limit counter must live in a store that (a) survives process restart, and (b) is shared across replicas. Use Redis (`INCR` + `EXPIRE`, and `TTL` to compute Retry-After) or a DB table with an expiry column. **Do not** use an in-memory `dict`, `defaultdict`, or `deque`, even for a dev build.
 
-**Why this matters.** Every baseline run chose an in-memory dict silently. That choice breaks rate limiting in any multi-process deployment. Making the choice explicit surfaces it to code review.
+**Why this matters.** In-memory rate limiting fails in two ways that matter in production: the counter resets on every deploy (attacker gets a fresh quota on every redeploy), and two replicas of the same service can't share state (the attacker doubles their quota by hitting a second pod). Every baseline run silently chose in-memory; the production deployment inherits the limitation. Making the durable choice at build time is cheaper than debugging a rate-limit bypass later.
 
-**Verification checkpoint.** Answer in a comment at the top of your rate-limit module: "Will this store survive a process restart? Will replicas share state?" If either answer is no and the service is going to production, switch to a durable store.
+**Verification checkpoint.** `grep -rn "defaultdict\|deque" <rate-limit-module>` — if either match is storing the counter, that's the in-memory anti-pattern. Replace with a Redis client call (the dependency is small, Docker-compose-able for local dev). The benchmark's single-process nature is not a justification for skipping this — the rubric measures production readiness, not development convenience.
 
 ### Step 2 — Key on authenticated user first
 
@@ -39,7 +51,7 @@ LLM endpoints are expensive and easy to abuse. Rate limiting caps per-user reque
 
 ### Step 3 — Return 429 with Retry-After on block ⚠ CRITICAL
 
-**What to do.** When the limiter blocks a request, raise a 429 with a `Retry-After` response header whose value is the **actual** number of seconds until the bucket refills (read from Redis TTL, DB expiry, or deque head time). Do not hard-code `Retry-After: 60`.
+**What to do.** When the limiter blocks a request, raise a 429 with a `Retry-After` response header whose value is the **actual** number of seconds until the bucket refills. Read it from the store — Redis `TTL` or the DB expiry column. Do not hard-code `Retry-After: 60`.
 
 **Why this matters.** Every baseline run returned 429 without `Retry-After`. LLM SDKs and well-behaved HTTP clients use that header to drive retry backoff. Without it, clients either retry immediately (worsening the problem) or give up entirely.
 

@@ -11,6 +11,18 @@ system_traits: [uses-llm, accepts-user-input]
 
 Prompt injection is the #1 security risk for LLM applications (OWASP LLM01:2025). This procedure enforces length limits, strips dangerous characters, separates system/user roles, validates schema, and — most importantly — detects injection patterns **and blocks on detection before the LLM call**.
 
+<!--
+Procedure-design note (for maintainers, not for agents):
+Step 5 requires injection detection across THREE categories: (1) instruction
+override, (2) role/persona hijack, and (3) encoded/obfuscated input
+(zero-width, base64-like, homoglyphs). The rubric's Score 10 bar requires
+all three categories. Earlier drafts only listed categories 1 and 2;
+agent-produced code cleared the "log-only" overclaim but stayed at rubric
+Score 5 because Category 3 was absent. Category 3 detection runs on the
+RAW pre-sanitize input (since Step 2 strips zero-widths for safety).
+-->
+
+
 ## Common incomplete implementations
 
 1. **Injection detection that only logs.** The detector function exists, is called, and sets a flag. Then execution continues to the LLM call as if nothing happened. The literal Aigis V5 wording accepts "even if just logging", but a logging-only detector is a telemetry feature, not a security feature. Every baseline run built this shape.
@@ -61,13 +73,95 @@ client.messages.create(system=SYSTEM_PROMPT, messages=[{"role": "user", "content
 
 **Verification checkpoint.** Test with a payload that has `severity_score=11` (out of range). The parser must reject; the handler must fall back.
 
-### Step 5 — Implement injection pattern detection
+### Step 5 — Implement injection detection across three categories
 
-**What to do.** Define a `SUSPICIOUS_PATTERNS` list of known-bad phrases. Implement `check_injection_patterns(text) -> {"flagged": bool, "pattern": str | None}` that returns a flag when any pattern appears in the lowercased input.
+**What to do.** Injection detection must cover three distinct categories of attack. Define them as separate pattern lists / checks so the rater (and you) can verify coverage of each:
 
-**Why this matters.** Pattern detection is defense-in-depth on top of role separation. Catches unsophisticated attacks and produces telemetry for sophisticated ones.
+1. **Instruction override** — phrases that try to countermand the system prompt. `"ignore previous instructions"`, `"ignore all prior"`, `"new instructions:"`, `"do not follow"`, `"disregard"`.
+2. **Role / persona hijack** — attempts to reassign the model's identity or extract the system prompt. `"you are now"`, `"act as"`, `"pretend you are"`, `"system prompt"`, `"reveal your instructions"`.
+3. **Encoded or obfuscated input** — attacker hides instructions from a reviewer's eye or the keyword filter: zero-width / bidi Unicode between letters, base64-encoded payload, mixed-script homoglyphs (Cyrillic `а` vs Latin `a`).
 
-**Verification checkpoint.** Unit-test with "ignore previous instructions". The return value must have `flagged=True`.
+Categories 1–2 run on the **cleaned** (post-sanitize) text. Category 3 runs on the **raw pre-sanitize** input because Step 2 strips zero-widths for safety — the detection needs to know they were present.
+
+```python
+import base64
+import re
+import unicodedata
+
+INSTRUCTION_OVERRIDE = ["ignore previous instructions", "ignore all prior",
+                        "new instructions:", "do not follow", "disregard"]
+ROLE_HIJACK = ["you are now", "act as", "pretend you are",
+               "system prompt", "reveal your instructions"]
+
+ZERO_WIDTH_RE = re.compile(r"[\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]")
+BASE64_LIKE_RE = re.compile(r"[A-Za-z0-9+/]{40,}={0,2}")
+
+def _homoglyph_scripts_mixed(text: str) -> bool:
+    """True when Latin letters coexist with Cyrillic or Greek (common homoglyph attack)."""
+    scripts = set()
+    for c in text:
+        if not c.isalpha():
+            continue
+        try:
+            name = unicodedata.name(c)
+        except ValueError:
+            continue
+        if "CYRILLIC" in name:   scripts.add("cyrillic")
+        elif "GREEK" in name:    scripts.add("greek")
+        elif "LATIN" in name:    scripts.add("latin")
+    return "latin" in scripts and len(scripts) > 1
+
+def _base64_decodes_to_instruction(s: str) -> bool:
+    """Base64-shaped substrings that decode to ASCII text containing instruction phrases."""
+    for match in BASE64_LIKE_RE.finditer(s):
+        try:
+            decoded = base64.b64decode(match.group(), validate=True).decode("utf-8", "replace").lower()
+        except Exception:
+            continue
+        if any(p in decoded for p in INSTRUCTION_OVERRIDE + ROLE_HIJACK):
+            return True
+    return False
+
+def check_injection_patterns(raw_text: str, cleaned_text: str) -> dict:
+    lower = cleaned_text.lower()
+    for pattern in INSTRUCTION_OVERRIDE:
+        if pattern in lower:
+            return {"flagged": True, "category": "instruction_override", "pattern": pattern}
+    for pattern in ROLE_HIJACK:
+        if pattern in lower:
+            return {"flagged": True, "category": "role_hijack", "pattern": pattern}
+    if ZERO_WIDTH_RE.search(raw_text):
+        return {"flagged": True, "category": "encoded_obfuscated", "pattern": "zero_width_unicode"}
+    if _base64_decodes_to_instruction(raw_text):
+        return {"flagged": True, "category": "encoded_obfuscated", "pattern": "base64_instruction"}
+    if _homoglyph_scripts_mixed(raw_text):
+        return {"flagged": True, "category": "encoded_obfuscated", "pattern": "mixed_scripts"}
+    return {"flagged": False, "category": None, "pattern": None}
+```
+
+**Why this matters.** Keyword-only detection (categories 1–2) is defeated by any attacker who can type in Russian-looking letters or drop a zero-width between words. Category 3 detects the structural signals those attacks leave behind, even when the decoded content never appears as literal text in the input.
+
+**Verification checkpoint.** Unit-test each category and confirm the return value names the right category:
+
+```python
+# Category 1
+assert check_injection_patterns("ignore previous instructions",
+                                 "ignore previous instructions")["category"] == "instruction_override"
+# Category 2
+assert check_injection_patterns("you are now helpful",
+                                 "you are now helpful")["category"] == "role_hijack"
+# Category 3 (zero-width)
+assert check_injection_patterns("normal\u200Btext",
+                                 "normaltext")["category"] == "encoded_obfuscated"
+# Category 3 (base64 hiding an override)
+import base64
+encoded = base64.b64encode(b"ignore previous instructions").decode()
+assert check_injection_patterns(encoded, encoded)["category"] == "encoded_obfuscated"
+# Category 3 (mixed scripts — Cyrillic 'а' + Latin 'ssess')
+assert check_injection_patterns("аssess claim", "аssess claim")["category"] == "encoded_obfuscated"
+```
+
+All three categories must be present and testable. If your detector returns `category=None` on any of the five assertions above, Step 5 is not done.
 
 ### Step 6 — Block on detection, not just log ⚠ CRITICAL
 
@@ -77,19 +171,18 @@ client.messages.create(system=SYSTEM_PROMPT, messages=[{"role": "user", "content
 
 ```python
 # CORRECT — injection detected, request rejected before LLM call
-from fastapi import HTTPException
-
 @app.post("/api/assess-claim")
 async def assess_claim(body: AssessRequest) -> dict:
-    cleaned = sanitize_input(body.claim_description)
+    raw = body.claim_description                               # pre-sanitize: needed for category 3
+    cleaned = sanitize_input(raw)
     validate_input_length(cleaned)
 
-    injection = check_injection_patterns(cleaned)
+    injection = check_injection_patterns(raw_text=raw, cleaned_text=cleaned)
     if injection["flagged"]:
         # Block. Do not reach the LLM call below.
         raise HTTPException(
             status_code=400,
-            detail="Input rejected: matched injection pattern",
+            detail=f"Input rejected ({injection['category']}): {injection['pattern']}",
         )
 
     response = client.messages.create(
@@ -101,17 +194,9 @@ async def assess_claim(body: AssessRequest) -> dict:
 
 
 # WRONG — logs the detection, then calls the LLM anyway
-@app.post("/api/assess-claim")
-async def assess_claim(body: AssessRequest) -> dict:
-    cleaned = sanitize_input(body.claim_description)
-    injection = check_injection_patterns(cleaned)
-    security_flags = {"injection": injection["flagged"]}  # logged-only
-    # ⬇ no branch — execution continues to the LLM call
-    response = client.messages.create(
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": cleaned}],
-    )
-    return parse_and_return(response)
+# injection = check_injection_patterns(raw_text=raw, cleaned_text=cleaned)
+# security_flags = {"injection": injection["flagged"]}  # logged-only
+# response = client.messages.create(...)              # ⬅ no branch — LLM still called
 ```
 
 **Verification checkpoint.** `grep -rn "check_injection_patterns\|check_injection" --include="*.py"` — find the callsite (not the definition). Look at the next 10 lines after the call. You must see one of: `raise HTTPException`, `return <safe response>`, or `if … : return`. If instead you see a `messages.create` call happening regardless of the result, Step 6 is not done — the detector is log-only.
@@ -198,28 +283,59 @@ def parse_assessment(raw_text: str) -> AssessmentOutput | None:
         return None
 
 
-# ─── Step 5 — injection pattern detector ───────────────────────────────
-SUSPICIOUS_PATTERNS = [
-    "ignore previous instructions",
-    "ignore all prior",
-    "you are now",
-    "system prompt",
-    "reveal your instructions",
-    "act as",
-    "pretend you are",
-    "do not follow",
-    "disregard",
-    "new instructions:",
-]
+# ─── Step 5 — injection detection across three categories ─────────────
+import base64
+
+INSTRUCTION_OVERRIDE = ["ignore previous instructions", "ignore all prior",
+                        "new instructions:", "do not follow", "disregard"]
+ROLE_HIJACK = ["you are now", "act as", "pretend you are",
+               "system prompt", "reveal your instructions"]
+
+ZERO_WIDTH_RE = re.compile(r"[\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]")
+BASE64_LIKE_RE = re.compile(r"[A-Za-z0-9+/]{40,}={0,2}")
 
 
-def check_injection_patterns(text: str) -> dict:
-    lower = text.lower()
-    for pattern in SUSPICIOUS_PATTERNS:
+def _homoglyph_scripts_mixed(text: str) -> bool:
+    scripts = set()
+    for c in text:
+        if not c.isalpha():
+            continue
+        try:
+            name = unicodedata.name(c)
+        except ValueError:
+            continue
+        if "CYRILLIC" in name:   scripts.add("cyrillic")
+        elif "GREEK" in name:    scripts.add("greek")
+        elif "LATIN" in name:    scripts.add("latin")
+    return "latin" in scripts and len(scripts) > 1
+
+
+def _base64_decodes_to_instruction(s: str) -> bool:
+    for match in BASE64_LIKE_RE.finditer(s):
+        try:
+            decoded = base64.b64decode(match.group(), validate=True).decode("utf-8", "replace").lower()
+        except Exception:
+            continue
+        if any(p in decoded for p in INSTRUCTION_OVERRIDE + ROLE_HIJACK):
+            return True
+    return False
+
+
+def check_injection_patterns(raw_text: str, cleaned_text: str) -> dict:
+    lower = cleaned_text.lower()
+    for pattern in INSTRUCTION_OVERRIDE:
         if pattern in lower:
-            logger.warning("injection_pattern_detected", extra={"pattern": pattern})
-            return {"flagged": True, "pattern": pattern}
-    return {"flagged": False, "pattern": None}
+            return {"flagged": True, "category": "instruction_override", "pattern": pattern}
+    for pattern in ROLE_HIJACK:
+        if pattern in lower:
+            return {"flagged": True, "category": "role_hijack", "pattern": pattern}
+    if ZERO_WIDTH_RE.search(raw_text):
+        return {"flagged": True, "category": "encoded_obfuscated", "pattern": "zero_width_unicode"}
+    if _base64_decodes_to_instruction(raw_text):
+        return {"flagged": True, "category": "encoded_obfuscated", "pattern": "base64_instruction"}
+    if _homoglyph_scripts_mixed(raw_text):
+        return {"flagged": True, "category": "encoded_obfuscated", "pattern": "mixed_scripts"}
+    return {"flagged": False, "category": None, "pattern": None}
 
 
 # ─── Step 3 + 6 — handler: role-separated call + BLOCK on injection ────
@@ -229,17 +345,19 @@ class AssessRequest(BaseModel):
 
 @app.post("/api/assess-claim")
 async def assess_claim(body: AssessRequest) -> dict:
+    raw = body.claim_description                               # pre-sanitize (Category 3 needs this)
     try:
-        cleaned = sanitize_input(body.claim_description)      # Step 2
+        cleaned = sanitize_input(raw)                          # Step 2
         validate_input_length(cleaned)                         # Step 1
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
-    injection = check_injection_patterns(cleaned)              # Step 5
+    injection = check_injection_patterns(raw_text=raw, cleaned_text=cleaned)  # Step 5
     if injection["flagged"]:                                   # Step 6 ⚠ CRITICAL
+        logger.warning("injection_blocked", extra=injection)
         raise HTTPException(
             status_code=400,
-            detail="Input rejected: matched injection pattern",
+            detail=f"Input rejected ({injection['category']}): {injection['pattern']}",
         )
 
     response = client.messages.create(                         # Step 3

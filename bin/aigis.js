@@ -3,7 +3,7 @@
 const { Command } = require('commander');
 const chalk = require('chalk');
 const { classify } = require('../lib/classify');
-const { get, getTemplate, getAuditScan, getWorkflow, listWorkflows } = require('../lib/fetch');
+const { get, getTemplate, getAuditScan, getWorkflow, listWorkflows, getInfra, listInfras } = require('../lib/fetch');
 const { verify } = require('../lib/fetch');
 const { search, listAll } = require('../lib/search');
 const { annotate, listAnnotations, clearAnnotation } = require('../lib/annotate');
@@ -16,7 +16,7 @@ const program = new Command();
 program
   .name('aigis')
   .description('AI governance guardrails for coding agents')
-  .version('2.0.0-alpha.2');
+  .version('2.0.0-alpha.3');
 
 // ============================================================
 // aigis classify
@@ -289,6 +289,44 @@ program
       const workflows = listWorkflows();
       if (workflows.length > 0) {
         console.log(chalk.dim('\nAvailable workflows: ' + workflows.join(', ')));
+      }
+      process.exit(1);
+    }
+  });
+
+// ============================================================
+// aigis infra
+// ============================================================
+program
+  .command('infra')
+  .description('Fetch infrastructure setup content (rate-limiting, secrets, logging)')
+  .argument('[area]', 'Infrastructure area (e.g. rate-limiting). Omit + use --list to see available.')
+  .option('--list', 'List available infrastructure areas')
+  .action((area, opts) => {
+    if (opts.list) {
+      const infras = listInfras();
+      if (infras.length === 0) {
+        console.log(chalk.dim('No infrastructure areas found.'));
+        return;
+      }
+      console.log(chalk.bold('Available infrastructure areas:\n'));
+      for (const i of infras) console.log(`  ${i}`);
+      console.log(chalk.dim('\nFetch one with: aigis infra <area>'));
+      return;
+    }
+    if (!area) {
+      console.error(chalk.red('Provide an infrastructure area or pass --list.'));
+      console.log(chalk.dim('  aigis infra rate-limiting'));
+      console.log(chalk.dim('  aigis infra --list\n'));
+      process.exit(1);
+    }
+    try {
+      console.log(getInfra(area));
+    } catch (err) {
+      console.error(chalk.red(err.message));
+      const infras = listInfras();
+      if (infras.length > 0) {
+        console.log(chalk.dim('\nAvailable areas: ' + infras.join(', ')));
       }
       process.exit(1);
     }

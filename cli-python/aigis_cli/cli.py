@@ -8,7 +8,7 @@ from rich.console import Console
 
 from . import __version__
 from .classify import classify as run_classify
-from .fetch import get as fetch_get, get_audit_scan, get_template, get_workflow, list_workflows, verify as fetch_verify
+from .fetch import get as fetch_get, get_audit_scan, get_infra, get_template, get_workflow, list_infras, list_workflows, verify as fetch_verify
 from .keywords import detect_traits_from_text
 from .search import list_all, search as run_search
 from .annotate import annotate as add_annotation, clear_annotation, list_annotations
@@ -272,6 +272,37 @@ def workflow(type_: str | None, list_workflows_flag: bool) -> None:
         items = list_workflows()
         if items:
             console.print(f"[dim]\nAvailable workflows: {', '.join(items)}[/dim]")
+        sys.exit(1)
+
+
+# ── infra ───────────────────────────────────────────────────────────
+@cli.command()
+@click.argument("area", required=False, default=None)
+@click.option("--list", "list_infras_flag", is_flag=True, help="List available infrastructure areas")
+def infra(area: str | None, list_infras_flag: bool) -> None:
+    """Fetch infrastructure setup content (rate-limiting, secrets, logging)."""
+    if list_infras_flag:
+        items = list_infras()
+        if not items:
+            console.print("[dim]No infrastructure areas found.[/dim]")
+            return
+        console.print("[bold]Available infrastructure areas:[/bold]\n")
+        for i in items:
+            console.print(f"  {i}")
+        console.print("[dim]\nFetch one with: aigis infra <area>[/dim]")
+        return
+    if not area:
+        console.print("[red]Provide an infrastructure area or pass --list.[/red]")
+        console.print("[dim]  aigis infra rate-limiting[/dim]")
+        console.print("[dim]  aigis infra --list\n[/dim]")
+        sys.exit(1)
+    try:
+        click.echo(get_infra(area))
+    except (ValueError, FileNotFoundError) as exc:
+        console.print(f"[red]{exc}[/red]")
+        items = list_infras()
+        if items:
+            console.print(f"[dim]\nAvailable areas: {', '.join(items)}[/dim]")
         sys.exit(1)
 
 

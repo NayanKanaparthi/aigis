@@ -217,3 +217,16 @@ def get_workflow(type_: str) -> str:
 
 def list_workflows() -> list[str]:
     return list_dir("skills/workflows")
+
+
+def get_infra(area: str) -> str:
+    if not area:
+        raise ValueError(
+            'Provide an infrastructure area. Run "aigis infra --list" to see available areas.'
+        )
+    return read_file("skills/infrastructure", area)
+
+
+def list_infras() -> list[str]:
+    # Sort case-insensitively so output is stable regardless of filesystem order.
+    return sorted(list_dir("skills/infrastructure"), key=str.lower)

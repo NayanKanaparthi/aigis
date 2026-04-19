@@ -1,0 +1,229 @@
+{
+  "version": "1.0",
+  "tier_rule": "High-confidence: phrase implies the listed traits in essentially every realistic project where it appears (no plausible counterexample). Low-confidence: phrase implies the traits only some of the time (a realistic counter-project exists). Decision rule: if you can describe a project where the phrase appears but the trait does not apply, the entry is low-confidence. When in doubt, low-confidence.",
+
+  "high_confidence": {
+    "Anthropic": {
+      "traits": ["uses-llm", "uses-thirdparty-api"],
+      "confidence": "high",
+      "notes": "Mentioning the provider implies third-party + LLM."
+    },
+    "chatbot": {
+      "traits": ["uses-llm", "accepts-user-input"],
+      "confidence": "high",
+      "notes": "Any LLM-backed conversational interface."
+    },
+    "Claude": {
+      "traits": ["uses-llm", "uses-thirdparty-api"],
+      "confidence": "high",
+      "notes": "Specific model name implies the provider."
+    },
+    "code assistant": {
+      "traits": ["uses-llm", "generates-code"],
+      "confidence": "high",
+      "notes": "Code completion or code-explanation tooling."
+    },
+    "coding agent": {
+      "traits": ["uses-llm", "generates-code", "is-agentic"],
+      "confidence": "high",
+      "notes": "Agent that reads and writes code (Cursor-style)."
+    },
+    "fine-tune": {
+      "traits": ["uses-finetuned"],
+      "confidence": "high",
+      "notes": "Matches 'fine-tune', 'fine-tuned', 'fine-tuning'."
+    },
+    "function calling": {
+      "traits": ["is-agentic", "uses-llm"],
+      "confidence": "high",
+      "notes": "OpenAI/Anthropic function/tool calling — by definition agentic."
+    },
+    "GDPR": {
+      "traits": ["jurisdiction-eu"],
+      "confidence": "high",
+      "notes": "EU regulatory scope."
+    },
+    "GPT-4": {
+      "traits": ["uses-llm", "uses-thirdparty-api"],
+      "confidence": "high",
+      "notes": "Matches 'GPT-4', 'GPT-4o', 'GPT-4 Turbo' via substring."
+    },
+    "HIPAA": {
+      "traits": ["handles-health", "jurisdiction-us-regulated"],
+      "confidence": "high",
+      "notes": "Mentioning HIPAA implies health data + US regulated."
+    },
+    "OpenAI": {
+      "traits": ["uses-llm", "uses-thirdparty-api"],
+      "confidence": "high",
+      "notes": "Same pattern as Anthropic."
+    },
+    "RAG": {
+      "traits": ["uses-rag", "uses-llm"],
+      "confidence": "high",
+      "notes": "Retrieval-augmented generation. Spelled out in next entry."
+    },
+    "retrieval-augmented generation": {
+      "traits": ["uses-rag", "uses-llm"],
+      "confidence": "high",
+      "notes": "Spelled-out form of RAG."
+    },
+    "tool calling": {
+      "traits": ["is-agentic", "uses-llm"],
+      "confidence": "high",
+      "notes": "Same concept as function calling."
+    },
+    "vector database": {
+      "traits": ["uses-rag"],
+      "confidence": "high",
+      "notes": "Pinecone/Weaviate/Chroma/pgvector — any of these implies RAG."
+    }
+  },
+
+  "low_confidence": {
+    "AI agent": {
+      "traits": ["is-agentic"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned an AI agent. Does an LLM choose the next action at each step (decides which tool to call, when to stop), or is the flow scripted by your code with the LLM only doing per-step generation? (yes / no / unsure)",
+      "notes": "'Agent' is overloaded marketing language. True agentic systems delegate the action loop to the LLM."
+    },
+    "analytics": {
+      "traits": ["processes-pii"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned analytics. Are individual users identifiable in the data, or is it aggregated (counts, percentages, no per-user records)? (yes / no / unsure)",
+      "notes": "Aggregate analytics avoids PII."
+    },
+    "checkout": {
+      "traits": ["handles-financial"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned checkout. Does this code touch payment processing, transaction records, or money flow? (yes / no / unsure)",
+      "notes": "Checkout UI vs payment backend are different things."
+    },
+    "content moderation": {
+      "traits": ["influences-decisions", "accepts-user-input"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned content moderation. Does the AI's classification act on content directly (delete/hide), or does a human reviewer make the final call? (yes / no / unsure)",
+      "notes": "Same as 'moderation' but explicit two-trait suggestion."
+    },
+    "customer support": {
+      "traits": ["accepts-user-input", "is-external"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned customer support. Is this exposed directly to customers (external) or only used by your support team (internal)? (yes / no / unsure)",
+      "notes": "Some support tools are agent-only."
+    },
+    "dashboard": {
+      "traits": ["processes-pii"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned a dashboard. Does it display per-user data, or aggregate metrics only? (yes / no / unsure)",
+      "notes": "Aggregate dashboards skip PII."
+    },
+    "education": {
+      "traits": ["handles-minors"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned education. Is this product used by anyone under 13 (or under 16 in the EU)? (yes / no / unsure)",
+      "notes": "Adult education products don't trigger COPPA/minors."
+    },
+    "email automation": {
+      "traits": ["generates-content", "processes-pii"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned email automation. Are the emails generated per-recipient (uses customer data) or templated/broadcast (no per-user PII in the generation)? (yes / no / unsure)",
+      "notes": "Drip campaigns differ from per-recipient generation."
+    },
+    "extract from documents": {
+      "traits": ["uses-rag"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned document extraction. Does the system index and search documents semantically (RAG), or is this single-document OCR/extraction without retrieval? (yes / no / unsure)",
+      "notes": "OCR pipelines aren't RAG."
+    },
+    "form processing": {
+      "traits": ["accepts-user-input", "processes-pii"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned form processing. Do the forms collect personally identifiable information (name, email, phone, etc.)? (yes / no / unsure)",
+      "notes": "Anonymous feedback forms don't have PII."
+    },
+    "high traffic": {
+      "traits": ["is-high-volume"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned high traffic. Are you actually expecting >1000 LLM requests/day, or describing aspirational scale? (yes / no / unsure)",
+      "notes": "Aspirational scale != current reality."
+    },
+    "image upload": {
+      "traits": ["is-multimodal"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned image upload. Are the images analyzed by a vision model (multimodal LLM), or just stored/displayed without AI processing? (yes / no / unsure)",
+      "notes": "Image hosting != multimodal AI."
+    },
+    "internal tool": {
+      "traits": ["is-internal"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned an internal tool. Is access restricted to employees only (no external users), or is 'internal' a marketing term? (yes / no / unsure)",
+      "notes": "Some 'internal' tools have customer-facing surfaces."
+    },
+    "marketplace": {
+      "traits": ["handles-financial", "is-external"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned a marketplace. Does it process payments directly, or just facilitate connections (no money flow through your service)? (yes / no / unsure)",
+      "notes": "Lead-gen marketplaces don't always touch money."
+    },
+    "moderation": {
+      "traits": ["influences-decisions"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned moderation. Does the AI act directly on user content (delete, hide, suspend) without a human reviewer in the loop? (yes / no / unsure)",
+      "notes": "Human-in-the-loop moderation is advisory, not deciding."
+    },
+    "notifications": {
+      "traits": ["processes-pii"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned notifications. Are notifications addressed to individual users (their email/phone/device token)? (yes / no / unsure)",
+      "notes": "Broadcast notifications without targeting don't need PII."
+    },
+    "personalization": {
+      "traits": ["processes-pii"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned personalization. Does this system use information that identifies an individual user (account, profile, history) to personalize output? Anonymous session-only personalization does not count. (yes / no / unsure)",
+      "notes": "Anonymous session-based personalization doesn't trigger PII."
+    },
+    "recommendations": {
+      "traits": ["influences-decisions"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned recommendations. Do they directly affect a user's outcomes (price, eligibility, hiring) or are they advisory only? (yes / no / unsure)",
+      "notes": "Product recommendations are usually advisory; loan recommendations are not."
+    },
+    "search through documents": {
+      "traits": ["uses-rag"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned searching through documents. Are the documents embedded into a vector store, or is this keyword search (Postgres FTS, Elasticsearch BM25, grep)? (yes / no / unsure)",
+      "notes": "Keyword search != RAG."
+    },
+    "summarize": {
+      "traits": ["uses-llm", "generates-content"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned summarization. Is this an LLM summary, or extractive (pulling sentences out without an LLM)? (yes / no / unsure)",
+      "notes": "Extractive summarization predates LLMs."
+    },
+    "translation": {
+      "traits": ["uses-llm"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned translation. Is this LLM-based, or using a dedicated translation API (Google Translate, DeepL) without an LLM? (yes / no / unsure)",
+      "notes": "Translation APIs != LLMs."
+    },
+    "user profile": {
+      "traits": ["processes-pii"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned user profiles. Do these profiles include personally identifiable information (name, email, address, etc.)? (yes / no / unsure)",
+      "notes": "Pseudonymous profiles can avoid PII traits."
+    },
+    "voice assistant": {
+      "traits": ["is-multimodal", "accepts-user-input", "uses-llm"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned voice. Is voice the input/output modality (multimodal LLM), or is voice transcribed to text first by a separate service before reaching your LLM? (yes / no / unsure)",
+      "notes": "STT-then-LLM is text-only at the LLM layer."
+    },
+    "writing assistant": {
+      "traits": ["uses-llm", "generates-content"],
+      "confidence": "low",
+      "confirmation_prompt": "You mentioned a writing assistant. Does it generate text on its own (uses-llm + generates-content), or only check spelling/grammar against rules? (yes / no / unsure)",
+      "notes": "Grammarly-style rule-based tools don't need LLM traits."
+    }
+  }
+}

@@ -17,6 +17,34 @@ from .init_ide import init as run_init
 console = Console(highlight=False)
 
 
+def _prompt_low_confidence(detection: dict) -> dict[str, str]:
+    """Interactive prompt for low-confidence resolver suggestions."""
+    decisions: dict[str, str] = {}
+    console.print("\n[bold]═══ AIGIS RESOLVER ═══[/bold]")
+    if detection["high_confidence_matches"]:
+        console.print("\n[bold]High-confidence triggers (auto-applied):[/bold]")
+        for m in detection["high_confidence_matches"]:
+            console.print(f"  [green]✓[/green] \"{m['phrase']}\" → {', '.join(m['traits'])}")
+    console.print(f"\n[bold]Low-confidence triggers (need your input — {len(detection['low_confidence_matches'])}):[/bold]")
+    for sug in detection["low_confidence_matches"]:
+        console.print(f"\n  [bold][{sug['id']}] \"{sug['phrase']}\"[/bold]")
+        console.print(f"      [dim]Suggested traits: {', '.join(sug['traits'])}[/dim]")
+        console.print(f"      {sug['confirmation_prompt']}")
+        ans = input("      (y)es / (n)o / (u)nsure [n]: ").strip().lower()
+        if ans in ("", "n", "no"):
+            decision = "no"
+        elif ans in ("y", "yes"):
+            decision = "yes"
+        elif ans in ("u", "unsure"):
+            decision = "unsure"
+        else:
+            console.print(f"      [dim](unrecognized — defaulting to 'no')[/dim]")
+            decision = "no"
+        decisions[sug["id"]] = decision
+    console.print("")
+    return decisions
+
+
 @click.group()
 @click.version_option(__version__, prog_name="aigis")
 def cli() -> None:
@@ -26,49 +54,98 @@ def cli() -> None:
 # ── classify ────────────────────────────────────────────────────────
 @cli.command()
 @click.argument("description", required=False, default=None)
-@click.option("--traits", "traits_str", default=None, help="Comma-separated trait IDs")
-@click.option("--interactive", is_flag=True, help="Confirm detected traits before classifying")
-@click.option("--json", "as_json", is_flag=True, help="Output as JSON")
-def classify(description: str | None, traits_str: str | None,
-             interactive: bool, as_json: bool) -> None:
+@click.option("--traits", "traits_str", default=None, help="Comma-separated trait IDs (additive: combines with --description triggers if both passed)")
+@click.option("--json", "as_json", is_flag=True, help="Output as JSON (also enabled automatically when stdout is not a TTY)")
+@click.option("--confirm", "confirm_str", default=None, help="Comma-separated low-confidence suggestion IDs to confirm")
+@click.option("--reject", "reject_str", default=None, help="Comma-separated low-confidence suggestion IDs to reject")
+def classify(description: str | None, traits_str: str | None, as_json: bool,
+             confirm_str: str | None, reject_str: str | None) -> None:
     """Classify an AI system and get recommended governance files."""
-    traits: list[str] | None = None
-
-    if traits_str:
-        traits = [t.strip() for t in traits_str.split(",")]
-    elif description:
-        detected = detect_traits_from_text(description)
-        if interactive:
-            console.print("\n[bold]Detected traits from description:[/bold]\n")
-            for d in detected:
-                icon = "[green]✓[/green]" if d["confidence"] == "high" else "[yellow]?[/yellow]"
-                console.print(f"  {icon} [cyan]{d['trait']}[/cyan]  (matched: \"{d['keyword']}\")")
-            trait_list = ",".join(d["trait"] for d in detected)
-            console.print("[dim]\nTo classify with these traits, run:[/dim]")
-            console.print(f"[green]  aigis classify --traits {trait_list}[/green]\n")
-            console.print("[dim]Add or remove traits as needed before running.\n[/dim]")
-            return
-        traits = [d["trait"] for d in detected]
-        if not traits:
-            console.print("[red]No traits detected from description.[/red]")
-            console.print('[dim]Run "aigis traits" to see available traits, or use --traits flag.\n[/dim]')
-            sys.exit(1)
-        console.print(f"[dim]Detected traits: {', '.join(traits)}\n[/dim]")
-    else:
-        console.print("[red]Provide --traits or a quoted description.[/red]")
+    from .keywords import apply_confirmations
+    if not traits_str and not description:
+        console.print("[red]Provide --traits, a quoted description, or both.[/red]")
         console.print("[dim]Example: aigis classify --traits uses-llm,processes-pii[/dim]")
-        console.print('[dim]Example: aigis classify "customer chatbot with RAG"\n[/dim]')
+        console.print('[dim]Example: aigis classify "customer chatbot with RAG"[/dim]')
+        console.print('[dim]Example: aigis classify "chatbot" --traits handles-financial   (additive)\n[/dim]')
+        sys.exit(1)
+
+    json_mode = bool(as_json) or not sys.stdout.isatty()
+    traits_from_flag = [t.strip() for t in traits_str.split(",") if t.strip()] if traits_str else []
+    confirm_ids = set(s.strip() for s in confirm_str.split(",") if s.strip()) if confirm_str else None
+    reject_ids = set(s.strip() for s in reject_str.split(",") if s.strip()) if reject_str else None
+
+    detection = {"high_confidence_matches": [], "low_confidence_matches": [], "traits_auto_applied": []}
+    if description:
+        detection = detect_traits_from_text(description)
+
+    decisions: dict[str, str] = {}
+    used_flags = bool(confirm_ids or reject_ids)
+
+    if description and detection["low_confidence_matches"]:
+        if used_flags:
+            for sug in detection["low_confidence_matches"]:
+                if confirm_ids and sug["id"] in confirm_ids:
+                    decisions[sug["id"]] = "yes"
+                elif reject_ids and sug["id"] in reject_ids:
+                    decisions[sug["id"]] = "no"
+                else:
+                    decisions[sug["id"]] = "no"
+        elif json_mode:
+            for sug in detection["low_confidence_matches"]:
+                decisions[sug["id"]] = "no"
+        else:
+            decisions = _prompt_low_confidence(detection)
+
+    resolved = apply_confirmations(detection, decisions)
+    final_traits = sorted(set(resolved["final_traits"]) | set(traits_from_flag))
+
+    resolver_report = None
+    if description:
+        resolver_report = {
+            "input": description,
+            "high_confidence_matches": detection["high_confidence_matches"],
+            "low_confidence_suggestions": resolved["low_confidence_decisions"],
+            "traits_from_description": resolved["final_traits"],
+            "traits_from_flag": traits_from_flag,
+            "final_traits": final_traits,
+        }
+
+    if not final_traits:
+        msg = "No traits resolved from description or --traits flag."
+        if json_mode:
+            click.echo(json.dumps({"error": msg, "resolver": resolver_report}, indent=2))
+        else:
+            console.print(f"[red]{msg}[/red]")
+            console.print('[dim]Run "aigis traits" to see available traits.\n[/dim]')
         sys.exit(1)
 
     try:
-        result = run_classify(traits)
+        result = run_classify(final_traits)
     except ValueError as exc:
         console.print(f"[red]{exc}[/red]")
         sys.exit(1)
+    if resolver_report:
+        result["resolver"] = resolver_report
 
-    if as_json:
+    if json_mode:
         click.echo(json.dumps(result, indent=2))
         return
+
+    if resolver_report:
+        console.print("[bold]═══ AIGIS RESOLVER ═══[/bold]")
+        if detection["high_confidence_matches"]:
+            console.print("\n[bold]High-confidence triggers (auto-applied):[/bold]")
+            for m in detection["high_confidence_matches"]:
+                console.print(f"  [green]✓[/green] \"{m['phrase']}\" → {', '.join(m['traits'])}")
+        if resolved["low_confidence_decisions"]:
+            console.print("\n[bold]Low-confidence decisions:[/bold]")
+            for d in resolved["low_confidence_decisions"]:
+                icon = "[green]✓[/green]" if d["user_decision"] == "yes" else ("[yellow]?[/yellow]" if d["user_decision"] == "unsure" else "[dim]✗[/dim]")
+                console.print(f"  {icon} [{d['id']}] \"{d['phrase']}\" → {', '.join(d['traits'])}  (decision: {d['user_decision']})")
+        if traits_from_flag:
+            console.print(f"\n[bold]Added via --traits flag:[/bold] {', '.join(traits_from_flag)}")
+        console.print(f"\n[bold]Final trait set ({len(final_traits)}):[/bold] {', '.join(final_traits)}\n")
+        console.print("[dim]═══════════════════════[/dim]\n")
 
     tier = result["risk_tier"]
     tier_color = "red" if tier == "HIGH" else "yellow" if tier == "MEDIUM" else "green"
@@ -359,9 +436,10 @@ def annotate(file_id: str | None, note: str | None,
 # ── init ────────────────────────────────────────────────────────────
 @cli.command("init")
 @click.argument("ide")
-def init_cmd(ide: str) -> None:
-    """Set up aigis for your IDE."""
-    run_init(ide)
+@click.option("--refresh", is_flag=True, help="Overwrite existing aigis content (destructive — use after Aigis updates or to fix a stale resolver block checksum)")
+def init_cmd(ide: str, refresh: bool) -> None:
+    """Set up aigis for your IDE (writes core skill + resolver block)."""
+    run_init(ide, refresh=refresh)
 
 
 # ── traits ──────────────────────────────────────────────────────────

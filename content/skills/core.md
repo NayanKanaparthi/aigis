@@ -37,6 +37,16 @@ When building a new AI/LLM feature, or auditing one. Do this BEFORE writing the 
 
 When an OVERCLAIM is raised, the area is not complete — fix the anti-pattern before marking done.
 
+## How to pick traits
+
+Two ways to figure out which traits apply:
+
+1. **CLI:** `aigis classify "<plain-English description of what you're building>"`. Reads the trigger map, returns high-confidence traits immediately, and asks one consolidated confirmation prompt for low-confidence triggers (if any).
+
+2. **In-IDE:** scan the user's project description against the **AIGIS RESOLVER BLOCK** below in this rules file. Apply high-confidence triggers directly. For each low-confidence trigger that matches, ask the user the listed clarifying question (yes / no / unsure) before adding the trait.
+
+Default to NO on low-confidence questions when the user is unsure — false-positive trait classification is worse than missing one trait the user can add manually with `aigis classify --traits ...`.
+
 ## Available commands
 
 - `aigis classify` — risk tier + recommended areas

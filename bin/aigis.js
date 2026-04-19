@@ -8,14 +8,15 @@ const { verify } = require('../lib/fetch');
 const { search, listAll } = require('../lib/search');
 const { annotate, listAnnotations, clearAnnotation } = require('../lib/annotate');
 const { init } = require('../lib/init');
-const { detectTraitsFromText } = require('../lib/keywords');
+const { detectTraitsFromText, applyConfirmations } = require('../lib/keywords');
+const readline = require('readline');
 
 const program = new Command();
 
 program
   .name('aigis')
   .description('AI governance guardrails for coding agents')
-  .version('2.0.0-alpha.1');
+  .version('2.0.0-alpha.2');
 
 // ============================================================
 // aigis classify
@@ -23,56 +24,114 @@ program
 program
   .command('classify')
   .description('Classify an AI system and get recommended governance files')
-  .option('--traits <traits>', 'Comma-separated trait IDs')
-  .option('--interactive', 'Confirm detected traits before classifying')
-  .option('--json', 'Output as JSON')
-  .argument('[description]', 'Natural language description (keyword matching)')
-  .action((description, opts) => {
-    let traits;
-
-    if (opts.traits) {
-      traits = opts.traits.split(',').map(t => t.trim());
-    } else if (description) {
-      const detected = detectTraitsFromText(description);
-      if (opts.interactive) {
-        console.log(chalk.bold('\nDetected traits from description:\n'));
-        for (const { trait, keyword, confidence } of detected) {
-          const icon = confidence === 'high' ? chalk.green('✓') : chalk.yellow('?');
-          console.log(`  ${icon} ${chalk.cyan(trait)}  (matched: "${keyword}")`);
-        }
-        console.log(chalk.dim('\nTo classify with these traits, run:'));
-        console.log(chalk.green(`  aigis classify --traits ${detected.map(d => d.trait).join(',')}\n`));
-        console.log(chalk.dim('Add or remove traits as needed before running.\n'));
-        return;
-      }
-      traits = detected.map(d => d.trait);
-      if (traits.length === 0) {
-        console.error(chalk.red('No traits detected from description.'));
-        console.log(chalk.dim('Run "aigis traits" to see available traits, or use --traits flag.\n'));
-        process.exit(1);
-      }
-      console.log(chalk.dim(`Detected traits: ${traits.join(', ')}\n`));
-    } else {
-      console.error(chalk.red('Provide --traits or a quoted description.'));
+  .option('--traits <traits>', 'Comma-separated trait IDs (additive: combines with --description triggers if both passed)')
+  .option('--json', 'Output as JSON (also enabled automatically when stdout is not a TTY)')
+  .option('--confirm <ids>', 'Comma-separated low-confidence suggestion IDs to confirm (no interactive prompt)')
+  .option('--reject <ids>', 'Comma-separated low-confidence suggestion IDs to reject (no interactive prompt)')
+  .argument('[description]', 'Natural language description (resolved via content/resolvers/triggers.json)')
+  .action(async (description, opts) => {
+    // Three modes: --traits only, description only, both (additive).
+    if (!opts.traits && !description) {
+      console.error(chalk.red('Provide --traits, a quoted description, or both.'));
       console.log(chalk.dim('Example: aigis classify --traits uses-llm,processes-pii'));
-      console.log(chalk.dim('Example: aigis classify "customer chatbot with RAG"\n'));
+      console.log(chalk.dim('Example: aigis classify "customer chatbot with RAG"'));
+      console.log(chalk.dim('Example: aigis classify "chatbot" --traits handles-financial   (additive)\n'));
+      process.exit(1);
+    }
+
+    // Auto-enable JSON when stdout is not a TTY (CI, piped, &c.)
+    const jsonMode = !!opts.json || !process.stdout.isTTY;
+    const traitsFromFlag = opts.traits ? opts.traits.split(',').map(t => t.trim()).filter(Boolean) : [];
+    const confirmIds = opts.confirm ? new Set(opts.confirm.split(',').map(s => s.trim()).filter(Boolean)) : null;
+    const rejectIds = opts.reject ? new Set(opts.reject.split(',').map(s => s.trim()).filter(Boolean)) : null;
+
+    let detection = { high_confidence_matches: [], low_confidence_matches: [], traits_auto_applied: [] };
+    if (description) {
+      detection = detectTraitsFromText(description);
+    }
+
+    // Decide what to do with low-confidence suggestions.
+    //   Priority: --confirm/--reject flags > interactive prompt (TTY only) > default reject.
+    let decisions = {};
+    let usedFlags = !!(confirmIds || rejectIds);
+
+    if (description && detection.low_confidence_matches.length > 0) {
+      if (usedFlags) {
+        for (const sug of detection.low_confidence_matches) {
+          if (confirmIds && confirmIds.has(sug.id)) decisions[sug.id] = 'yes';
+          else if (rejectIds && rejectIds.has(sug.id)) decisions[sug.id] = 'no';
+          else decisions[sug.id] = 'no';
+        }
+      } else if (jsonMode) {
+        for (const sug of detection.low_confidence_matches) decisions[sug.id] = 'no';
+      } else {
+        // Interactive prompt
+        decisions = await promptLowConfidence(detection);
+      }
+    }
+
+    const resolved = applyConfirmations(detection, decisions);
+    // Merge with --traits
+    const finalTraits = [...new Set([...resolved.final_traits, ...traitsFromFlag])].sort();
+
+    // Build a resolver report for transparency (in both JSON and text modes when description was given)
+    const resolverReport = description ? {
+      input: description,
+      high_confidence_matches: detection.high_confidence_matches,
+      low_confidence_suggestions: resolved.low_confidence_decisions,
+      traits_from_description: resolved.final_traits,
+      traits_from_flag: traitsFromFlag,
+      final_traits: finalTraits,
+    } : null;
+
+    if (finalTraits.length === 0) {
+      const msg = 'No traits resolved from description or --traits flag.';
+      if (jsonMode) {
+        console.log(JSON.stringify({ error: msg, resolver: resolverReport }, null, 2));
+      } else {
+        console.error(chalk.red(msg));
+        console.log(chalk.dim('Run "aigis traits" to see available traits.\n'));
+      }
       process.exit(1);
     }
 
     let result;
     try {
-      result = classify(traits);
+      result = classify(finalTraits);
     } catch (e) {
       console.error(chalk.red(e.message));
       process.exit(1);
     }
+    if (resolverReport) result.resolver = resolverReport;
 
-    if (opts.json) {
+    if (jsonMode) {
       console.log(JSON.stringify(result, null, 2));
       return;
     }
 
-    // Formatted output
+    // Formatted output. Show resolver section first if it was used.
+    if (resolverReport) {
+      console.log(chalk.bold('═══ AIGIS RESOLVER ═══'));
+      if (detection.high_confidence_matches.length > 0) {
+        console.log(chalk.bold('\nHigh-confidence triggers (auto-applied):'));
+        for (const m of detection.high_confidence_matches) {
+          console.log(`  ${chalk.green('✓')} "${m.phrase}" → ${m.traits.join(', ')}`);
+        }
+      }
+      if (resolved.low_confidence_decisions.length > 0) {
+        console.log(chalk.bold('\nLow-confidence decisions:'));
+        for (const d of resolved.low_confidence_decisions) {
+          const icon = d.user_decision === 'yes' ? chalk.green('✓') : d.user_decision === 'unsure' ? chalk.yellow('?') : chalk.dim('✗');
+          console.log(`  ${icon} [${d.id}] "${d.phrase}" → ${d.traits.join(', ')}  (decision: ${d.user_decision})`);
+        }
+      }
+      if (traitsFromFlag.length > 0) {
+        console.log(chalk.bold(`\nAdded via --traits flag: ${traitsFromFlag.join(', ')}`));
+      }
+      console.log(chalk.bold(`\nFinal trait set (${finalTraits.length}): ${finalTraits.join(', ')}\n`));
+      console.log(chalk.dim('═══════════════════════\n'));
+    }
+
     const tierColor = result.risk_tier === 'HIGH' ? chalk.red : result.risk_tier === 'MEDIUM' ? chalk.yellow : chalk.green;
     console.log(`${chalk.bold('Risk tier:')} ${tierColor.bold(result.risk_tier)}`);
     console.log(`${chalk.bold('Reason:')} ${result.reason}\n`);
@@ -421,10 +480,11 @@ program
 // ============================================================
 program
   .command('init')
-  .description('Set up aigis for your IDE')
+  .description('Set up aigis for your IDE (writes core skill + resolver block)')
   .argument('<ide>', 'IDE to configure: cursor, claude-code, windsurf, copilot')
-  .action((ide) => {
-    init(ide);
+  .option('--refresh', 'Overwrite existing aigis content (destructive — use after Aigis updates or to fix a stale resolver block checksum)')
+  .action((ide, opts) => {
+    init(ide, { refresh: !!opts.refresh });
   });
 
 // ============================================================
@@ -447,5 +507,37 @@ program
       console.log(`  ${traits.map(t => chalk.cyan(t)).join(', ')}\n`);
     }
   });
+
+// ── helper: interactive prompt for low-confidence resolver suggestions ──
+async function promptLowConfidence(detection) {
+  const decisions = {};
+  console.log(chalk.bold('\n═══ AIGIS RESOLVER ═══'));
+  if (detection.high_confidence_matches.length > 0) {
+    console.log(chalk.bold('\nHigh-confidence triggers (auto-applied):'));
+    for (const m of detection.high_confidence_matches) {
+      console.log(`  ${chalk.green('✓')} "${m.phrase}" → ${m.traits.join(', ')}`);
+    }
+  }
+  console.log(chalk.bold(`\nLow-confidence triggers (need your input — ${detection.low_confidence_matches.length}):`));
+
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const ask = (q) => new Promise((res) => rl.question(q, res));
+
+  for (const sug of detection.low_confidence_matches) {
+    console.log(chalk.bold(`\n  [${sug.id}] "${sug.phrase}"`));
+    console.log(chalk.dim(`      Suggested traits: ${sug.traits.join(', ')}`));
+    console.log(`      ${sug.confirmation_prompt}`);
+    const ans = (await ask('      (y)es / (n)o / (u)nsure [n]: ')).trim().toLowerCase();
+    let decision;
+    if (ans === '' || ans === 'n' || ans === 'no') decision = 'no';
+    else if (ans === 'y' || ans === 'yes') decision = 'yes';
+    else if (ans === 'u' || ans === 'unsure') decision = 'unsure';
+    else { console.log(chalk.dim(`      (unrecognized — defaulting to 'no')`)); decision = 'no'; }
+    decisions[sug.id] = decision;
+  }
+  rl.close();
+  console.log('');
+  return decisions;
+}
 
 program.parse();

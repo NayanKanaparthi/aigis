@@ -1,136 +1,73 @@
+"""Mirror of lib/keywords.js — the resolver.
+
+Loads content/resolvers/triggers.json and provides:
+  - detect_traits_from_text(text): returns high/low matches + auto-applied traits
+  - apply_confirmations(detection, decisions): merges low-confidence yes answers
+
+The two-tier match logic is identical to the JS implementation.
+"""
+
 from __future__ import annotations
 
-KEYWORD_MAP: dict[str, list[str]] = {
-    "uses-llm": [
-        "llm", "language model", "gpt", "claude", "chatbot", "chat bot", "bot",
-        "generative ai", "gen ai", "genai", "openai", "anthropic", "gemini",
-        "mistral", "cohere", "completion", "prompt", "chat completion",
-        "text generation", "natural language", "nlp",
-    ],
-    "uses-rag": [
-        "rag", "retrieval", "vector", "embedding", "knowledge base", "knowledgebase",
-        "pinecone", "weaviate", "chromadb", "chroma", "qdrant", "pgvector",
-        "faiss", "milvus", "semantic search", "document search", "vector db",
-        "vector database", "vector store",
-    ],
-    "uses-finetuned": [
-        "fine-tune", "finetune", "fine tune", "custom model", "trained model",
-        "lora", "qlora", "peft", "sft", "custom trained", "training data",
-        "fine-tuning",
-    ],
-    "uses-thirdparty-api": [
-        "openai api", "anthropic api", "api key", "third party", "third-party",
-        "external model", "model provider", "hosted model", "api provider",
-        "cloud model", "model api",
-    ],
-    "is-agentic": [
-        "agent", "agentic", "autonomous", "auto-execute", "takes actions",
-        "tool use", "function calling", "tool calling", "writes to database",
-        "sends email", "executes code", "multi-step", "self-directed",
-        "langchain agent", "autogen", "crewai",
-    ],
-    "is-multimodal": [
-        "multimodal", "multi-modal", "image", "audio", "video", "vision",
-        "speech", "voice", "text-to-speech", "speech-to-text", "ocr",
-        "image generation", "dall-e", "stable diffusion", "whisper",
-    ],
-    "processes-pii": [
-        "pii", "personal data", "personally identifiable", "names", "emails",
-        "email address", "phone number", "ssn", "social security", "address",
-        "date of birth", "user data", "customer data", "gdpr", "personal information",
-    ],
-    "handles-financial": [
-        "financial", "finance", "banking", "payment", "credit", "debit",
-        "transaction", "insurance", "claim", "policy", "lending", "loan",
-        "mortgage", "investment", "trading", "fintech", "account balance",
-        "credit card", "credit score",
-    ],
-    "handles-health": [
-        "health", "medical", "clinical", "patient", "diagnosis", "prescription",
-        "hipaa", "healthcare", "hospital", "doctor", "treatment", "symptom",
-        "disease", "medication", "ehr", "electronic health", "pharma",
-        "pharmaceutical",
-    ],
-    "handles-proprietary": [
-        "proprietary", "trade secret", "confidential", "internal only",
-        "competitive", "intellectual property", "ip", "source code analysis",
-        "strategy", "classified",
-    ],
-    "handles-minors": [
-        "children", "child", "minor", "kid", "student", "school", "coppa",
-        "under 13", "under 16", "parental", "youth", "teen", "education",
-        "k-12", "k12",
-    ],
-    "influences-decisions": [
-        "decision", "approve", "deny", "reject", "score", "rank", "filter",
-        "hiring", "recruitment", "credit decision", "loan decision",
-        "eligibility", "assessment", "evaluation", "grading", "sentencing",
-        "recommendation", "determines", "affects people",
-    ],
-    "accepts-user-input": [
-        "user input", "user text", "chat", "message", "form", "text area",
-        "text input", "free text", "user query", "search box", "prompt input",
-        "customer message", "user message", "text field",
-    ],
-    "is-external": [
-        "customer", "public", "external", "user-facing", "customer-facing",
-        "consumer", "website", "app", "saas", "product", "end user",
-        "client-facing",
-    ],
-    "is-internal": [
-        "internal", "employee", "staff only", "back office", "internal tool",
-        "admin only", "intranet", "corporate only",
-    ],
-    "is-high-volume": [
-        "high volume", "production", "scale", "thousands", "millions",
-        "high traffic", "load balancer", "auto-scaling", "enterprise",
-        "at scale", "high throughput",
-    ],
-    "generates-code": [
-        "generates code", "code generation", "sql generation", "writes code",
-        "code execution", "executes code", "eval", "exec", "coding assistant",
-        "code interpreter",
-    ],
-    "generates-content": [
-        "generates content", "content generation", "marketing copy", "blog post",
-        "email generation", "social media", "article", "report generation",
-        "publish", "customer email", "notification",
-    ],
-    "multi-model-pipeline": [
-        "pipeline", "chain", "multi-model", "multi model", "sequential",
-        "model chain", "orchestration", "workflow", "first model",
-        "second model", "feeds into",
-    ],
-    "jurisdiction-eu": [
-        "eu", "european", "europe", "gdpr", "eu ai act", "ai act",
-        "european union", "germany", "france", "brussels",
-    ],
-    "jurisdiction-us-regulated": [
-        "hipaa", "fcra", "ferpa", "fedramp", "soc2", "regulated",
-        "compliance", "banking regulation", "sec", "finra", "occ",
-        "us regulated", "federal",
-    ],
-    "jurisdiction-global": [
-        "global", "worldwide", "international", "multi-country", "multi country",
-        "cross-border", "multiple countries", "global deployment",
-    ],
-}
+import json
+from pathlib import Path
+
+CONTENT_DIR = Path(__file__).resolve().parent / "content"
+TRIGGERS_PATH = CONTENT_DIR / "resolvers" / "triggers.json"
+
+_cache: dict | None = None
 
 
-def detect_traits_from_text(text: str) -> list[dict[str, str]]:
+def load_triggers() -> dict:
+    global _cache
+    if _cache is None:
+        _cache = json.loads(TRIGGERS_PATH.read_text(encoding="utf-8"))
+    return _cache
+
+
+def detect_traits_from_text(text: str) -> dict:
+    triggers = load_triggers()
     text_lower = text.lower()
-    detected: list[dict[str, str]] = []
-    seen: set[str] = set()
 
-    for trait, keywords in KEYWORD_MAP.items():
-        for keyword in keywords:
-            if keyword in text_lower and trait not in seen:
-                seen.add(trait)
-                detected.append({
-                    "trait": trait,
-                    "keyword": keyword,
-                    "confidence": "high" if len(keyword) > 4 else "medium",
-                })
-                break
+    high_matches = []
+    auto_traits: set[str] = set()
+    for phrase, entry in triggers["high_confidence"].items():
+        if phrase.lower() in text_lower:
+            high_matches.append({"phrase": phrase, "traits": list(entry["traits"])})
+            for t in entry["traits"]:
+                auto_traits.add(t)
 
-    return detected
+    low_matches = []
+    next_id = 1
+    for phrase, entry in triggers["low_confidence"].items():
+        if phrase.lower() in text_lower:
+            low_matches.append({
+                "id": str(next_id),
+                "phrase": phrase,
+                "traits": list(entry["traits"]),
+                "confirmation_prompt": entry["confirmation_prompt"],
+                "notes": entry["notes"],
+            })
+            next_id += 1
+
+    return {
+        "high_confidence_matches": high_matches,
+        "low_confidence_matches": low_matches,
+        "traits_auto_applied": list(auto_traits),
+    }
+
+
+def apply_confirmations(detection: dict, decisions: dict | None = None) -> dict:
+    decisions = decisions or {}
+    final = set(detection["traits_auto_applied"])
+    user_decisions = []
+    for sug in detection["low_confidence_matches"]:
+        decision = (decisions.get(sug["id"], "no") or "no").lower()
+        user_decisions.append({**sug, "user_decision": decision})
+        if decision in ("yes", "y"):
+            for t in sug["traits"]:
+                final.add(t)
+    return {
+        "final_traits": sorted(final),
+        "low_confidence_decisions": user_decisions,
+    }

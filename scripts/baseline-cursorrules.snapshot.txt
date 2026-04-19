@@ -1,0 +1,30 @@
+# Aigis AI Governance
+# Added by: aigis init cursor
+# Docs: https://github.com/aigis-ai/aigis
+
+When building any AI or LLM feature, use the aigis CLI for governance patterns:
+
+1. Before writing LLM code, classify the system:
+   Run: aigis classify --traits <relevant-traits> --json
+
+2. For EACH recommended file in implement_files, work one at a time:
+   a) Fetch one file:
+      Run: aigis get <file-id>
+   b) Implement the patterns in code
+   c) Verify that same file:
+      Run: aigis verify <file-id>
+   d) Fix FAIL/PARTIAL items until all checks pass
+   e) Move to the next file
+
+3. After all files pass, generate compliance docs:
+   Run: aigis template <template-id>
+
+IMPORTANT: Do NOT fetch all implement files at once. Work through them one at a time. Implement fully and verify before moving to the next.
+
+4. To audit an existing project:
+   Run: aigis audit --scan
+
+Available traits: uses-llm, uses-rag, uses-finetuned, uses-thirdparty-api, is-agentic, is-multimodal, processes-pii, handles-financial, handles-health, handles-proprietary, handles-minors, influences-decisions, accepts-user-input, is-external, is-internal, is-high-volume, generates-code, generates-content, multi-model-pipeline, jurisdiction-eu, jurisdiction-us-regulated, jurisdiction-global
+
+Run "aigis search --list" to see all available governance patterns.
+Run "aigis traits" to see trait descriptions.

@@ -1,23 +1,9 @@
-node_modules
-.git
-.github
+.claude/
 .DS_Store
 *.log
-
-# Python package (published separately on PyPI)
-cli-python/
-
-# Python artifacts (anywhere in the tree)
-__pycache__/
-*.py[cod]
-*$py.class
-*.egg-info/
-*.egg
-dist/
-build/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.venv/
-venv/
-env/
+.env
+.env.*
+node_modules/
+benchmarks/
+test/
+.github/

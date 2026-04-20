@@ -4,6 +4,9 @@ node_modules
 .DS_Store
 *.log
 
+# Claude Code metadata (local filesystem paths, session data)
+.claude/
+
 # Python package (published separately on PyPI)
 cli-python/
 
@@ -21,3 +24,9 @@ build/
 .venv/
 venv/
 env/
+
+# Local development and benchmark files
+benchmarks/
+test/
+.env
+.env.*

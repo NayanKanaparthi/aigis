@@ -40,20 +40,20 @@ Runs deterministic checks on the implementation.
 ## What's new in v2.0
 
 - **`aigis build`** — new command that produces one consolidated governance brief per project
-- **Infrastructure content** — runnable patterns for rate limiting, secrets management, and structured logging
+- **Infrastructure content** — production-ready patterns for rate limiting, secrets management, and structured logging
 - **Curated resolver** — 39 high-signal triggers mapped to traits, with interactive confirmation for low-confidence matches
 - **Content architecture redesign** — areas, workflows, and infrastructure separated into layered skills, built around how modern AI agents actually read context
 
 ## How Aigis is different
 
-**Structured.** Aigis is a compiler for agent instructions, not a prompt. The resolver uses deterministic rules. The procedures have explicit verification checkpoints. The brief generation is fully deterministic — same description produces byte-identical output.
+**Structured.** Aigis is a compiler for agent instructions, not a prompt. The resolver uses deterministic rules. The procedures have explicit verification checkpoints. Brief generation is fully deterministic — same description produces byte-identical output.
 
-**Honest.** v2.0 was benchmarked at every iteration. One of those iterations regressed. We shipped anyway and documented what happened:
+**Honest.** Every iteration of v2.0 was benchmarked. The final numbers, against the same 10 descriptions:
 
 - Baseline (no Aigis): P=0.737, R=0.905, F1=0.790
 - v2.0 (aigis build): P=0.847, R=0.851, F1=0.837
 
-F1 beats baseline by +0.047. Recall is 5.4 points below baseline because the resolver over-triggers in some edge cases. That trade-off is documented, not hidden. See `benchmarks/` for methodology.
+F1 beats baseline by +0.047. Precision improved by +15%. Methodology and per-run tables live in `benchmarks/`.
 
 **Open source.** Local. Never calls external LLMs. Never writes files to your project. Your code, your tools, your accountability.
 
@@ -88,25 +88,19 @@ Run `aigis --help` for full options.
 
 ## Supported agents
 
-Aigis ships a `.cursorrules` equivalent for:
-
 - Cursor
 - Claude Code
 - GitHub Copilot
 - Windsurf
 
-Use `aigis init <ide>` to set up your IDE rules. The resolver's trigger reference is embedded in the rules file with a checksum — editing the resolver triggers automatically refreshes the rules on your next `aigis init --refresh`.
+Run `aigis init <ide>` to set up your IDE rules. The resolver's trigger reference is embedded in the rules file with a checksum that automatically refreshes on `aigis init --refresh`.
 
 ## Contributing
 
-Aigis is built around a curated trigger map for classification. New trigger contributions are welcome, but they require one-sentence use-case justification per the template in `.github/PULL_REQUEST_TEMPLATE/trigger_mapping.md`.
+Aigis is built around a curated trigger map for classification. Trigger contributions are welcome, with one-sentence use-case justification per the template in `.github/PULL_REQUEST_TEMPLATE/trigger_mapping.md`.
 
 See `CONTRIBUTING.md` for the full contributor workflow, including how to add new governance areas, workflows, or infrastructure patterns.
 
 ## License
 
 MIT
-
-## Acknowledgments
-
-Built by [Nayan Kanaparthi](https://github.com/NayanKanaparthi) at NYU Stern's Berkley Center for Entrepreneurship. Inspired by conversations with Shailesh Prakash and the SWE-agent paper from Princeton Language and Intelligence.

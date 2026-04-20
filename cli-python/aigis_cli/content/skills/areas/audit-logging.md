@@ -169,3 +169,8 @@ function logDecision(decision, context) {
 - **Log volume at scale.** At high volume, consider sampling non-critical logs while keeping 100% of error and decision logs.
 - **Log retention and compliance.** Different regulations require different retention periods. Configure per data type.
 - **Cross-system correlation.** If the AI system calls external services, propagate trace IDs via headers.
+
+## Related infrastructure
+
+- `aigis infra logging` — `structlog` JSON-to-stdout setup with a concrete `REDACT_KEYS` list, plus integration patterns for Datadog/New Relic/Honeycomb, CloudWatch, Sentry (with the `max_request_body_size='never'` warning), and OpenTelemetry/OTLP.
+- `aigis infra secrets` — keep API keys and connection strings out of the structured fields you log.

@@ -1,0 +1,19 @@
+name: content sync (canonical ↔ Python package)
+
+on:
+  pull_request:
+    paths:
+      - 'content/**'
+      - 'cli-python/aigis_cli/content/**'
+      - 'scripts/check-content-sync.js'
+
+jobs:
+  check-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify Python content copy is byte-identical to canonical
+        run: node scripts/check-content-sync.js

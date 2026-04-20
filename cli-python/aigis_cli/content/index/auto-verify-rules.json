@@ -1,0 +1,439 @@
+{
+  "_schema_doc": "Auto-verify rules for aigis verify --auto. Each pattern area (key at top level) maps to an object with 'auto', 'overclaim', and 'judgment' sections. AUTO checks pass if ANY of their patterns match any file in the project under the default glob. OVERCLAIM checks run a named recognizer from lib/special-recognizers. JUDGMENT checks are listed without rules and are returned to the agent for evaluation.",
+  "_schema_auto_entry": {
+    "desc": "What this check is looking for",
+    "patterns": ["regex-string-1", "regex-string-2"],
+    "require": "any|all (default: any)",
+    "file_glob": "optional override of default project glob"
+  },
+  "_schema_overclaim_entry": {
+    "desc": "What this overclaim pattern looks like",
+    "recognizer": "name_of_recognizer_function",
+    "also_auto": "V1 (optional: run this auto rule first; overclaim only raised if auto passed)"
+  },
+
+  "audit-logging": {
+    "auto": {
+      "V1": {
+        "desc": "Structured log entry with trace_id for LLM interactions",
+        "patterns": ["trace_id", "traceId", "correlation_id"],
+        "require": "any"
+      },
+      "V2": {
+        "desc": "Trace ID generated and propagated",
+        "patterns": ["ContextVar\\s*\\(.*trace", "trace_id_var", "set_trace_id", "x[-_]trace[-_]id", "trace_id\\s*=\\s*str\\s*\\(\\s*uuid\\.uuid4", "trace_id\\s*=\\s*uuid\\.uuid4", "generate_trace_id"],
+        "require": "any"
+      },
+      "V3": {
+        "desc": "AI-influenced decisions logged with context",
+        "patterns": ["log_decision", "decision_log", "event_type[\"'\\s:=]+(ai_decision|decision)", "_log_audit_event\\s*\\(\\s*[\"']decision"],
+        "require": "any"
+      },
+      "V4": {
+        "desc": "Logging is PII-redacted (redact function referenced near logger)",
+        "patterns": ["redact_pii|redactPii|RedactPII", "input_hash|inputHash", "hashlib\\.sha256.*input"],
+        "require": "any"
+      }
+    },
+    "overclaim": {},
+    "judgment": {
+      "V5": "Are ALL interactions logged (not just errors)? Requires reading log call sites to confirm coverage."
+    }
+  },
+
+  "bias-monitoring": {
+    "auto": {
+      "V1": {
+        "desc": "Fairness-enabling fields in logs",
+        "patterns": ["fairness", "claim_type", "input_length_bucket", "submission_channel", "bucket_length"],
+        "require": "any"
+      },
+      "V3": {
+        "desc": "Fairness report generator exists",
+        "patterns": ["generate_fairness_report", "fairness_report", "BiasMonitor"],
+        "require": "any"
+      }
+    },
+    "overclaim": {},
+    "judgment": {
+      "V2": "Is distribution monitoring by demographic segments actually wired to a backend (not a stub that returns [])? Requires agent inspection of the monitor implementation.",
+      "V4": "Confirm protected characteristics are not collected. Absence is hard to prove by regex.",
+      "V5": "Is override pattern analysis actually implemented (not a placeholder)? Requires agent inspection."
+    }
+  },
+
+  "confidence-scoring": {
+    "auto": {
+      "V1": {
+        "desc": "Confidence metadata on AI responses",
+        "patterns": ["confidence_score", "confidence\\s*:\\s*float", "confidence\\s*[:=]\\s*Field", "ConfidenceScore"],
+        "require": "any"
+      },
+      "V3": {
+        "desc": "Recommendation framing (language of suggestion)",
+        "patterns": ["recommendation\\s*[:=]", "recommends?\\(", "suggests?\\(", "AI-assisted", "ai_assisted"],
+        "require": "any"
+      },
+      "V4": {
+        "desc": "No 'The AI determined' framing (inverse: absence indicates PASS)",
+        "patterns": ["The AI determined", "AI has decided", "the model decided"],
+        "require": "any",
+        "inverse": true
+      },
+      "V5": {
+        "desc": "Low-confidence flagged for human review",
+        "patterns": ["requires_human_review", "human_review_required", "(?:confidence|conf|score)\\s*<\\s*0\\.", "confidence_threshold", "DecisionGate"],
+        "require": "any"
+      }
+    },
+    "overclaim": {},
+    "judgment": {
+      "V2": "Is grounding verification implemented for RAG? N/A for non-RAG systems."
+    }
+  },
+
+  "data-integrity": {
+    "auto": {
+      "V1": {
+        "desc": "Data provenance tracking (checksum, ingestion date)",
+        "patterns": ["checksum", "hashlib\\..*\\.hexdigest", "ingestion_date|ingested_at", "provenance"],
+        "require": "any"
+      }
+    },
+    "overclaim": {},
+    "judgment": {
+      "V2": "Pre-embedding validation requires agent evaluation of vector pipeline.",
+      "V3": "Dataset versioning requires agent evaluation of training pipeline.",
+      "V4": "Absence of unverified data sources is hard to prove by regex."
+    }
+  },
+
+  "explainability": {
+    "auto": {
+      "V1": {
+        "desc": "Human-readable explanation field in responses",
+        "patterns": ["explanation\\s*[:=]", "reasoning\\s*[:=]", "generate_explanation", "human_readable"],
+        "require": "any"
+      },
+      "V2": {
+        "desc": "Model card exists (endpoint, file, or function)",
+        "patterns": ["model_card", "model-card", "modelCard", "/model-card"],
+        "require": "any"
+      },
+      "V3": {
+        "desc": "Audit-friendly structured logs",
+        "patterns": ["audit_logger|audit_log", "json\\.dumps.*decision", "structured.*log", "event_type"],
+        "require": "any"
+      },
+      "V5": {
+        "desc": "Appeal / review info in decision outputs",
+        "patterns": ["appeal", "override_available", "human_override", "review_endpoint"],
+        "require": "any"
+      }
+    },
+    "overclaim": {},
+    "judgment": {
+      "V4": "Plain-language vs technical jargon is a stylistic judgment regex can't make reliably."
+    }
+  },
+
+  "fallback-patterns": {
+    "auto": {
+      "V1": {
+        "desc": "Default safe response function for LLM failures",
+        "patterns": ["default_safe_response", "default_safe_assessment", "fallback_response", "safe_default", "_?fallback_assessment", "(?:def|function)\\s+\\w*fallback\\w*"],
+        "require": "any"
+      },
+      "V2": {
+        "desc": "Circuit breaker with state machine",
+        "patterns": ["CircuitBreaker", "circuit_breaker", "(\"|')closed(\"|').*(\"|')open(\"|')", "half[_-]?open"],
+        "require": "any"
+      },
+      "V3": {
+        "desc": "Kill switch toggle",
+        "patterns": ["ai_system_enabled|AI_SYSTEM_ENABLED|aiSystemEnabled", "kill_switch|killSwitch|KILL_SWITCH", "feature_flag|featureFlag"],
+        "require": "any"
+      },
+      "V4": {
+        "desc": "Exception handling around LLM call (try + except + LLM reference all present)",
+        "patterns": ["\\btry\\s*[:{]", "\\b(?:except|catch)\\b", "(?:anthropic|openai|messages\\.create|client\\.messages|_assess_with_|call_claude|call_llm|_call_llm|circuit_breaker\\.call|call_with_llm_circuit)"],
+        "require": "all"
+      }
+    },
+    "overclaim": {
+      "V3": {
+        "desc": "Kill switch is restart-latched (env read only at import, not per request)",
+        "recognizer": "kill_switch_restart_latched",
+        "also_auto": "V3"
+      }
+    },
+    "judgment": {
+      "V5": "Is there a defined recovery process after kill-switch activation? Requires runbook/docs inspection."
+    }
+  },
+
+  "human-oversight": {
+    "auto": {
+      "V1": {
+        "desc": "Explicit tool allowlist structure",
+        "patterns": ["ALLOWED_TOOLS|allowed_tools|allowedTools", "tool_allowlist|tool_policy"],
+        "require": "any"
+      },
+      "V3": {
+        "desc": "Action rate limiting on LLM-initiated actions",
+        "patterns": ["RateLimiter|rate_limiter|rateLimiter", "rate_limit_check|checkRateLimit"],
+        "require": "any"
+      },
+      "V4": {
+        "desc": "Override mechanism surfaced in responses",
+        "patterns": ["override(_available|Available|:)|human_override|humanOverride", "appeal"],
+        "require": "any"
+      },
+      "V5": {
+        "desc": "Audit trail for LLM-initiated actions",
+        "patterns": ["log_decision|audit_logger|audit_log", "controls_applied|controlsApplied"],
+        "require": "any"
+      },
+      "V6": {
+        "desc": "Low-confidence routed to human review",
+        "patterns": ["requires_human_review|humanReviewRequired", "DecisionGate", "(?:confidence|conf|score)\\s*<\\s*0\\."],
+        "require": "any"
+      }
+    },
+    "overclaim": {},
+    "judgment": {
+      "V2": "Whether mutating operations require human approval is architectural; regex can't tell which ops are mutating without project-specific context."
+    }
+  },
+
+  "input-validation": {
+    "auto": {
+      "V1": {
+        "desc": "Maximum input length check",
+        "patterns": ["max_length\\s*[:=]\\s*\\d+", "maxLength\\s*[:=]\\s*\\d+", "MAX_INPUT_LENGTH|MAX_LEN|MAX_TOKENS", "validate_input_length"],
+        "require": "any"
+      },
+      "V2": {
+        "desc": "System/user role separation in LLM call",
+        "patterns": ["[\"']role[\"']\\s*:\\s*[\"']system[\"']", "[\"']role[\"']\\s*:\\s*[\"']user[\"']", "system\\s*=\\s*[A-Z_]*PROMPT", "system\\s*:\\s*SYSTEM_PROMPT"],
+        "require": "any"
+      },
+      "V3": {
+        "desc": "Sanitization of control chars / zero-width Unicode",
+        "patterns": ["\\\\x00|\\\\u200[B-F]|\\\\u202[A-E]|\\\\uFEFF", "DANGEROUS_CHARS|SANITIZE|sanitize_input", "unicodedata\\.normalize"],
+        "require": "any"
+      },
+      "V4": {
+        "desc": "Output schema validation against Pydantic/Zod/equivalent",
+        "patterns": ["model_validate|model_validate_json|parse_obj_as", "BaseModel", "ValidationError", "z\\.object|z\\.string"],
+        "require": "any"
+      },
+      "V5": {
+        "desc": "Injection pattern detection layer exists",
+        "patterns": ["SUSPICIOUS_PATTERNS|INJECTION_PATTERN", "check_injection|detect_injection|scan_injection", "ignore previous instructions"],
+        "require": "any"
+      },
+      "V6": {
+        "desc": "No f-string / concat of user input into prompt (anti-pattern: presence = FAIL)",
+        "patterns": ["f[\"'][^\"']*\\{(claim|user|input|prompt)[^}]*\\}[^\"']*[\"'].*(?:messages|system|prompt)", "prompt\\s*\\+\\s*(user|input|claim)"],
+        "require": "any",
+        "inverse": true
+      },
+      "V7": {
+        "desc": "Oversize input raises error (not silent truncation)",
+        "patterns": ["raise\\s+(ValueError|HTTPException|ValidationError).*(?:length|too large|exceed)", "HTTPException\\s*\\(\\s*status_code\\s*=\\s*(400|422|413)"],
+        "require": "any"
+      }
+    },
+    "overclaim": {
+      "V5": {
+        "desc": "Injection detector is log-only (callsite does not block/branch on result)",
+        "recognizer": "injection_log_only",
+        "also_auto": "V5"
+      }
+    },
+    "judgment": {
+      "V8": "File/document extraction path parity is N/A when no file ingestion exists. Needs agent to confirm."
+    }
+  },
+
+  "monitoring": {
+    "auto": {
+      "V1": {
+        "desc": "Key metrics tracked (latency/error/cost)",
+        "patterns": ["latency_ms|latencyMs", "error_rate|errorRate", "token_count|tokenCount|usage\\.", "MONITORING_METRICS|metrics_logger"],
+        "require": "any"
+      },
+      "V2": {
+        "desc": "Drift detection comparing recent to baseline",
+        "patterns": ["drift_detected|driftDetected|DriftDetector", "baseline.*compare|compare.*baseline"],
+        "require": "any"
+      },
+      "V3": {
+        "desc": "User feedback mechanism (agree/disagree/escalate)",
+        "patterns": ["/feedback|post_feedback|submit_feedback|record_feedback", "feedback_type|feedbackType", "agree.*disagree|thumbs_up.*thumbs_down"],
+        "require": "any"
+      },
+      "V4": {
+        "desc": "Structured incident logging",
+        "patterns": ["log_incident|logIncident", "incident_type|incidentType", "incident_id|incidentId"],
+        "require": "any"
+      }
+    },
+    "overclaim": {},
+    "judgment": {
+      "V5": "Whether monitoring was active from day one is a process question, not a code question."
+    }
+  },
+
+  "output-sanitization": {
+    "auto": {
+      "V4": {
+        "desc": "Content type / schema validation of LLM output",
+        "patterns": ["model_validate|parse_assessment|AssessmentOutput", "schema\\.validate|schemaValidate", "Enum\\s*\\)|enum\\s*\\)"],
+        "require": "any"
+      },
+      "V5": {
+        "desc": "No eval/exec on raw LLM output (anti-pattern: presence = FAIL)",
+        "patterns": ["\\beval\\s*\\(", "\\bexec\\s*\\(", "Function\\s*\\(.*new Function"],
+        "require": "any",
+        "inverse": true
+      }
+    },
+    "overclaim": {},
+    "judgment": {
+      "V1": "HTML escaping only applies when the system renders HTML. API-only services should mark N/A.",
+      "V2": "Parameterized DB queries only apply when the system has a DB layer. Absence of DB = N/A.",
+      "V3": "Sandbox for code execution only applies when LLM output is executed. Absence = N/A.",
+      "V6": "Markdown-to-HTML sanitization only applies if the system renders markdown."
+    }
+  },
+
+  "pii-handling": {
+    "auto": {
+      "V1": {
+        "desc": "PII redaction called before LLM request",
+        "patterns": ["redact_pii|redactPII|redactPii", "PII_PATTERNS|piiPatterns"],
+        "require": "any"
+      },
+      "V3": {
+        "desc": "LLM output scanned for PII",
+        "patterns": ["filter_output_pii|filterOutputPii", "redact_pii.*output|redact.*response"],
+        "require": "any"
+      },
+      "V5": {
+        "desc": "Logs written with redacted content",
+        "patterns": ["redact_pii.*log|logger.*redact", "input_hash|hashlib.*input", "redacted_out|output_redacted"],
+        "require": "any"
+      }
+    },
+    "overclaim": {
+      "V1": {
+        "desc": "PII pattern coverage is incomplete (fewer than the 5 required classes: ssn, email, phone, credit_card, address)",
+        "recognizer": "pii_incomplete_classes",
+        "also_auto": "V1"
+      }
+    },
+    "judgment": {
+      "V2": "Data minimization (only necessary fields sent to LLM) requires agent review of request schema.",
+      "V4": "Separated PII storage is architectural.",
+      "V6": "Whether full records are sent to LLM requires request-shape inspection."
+    }
+  },
+
+  "prompt-security": {
+    "auto": {
+      "V3": {
+        "desc": "Leakage detection on LLM output",
+        "patterns": ["detect_prompt_leakage|detectPromptLeakage", "prompt_leakage|promptLeakage", "leakage_detection|PROMPT_LEAK"],
+        "require": "any"
+      }
+    },
+    "overclaim": {},
+    "judgment": {
+      "V1": "Whether a system prompt contains secrets requires inspecting the prompt string's contents. Regex over the whole file produces false positives; agent should inspect the defined SYSTEM_PROMPT string for keys/credentials directly.",
+      "V2": "'Minimal' system prompt is subjective.",
+      "V4": "Whether business rules live in code vs prompt requires architectural review.",
+      "V5": "Presence of 'do not reveal' as SOLE protection is a qualitative judgment."
+    }
+  },
+
+  "rag-security": {
+    "auto": {},
+    "overclaim": {},
+    "judgment": {
+      "V1": "Vector DB access controls are architectural.",
+      "V2": "Tenant isolation is architectural.",
+      "V3": "Retrieval validation requires pipeline review.",
+      "V4": "Cross-tenant leakage is architectural."
+    }
+  },
+
+  "rate-limiting": {
+    "auto": {
+      "V1": {
+        "desc": "Per-user rate limiter",
+        "patterns": ["RateLimiter|rate_limiter|rateLimiter", "@limiter|@rate_limit", "rate_limit_check"],
+        "require": "any"
+      },
+      "V2": {
+        "desc": "Token budget (daily / per-request limits)",
+        "patterns": ["token_budget|tokenBudget", "daily_token|max_tokens_per_day", "TOKEN_BUDGET"],
+        "require": "any"
+      },
+      "V4": {
+        "desc": "Timeout configured on LLM calls",
+        "patterns": ["timeout\\s*=\\s*\\d", "timeout\\s*:\\s*\\d", "Anthropic\\s*\\([^)]*timeout", "OpenAI\\s*\\([^)]*timeout"],
+        "require": "any"
+      },
+      "V5": {
+        "desc": "Rate limit keyed on API key or user id (not IP only)",
+        "patterns": ["x[-_]api[-_]key|x[-_]user[-_]id", "(?:x_)?user_id\\s*[:=].*header", "RateLimiter.*user_id|rate_limit.*user_id", "api_limiter\\.check\\s*\\(\\s*user"],
+        "require": "any"
+      }
+    },
+    "overclaim": {
+      "V1": {
+        "desc": "Rate limiter exists but 429 responses do not include Retry-After header",
+        "recognizer": "rate_limit_no_retry_after",
+        "also_auto": "V1"
+      }
+    },
+    "judgment": {
+      "V3": "Cost monitoring / alerting is typically external infrastructure; regex can't detect 'alerts are configured'."
+    }
+  },
+
+  "supply-chain": {
+    "auto": {
+      "V1": {
+        "desc": "Model version pinned to date-stamped identifier (not 'latest')",
+        "patterns": ["claude-[a-z0-9-]+-\\d{8}", "gpt-[0-9a-z.-]+-\\d{4}", "[a-z_]+_model\\s*[:=]\\s*[\"'][a-z0-9-]+-\\d{4,8}", "MODEL_VERSION\\s*=.*\\d{4}"],
+        "require": "any"
+      },
+      "V2": {
+        "desc": "Model version tracked in responses/logs",
+        "patterns": ["model_version|modelVersion", "response.*model|response.*MODEL"],
+        "require": "any"
+      },
+      "V3": {
+        "desc": "Regression test suite (test files exist in project tree)",
+        "type": "exists_path",
+        "path_globs": ["**/tests/**", "**/test_*.py", "**/*_test.py", "**/*.test.*", "**/*.spec.*"]
+      },
+      "V4": {
+        "desc": "Fallback provider / safe fallback behavior defined",
+        "patterns": ["default_safe|fallback_response|fallback_provider", "_?fallback_assessment", "(?:def|function)\\s+\\w*fallback\\w*", "fallback\\s*=\\s*True"],
+        "require": "any"
+      },
+      "V5": {
+        "desc": "Client library versions pinned in requirements/package file",
+        "patterns": ["==\\d+\\.\\d+\\.\\d+", "[\"']\\^?\\d+\\.\\d+\\.\\d+[\"']"],
+        "require": "any",
+        "file_glob": "**/requirements*.txt,**/package.json,**/pyproject.toml,**/Pipfile.lock,**/poetry.lock"
+      }
+    },
+    "overclaim": {},
+    "judgment": {}
+  }
+}

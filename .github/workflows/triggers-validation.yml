@@ -1,0 +1,26 @@
+name: triggers.json validation
+
+on:
+  pull_request:
+    paths:
+      - 'content/resolvers/triggers.json'
+      - 'scripts/validate-triggers.js'
+      - 'scripts/triggers.schema.json'
+      - 'lib/classify.js'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Schema (shape, required keys, allowed values)
+        run: node scripts/validate-triggers.js --schema
+      - name: Trait validity (every trait appears in lib/classify.js ALL_TRAITS)
+        run: node scripts/validate-triggers.js --traits
+      - name: Confirmation prompts (every low-confidence entry has one, ends with "(yes / no / unsure)")
+        run: node scripts/validate-triggers.js --prompts
+      - name: Alphabetical ordering within tiers (case-insensitive)
+        run: node scripts/validate-triggers.js --ordering

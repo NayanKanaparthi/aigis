@@ -9,6 +9,7 @@ from rich.console import Console
 from . import __version__
 from .classify import classify as run_classify
 from .fetch import get as fetch_get, get_audit_scan, get_infra, get_template, get_workflow, list_infras, list_workflows, verify as fetch_verify
+from .build import build_brief, build_list, BriefTooLargeError, normalize_description, assign_unique_slugs
 from .keywords import detect_traits_from_text
 from .search import list_all, search as run_search
 from .annotate import annotate as add_annotation, clear_annotation, list_annotations
@@ -273,6 +274,132 @@ def workflow(type_: str | None, list_workflows_flag: bool) -> None:
         if items:
             console.print(f"[dim]\nAvailable workflows: {', '.join(items)}[/dim]")
         sys.exit(1)
+
+
+# ── build ───────────────────────────────────────────────────────────
+def _prompt_build_low_confidence(low_conf: list[dict]) -> dict[str, str]:
+    """Interactive prompt for low-conf triggers in `aigis build`. Default = unsure."""
+    decisions: dict[str, str] = {}
+    console.print("\n[bold]═══ AIGIS BUILD — low-confidence triggers ═══[/bold]")
+    console.print('[dim]Default for each is "unsure" → trait is included in the brief with a ⚠ flag for the agent to surface to you.\n[/dim]')
+    for m in low_conf:
+        console.print(f"  [bold][{m['slug']}] \"{m['phrase']}\"[/bold]")
+        console.print(f"      [dim]Suggested traits: {', '.join(m['traits'])}[/dim]")
+        console.print(f"      {m['confirmation_prompt']}")
+        ans = input("      (y)es / (n)o / (u)nsure [u]: ").strip().lower()
+        if ans in ("", "u", "unsure"):
+            decision = "unsure"
+        elif ans in ("y", "yes"):
+            decision = "yes"
+        elif ans in ("n", "no"):
+            decision = "no"
+        else:
+            console.print("      [dim](unrecognized — defaulting to 'unsure')[/dim]")
+            decision = "unsure"
+        decisions[m["slug"]] = decision
+        console.print("")
+    return decisions
+
+
+@cli.command()
+@click.argument("description", required=True)
+@click.option("--full", "force_full", is_flag=True, help="Force full inlined brief (hard cap at 200k chars)")
+@click.option("--compact", "force_compact", is_flag=True, help="Force compact pointer-only brief (no auto-fallback)")
+@click.option("--list", "list_only", is_flag=True, help="Shape A: print area names + traits + pre-built flags only")
+@click.option("--confirm", "confirm_str", default=None, help="Comma-separated low-confidence trigger ids/slugs to confirm")
+@click.option("--reject", "reject_str", default=None, help="Comma-separated low-confidence trigger ids/slugs to reject")
+@click.option("--json", "as_json", is_flag=True, help="Output JSON (brief + meta) instead of plain markdown")
+def build(description: str, force_full: bool, force_compact: bool, list_only: bool,
+          confirm_str: str | None, reject_str: str | None, as_json: bool) -> None:
+    """Compose a consolidated governance brief for a feature description."""
+    if force_full and force_compact:
+        console.print("[red]Pass --full or --compact, not both.[/red]")
+        sys.exit(1)
+    if list_only and (force_full or force_compact):
+        console.print("[red]--list is independent of --full/--compact; pass only one.[/red]")
+        sys.exit(1)
+
+    if list_only:
+        try:
+            click.echo(build_list(description), nl=False)
+        except ValueError as e:
+            console.print(f"[red]{e}[/red]")
+            sys.exit(1)
+        return
+
+    confirm_ids = set(s.strip() for s in confirm_str.split(",") if s.strip()) if confirm_str else None
+    reject_ids = set(s.strip() for s in reject_str.split(",") if s.strip()) if reject_str else None
+    if confirm_ids and reject_ids:
+        overlap = confirm_ids & reject_ids
+        if overlap:
+            console.print(f"[red]Trigger {', '.join(overlap)} appears in both --confirm and --reject. Pick one.[/red]")
+            sys.exit(1)
+
+    # Need slugs to know what to prompt for / what flags refer to.
+    from .keywords import detect_traits_from_text
+    normalized = normalize_description(description)
+    if not normalized:
+        console.print('[red]Provide a description in quotes. Example: aigis build "customer chatbot with RAG"[/red]')
+        sys.exit(1)
+    det = detect_traits_from_text(normalized)
+    low_conf = assign_unique_slugs(det["low_confidence_matches"])
+
+    decisions: dict[str, str] = {}
+    is_tty = sys.stdout.isatty() and sys.stdin.isatty()
+    used_flags = bool(confirm_ids or reject_ids)
+
+    if low_conf:
+        if used_flags:
+            for m in low_conf:
+                if confirm_ids and (m["slug"] in confirm_ids or m["id"] in confirm_ids):
+                    decisions[m["slug"]] = "yes"
+                elif reject_ids and (m["slug"] in reject_ids or m["id"] in reject_ids):
+                    decisions[m["slug"]] = "no"
+                else:
+                    decisions[m["slug"]] = "unsure"
+        elif is_tty:
+            decisions = _prompt_build_low_confidence(low_conf)
+        else:
+            for m in low_conf:
+                decisions[m["slug"]] = "unsure"
+
+    mode = "auto"
+    if force_full:
+        mode = "full"
+    elif force_compact:
+        mode = "compact"
+
+    try:
+        result = build_brief(description, decisions, mode=mode)
+    except BriefTooLargeError as e:
+        console.print(f"[red]{e}[/red]")
+        sys.exit(2)
+    except ValueError as e:
+        console.print(f"[red]{e}[/red]")
+        sys.exit(1)
+
+    if result.get("auto_fallback"):
+        full_cap = result["auto_fallback_full_cap"]
+        full_chars = result["auto_fallback_full_chars"]
+        normalized = result["meta"]["normalized_description"]
+        console.print(
+            f"[yellow]Brief exceeded {full_cap:,} chars with full content inlined "
+            f"({full_chars:,} chars). Falling back to compact mode (pointers only). "
+            f'Run `aigis build "{normalized}" --full` to force full content — '
+            f"you may need to split the build into per-domain runs if the brief is still too large.[/yellow]",
+            highlight=False,
+        )
+
+    if as_json:
+        click.echo(json.dumps({
+            "brief": result["brief"],
+            "meta": result["meta"],
+            "mode": result["mode"],
+            "auto_fallback": result.get("auto_fallback", False),
+        }, indent=2))
+        return
+
+    click.echo(result["brief"], nl=False)
 
 
 # ── infra ───────────────────────────────────────────────────────────

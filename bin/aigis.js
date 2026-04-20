@@ -4,6 +4,7 @@ const { Command } = require('commander');
 const chalk = require('chalk');
 const { classify } = require('../lib/classify');
 const { get, getTemplate, getAuditScan, getWorkflow, listWorkflows, getInfra, listInfras } = require('../lib/fetch');
+const { buildBrief, buildList, BriefTooLargeError } = require('../lib/build');
 const { verify } = require('../lib/fetch');
 const { search, listAll } = require('../lib/search');
 const { annotate, listAnnotations, clearAnnotation } = require('../lib/annotate');
@@ -16,7 +17,7 @@ const program = new Command();
 program
   .name('aigis')
   .description('AI governance guardrails for coding agents')
-  .version('2.0.0-alpha.3');
+  .version('2.0.0-alpha.4');
 
 // ============================================================
 // aigis classify
@@ -295,6 +296,121 @@ program
   });
 
 // ============================================================
+// aigis build
+// ============================================================
+program
+  .command('build')
+  .description('Compose a consolidated governance brief for a feature description')
+  .argument('<description>', 'Plain-English description of what you are building (in quotes)')
+  .option('--full', 'Force full inlined brief (hard cap at 200k chars)')
+  .option('--compact', 'Force compact pointer-only brief (no auto-fallback, no size concern)')
+  .option('--list', 'Shape A: print area names + traits + pre-built --confirm/--reject flags only')
+  .option('--confirm <ids>', 'Comma-separated low-confidence trigger ids/slugs to confirm (no interactive prompt)')
+  .option('--reject <ids>', 'Comma-separated low-confidence trigger ids/slugs to reject (no interactive prompt)')
+  .option('--json', 'Output JSON (brief + meta) instead of plain markdown to stdout')
+  .action(async (description, opts) => {
+    if (opts.full && opts.compact) {
+      console.error(chalk.red('Pass --full or --compact, not both.'));
+      process.exit(1);
+    }
+    if (opts.list && (opts.full || opts.compact)) {
+      console.error(chalk.red('--list is independent of --full/--compact; pass only one.'));
+      process.exit(1);
+    }
+
+    // --list short-circuit (Shape A)
+    if (opts.list) {
+      try {
+        process.stdout.write(buildList({ description }));
+      } catch (err) {
+        console.error(chalk.red(err.message));
+        process.exit(1);
+      }
+      return;
+    }
+
+    // Decision pipeline matches `aigis classify`: --confirm/--reject flags > interactive (TTY) > non-TTY default-uncertain.
+    const confirmIds = opts.confirm ? new Set(opts.confirm.split(',').map((s) => s.trim()).filter(Boolean)) : null;
+    const rejectIds = opts.reject ? new Set(opts.reject.split(',').map((s) => s.trim()).filter(Boolean)) : null;
+
+    if (confirmIds && rejectIds) {
+      const overlap = [...confirmIds].filter((x) => rejectIds.has(x));
+      if (overlap.length > 0) {
+        console.error(chalk.red(`Trigger ${overlap.join(', ')} appears in both --confirm and --reject. Pick one.`));
+        process.exit(1);
+      }
+    }
+
+    // First pass: detect low-conf triggers so we know what to prompt for.
+    let firstPass;
+    try {
+      firstPass = buildList({ description });    // cheap; runs the same pipeline
+    } catch (err) {
+      console.error(chalk.red(err.message));
+      process.exit(1);
+    }
+
+    // Re-run prep to grab the slugs (buildList prints them but we need structured access).
+    const { normalizeDescription } = require('../lib/build');
+    const { detectTraitsFromText } = require('../lib/keywords');
+    const { assignUniqueSlugs } = require('../lib/build');
+    const normalized = normalizeDescription(description);
+    const det = detectTraitsFromText(normalized);
+    const lowConf = assignUniqueSlugs(det.low_confidence_matches);
+
+    let decisions = {};
+    const isTTY = !!process.stdout.isTTY && !!process.stdin.isTTY;
+    const usedFlags = !!(confirmIds || rejectIds);
+
+    if (lowConf.length > 0) {
+      if (usedFlags) {
+        for (const m of lowConf) {
+          if (confirmIds && (confirmIds.has(m.slug) || confirmIds.has(m.id))) decisions[m.slug] = 'yes';
+          else if (rejectIds && (rejectIds.has(m.slug) || rejectIds.has(m.id))) decisions[m.slug] = 'no';
+          else decisions[m.slug] = 'unsure';   // default-include with uncertainty flag
+        }
+      } else if (isTTY) {
+        decisions = await promptBuildLowConfidence(lowConf);
+      } else {
+        for (const m of lowConf) decisions[m.slug] = 'unsure';
+      }
+    }
+
+    // Pick mode
+    let mode = 'auto';
+    if (opts.full) mode = 'full';
+    else if (opts.compact) mode = 'compact';
+
+    let result;
+    try {
+      result = buildBrief({ description, decisions, mode });
+    } catch (err) {
+      if (err instanceof BriefTooLargeError) {
+        console.error(chalk.red(err.message));
+        process.exit(2);
+      }
+      console.error(chalk.red(err.message));
+      process.exit(1);
+    }
+
+    if (result.auto_fallback) {
+      console.error(chalk.yellow(
+        `Brief exceeded ${result.auto_fallback_full_cap.toLocaleString()} chars with full content inlined ` +
+        `(${result.auto_fallback_full_chars.toLocaleString()} chars). Falling back to compact mode (pointers only). ` +
+        `Run \`aigis build "${result.meta.normalized_description}" --full\` to force full content — you may need to ` +
+        `split the build into per-domain runs if the brief is still too large.`
+      ));
+    }
+
+    if (opts.json) {
+      console.log(JSON.stringify({ brief: result.brief, meta: result.meta, mode: result.mode, auto_fallback: result.auto_fallback }, null, 2));
+      return;
+    }
+
+    process.stdout.write(result.brief);
+  });
+
+// ============================================================
 // aigis infra
 // ============================================================
 program
@@ -545,6 +661,33 @@ program
       console.log(`  ${traits.map(t => chalk.cyan(t)).join(', ')}\n`);
     }
   });
+
+// ── helper: interactive prompt for low-confidence triggers in `aigis build` ──
+// Mirrors promptLowConfidence's vocabulary (y/n/u) but defaults to 'u' (unsure → include with ⚠ flag in brief), per Step 8 design.
+async function promptBuildLowConfidence(lowConf) {
+  const decisions = {};
+  console.log(chalk.bold('\n═══ AIGIS BUILD — low-confidence triggers ═══'));
+  console.log(chalk.dim(`Default for each is "unsure" → trait is included in the brief with a ⚠ flag for the agent to surface to you.\n`));
+
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const ask = (q) => new Promise((res) => rl.question(q, res));
+
+  for (const m of lowConf) {
+    console.log(chalk.bold(`  [${m.slug}] "${m.phrase}"`));
+    console.log(chalk.dim(`      Suggested traits: ${m.traits.join(', ')}`));
+    console.log(`      ${m.confirmation_prompt}`);
+    const ans = (await ask('      (y)es / (n)o / (u)nsure [u]: ')).trim().toLowerCase();
+    let decision;
+    if (ans === '' || ans === 'u' || ans === 'unsure') decision = 'unsure';
+    else if (ans === 'y' || ans === 'yes') decision = 'yes';
+    else if (ans === 'n' || ans === 'no') decision = 'no';
+    else { console.log(chalk.dim(`      (unrecognized — defaulting to 'unsure')`)); decision = 'unsure'; }
+    decisions[m.slug] = decision;
+    console.log('');
+  }
+  rl.close();
+  return decisions;
+}
 
 // ── helper: interactive prompt for low-confidence resolver suggestions ──
 async function promptLowConfidence(detection) {

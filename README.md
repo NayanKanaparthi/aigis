@@ -1,236 +1,112 @@
 # Aigis
 
-AI governance guardrails for coding agents. Curated, agent-consumable security and compliance patterns from NIST AI RMF, OWASP Top 10 for LLMs, and ISO/IEC 42001.
+**AI governance that ships with your code.**
 
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![npm](https://img.shields.io/npm/v/@aigis-ai/cli)](https://www.npmjs.com/package/@aigis-ai/cli)
-[![PyPI](https://img.shields.io/pypi/v/aigis-cli)](https://pypi.org/project/aigis-cli/)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
-[![Python](https://img.shields.io/badge/python-%3E%3D3.9-blue)](https://www.python.org/)
+Aigis is a command-line tool that gives coding agents like Cursor, Claude Code, GitHub Copilot, and Windsurf curated AI governance patterns mapped to NIST AI RMF, OWASP Top 10 for LLMs, and ISO/IEC 42001.
 
-## The problem
+You describe what you're building. Aigis classifies it against the frameworks that apply. Your agent pulls the right governance patterns and implements them. One command verifies the result.
 
-Coding agents hallucinate security patterns and build AI systems without governance controls. When your agent writes an LLM-powered endpoint, it doesn't know about prompt injection, PII redaction, bias monitoring, or the compliance documentation your organization needs.
+## Install
 
-## What Aigis does
-
-Aigis gives your coding agent curated governance patterns it can fetch via a simple CLI. The agent reads the patterns, applies them when writing code, and verifies its own output against checklists — all mapped to real framework control IDs.
-
+```bash
+npm install -g @aigis-ai/cli
+# or
+pip install aigis-cli
 ```
-Without Aigis                          With Aigis
-───────────────────                    ─────────────────
-Agent writes LLM code                  Agent classifies the system
-No input validation                    Fetches governance patterns
-No PII redaction                       Writes code with controls built in
-No audit logging                       Self-verifies against checklists
-Compliance team finds gaps later       Compliance documentation generated alongside code
-Rework cycle                           Ships compliant on first pass
+
+Verify:
+
+```bash
+aigis --version
+# 2.0.1
 ```
 
 ## Quick start
 
-Install the CLI with **npm** (JavaScript / Node.js) or **pip** (Python). Both packages expose the same `aigis` command and behavior.
-
-**JavaScript developers — npm**
-
 ```bash
-npm install -g @aigis-ai/cli
+aigis build "customer support chatbot with order history lookup"
 ```
 
-**Python developers — pip**
+Aigis will classify the description against NIST, OWASP, and ISO frameworks, identify relevant governance areas (PII handling, rate limiting, audit logging, prompt security), and produce a consolidated brief your agent can implement from.
+
+Paste the brief into your coding agent's chat. The agent implements the patterns. Then:
 
 ```bash
-pip install aigis-cli
+aigis verify <area> --auto .
 ```
 
-**After installing (either toolchain)**
+Runs deterministic checks on the implementation.
 
-```bash
-# Set up for your IDE
-aigis init cursor        # or: claude-code, windsurf, copilot
+## What's new in v2.0
 
-# Classify your system
-aigis classify --traits uses-llm,accepts-user-input,processes-pii,is-external
+- **`aigis build`** — new command that produces one consolidated governance brief per project
+- **Infrastructure content** — runnable patterns for rate limiting, secrets management, and structured logging
+- **Curated resolver** — 39 high-signal triggers mapped to traits, with interactive confirmation for low-confidence matches
+- **Content architecture redesign** — areas, workflows, and infrastructure separated into layered skills, built around how modern AI agents actually read context
 
-# Fetch patterns
-aigis get input-validation pii-handling audit-logging
+## How Aigis is different
 
-# After writing code, verify
-aigis verify input-validation pii-handling audit-logging
+**Structured.** Aigis is a compiler for agent instructions, not a prompt. The resolver uses deterministic rules. The procedures have explicit verification checkpoints. The brief generation is fully deterministic — same description produces byte-identical output.
 
-# Generate compliance documentation (if HIGH/MEDIUM risk)
-aigis template ai-impact-assessment intended-purpose-doc
-```
+**Honest.** v2.0 was benchmarked at every iteration. One of those iterations regressed. We shipped anyway and documented what happened:
 
-## How it works
+- Baseline (no Aigis): P=0.737, R=0.905, F1=0.790
+- v2.0 (aigis build): P=0.847, R=0.851, F1=0.837
 
-Aigis has three layers:
+F1 beats baseline by +0.047. Recall is 5.4 points below baseline because the resolver over-triggers in some edge cases. That trade-off is documented, not hidden. See `benchmarks/` for methodology.
 
-**1. Classify** — Describe what you're building using 22 system traits. Aigis determines the risk tier (HIGH/MEDIUM/LOW) and tells you which governance files to fetch.
+**Open source.** Local. Never calls external LLMs. Never writes files to your project. Your code, your tools, your accountability.
 
-**2. Implement** — Fetch the relevant pattern files. Each file contains concrete code patterns (Python + JavaScript) for one security/governance concern, tagged with NIST, OWASP, and ISO control IDs.
+## The principle behind Aigis
 
-**3. Verify** — After writing code, fetch the matching checklists. The agent evaluates its own code against each check and reports PASS/FAIL with evidence.
+Governance isn't a content problem. It's an interface problem.
+
+AI governance frameworks exist. NIST AI RMF, OWASP Top 10 for LLMs, ISO/IEC 42001 — all rigorous, all published, all sitting in documents that engineering teams never read.
+
+Aigis treats governance as an agent-computer interface problem. Context layered for on-demand loading. Deterministic rules where accuracy isn't negotiable. Flexible reasoning where real projects don't fit rigid templates.
+
+Inspired by [SWE-agent's work on agent-computer interfaces](https://arxiv.org/abs/2405.15793) — the idea that how information reaches an LM agent matters as much as what reaches it.
 
 ## Commands
 
-| Command | Purpose |
-|---------|---------|
-| `aigis classify --traits <list>` | Classify system, get risk tier and recommended files |
-| `aigis classify "<description>"` | Same, using natural language (keyword matching) |
-| `aigis get <id> [id...]` | Fetch implementation pattern files |
-| `aigis get <id> --lang py\|js` | Fetch filtered to one language |
-| `aigis verify <id> [id...]` | Fetch verification checklists |
-| `aigis template <id> [id...]` | Fetch compliance documentation templates |
-| `aigis audit --scan` | Get structured prompt for auditing existing codebases |
-| `aigis audit --traits <list>` | Run full audit (classify + all checklists bundled) |
-| `aigis search <query>` | Search content by keyword or control ID |
-| `aigis search --list` | List all available files |
-| `aigis annotate <id> "<note>"` | Attach a local note for future sessions |
-| `aigis init <ide>` | Set up for cursor, claude-code, windsurf, or copilot |
-| `aigis traits` | List all 22 classification traits |
-
-## Classification traits (22)
-
-**AI architecture:** uses-llm, uses-rag, uses-finetuned, uses-thirdparty-api, is-agentic, is-multimodal
-
-**Data sensitivity:** processes-pii, handles-financial, handles-health, handles-proprietary, handles-minors
-
-**Impact scope:** influences-decisions, accepts-user-input, is-external, is-internal, is-high-volume
-
-**Output type:** generates-code, generates-content, multi-model-pipeline
-
-**Jurisdiction:** jurisdiction-eu, jurisdiction-us-regulated, jurisdiction-global
-
-## Governance content (15 pattern files)
-
-Each file covers one security/governance concern with Python + JavaScript code patterns, anti-patterns, edge cases, and cross-references to related files.
-
-| File | OWASP | What it covers |
-|------|-------|----------------|
-| input-validation | LLM01 | Sanitization, length limits, prompt separation, schema enforcement, injection detection |
-| output-sanitization | LLM05 | HTML encoding, parameterized queries, code sandboxing, content type validation |
-| pii-handling | LLM02 | PII detection/redaction, data minimization, output filtering, separated storage |
-| prompt-security | LLM07 | No secrets in prompts, minimal prompts, leakage detection, server-side enforcement |
-| human-oversight | LLM06 | Tool allowlists, approval gates, action rate limiting, override mechanisms |
-| supply-chain | LLM03 | Model version pinning, regression testing, fallback providers, version tracking |
-| data-integrity | LLM04 | Data provenance, RAG validation, checksums, distribution monitoring, batch rollback |
-| rag-security | LLM08 | Vector DB access control, tenant isolation, context validation, permission inheritance |
-| confidence-scoring | LLM09 | Confidence metadata, grounding verification, recommendation framing |
-| rate-limiting | LLM10 | Per-user limits, token budgets, cost monitoring, request timeouts |
-| audit-logging | — | Structured entries, trace ID propagation, decision records |
-| bias-monitoring | — | Fairness metadata, distribution monitoring, periodic reports |
-| fallback-patterns | — | Default safe responses, circuit breakers, kill switches |
-| monitoring | — | Key metrics, drift detection, user feedback, incident logging |
-| explainability | — | Decision explanations, model cards, audit-friendly records |
-
-## Compliance templates (4)
-
-| Template | Framework | When required |
-|----------|-----------|---------------|
-| ai-impact-assessment | ISO 42001 Clause 8.4 | HIGH risk, EU jurisdiction, decisions about individuals |
-| intended-purpose-doc | NIST MAP 1.1 | HIGH and MEDIUM risk |
-| risk-characterization | NIST MAP 5.1 | HIGH risk |
-| third-party-assessment | GOVERN 6 / LLM03 | Third-party API at MEDIUM or HIGH risk |
-
-## Auditing existing projects
-
-Aigis can audit codebases that already exist, not just new code:
-
 ```bash
-# Get the structured scan prompt
-aigis audit --scan
+aigis build "<description>"        # Generate governance brief (the main command)
+aigis build "..." --list           # List areas without full brief
+aigis build "..." --compact        # Pointer-only brief
 
-# The agent scans the codebase following the prompt, detects traits, then:
-aigis audit --traits uses-llm,processes-pii,is-external
+aigis classify "<text>"            # Classify traits from description
+aigis get <area>                   # Fetch governance procedure for an area
+aigis infra <area>                 # Fetch infrastructure pattern (rate-limiting, secrets, logging)
+aigis workflow <type>              # Fetch workflow template
 
-# Output: classification + all relevant checklists
-# Agent evaluates existing code against each check → gap report
+aigis verify <area> --auto .       # Run deterministic checks on your implementation
+aigis audit .                      # Summary audit of all implemented areas
+aigis search --list                # List all available areas
 ```
 
-## Self-improving agents
+Run `aigis --help` for full options.
 
-Aigis supports a learning loop where agents get smarter over time:
+## Supported agents
 
-```bash
-# Agent discovers a workaround during coding
-aigis annotate input-validation "Needs raw body for webhook verification"
+Aigis ships a `.cursorrules` equivalent for:
 
-# Next session, the annotation appears automatically
-aigis get input-validation
-# ... content includes annotation at the bottom
-```
+- Cursor
+- Claude Code
+- GitHub Copilot
+- Windsurf
 
-## Agent-agnostic design
-
-Aigis works with any coding agent that can execute shell commands:
-
-- **Cursor** — `aigis init cursor` writes `.cursorrules`
-- **Claude Code** — `aigis init claude-code` creates `~/.claude/skills/aigis/SKILL.md`
-- **Windsurf** — `aigis init windsurf` writes `.windsurfrules`
-- **GitHub Copilot** — `aigis init copilot` writes `.github/copilot-instructions.md`
-- **Any agent** — if it can run a terminal command and read stdout, it works
-
-## Framework coverage
-
-Aigis maps every code pattern to specific control IDs across three frameworks:
-
-- **OWASP Top 10 for LLM Applications (2025)** — all 10 risks covered
-- **NIST AI Risk Management Framework (AI RMF 1.0)** — 25 subcategories mapped
-- **ISO/IEC 42001:2023** — 15 control references mapped
-
-Control IDs are in each file's YAML frontmatter, enabling compliance teams to trace code decisions back to framework requirements.
-
-## Architecture
-
-The governance content lives under `content/` and is shared by both CLIs.
-
-**npm package** [`@aigis-ai/cli`](https://www.npmjs.com/package/@aigis-ai/cli) (Node.js)
-
-```
-@aigis-ai/cli
-├── bin/aigis.js        # CLI entry point (commander.js)
-├── lib/
-│   ├── classify.js     # Classification engine + guardrails
-│   ├── fetch.js        # Content reader + annotation injection
-│   ├── keywords.js     # Natural language → trait mapping
-│   ├── search.js       # Content search
-│   ├── annotate.js     # Local annotation store
-│   └── init.js         # IDE setup
-├── content/
-│   ├── implement/      # 15 governance pattern files
-│   ├── verify/         # 15 verification checklists
-│   ├── templates/      # 4 compliance doc templates
-│   └── index/          # Taxonomy, frameworks index, guardrails, audit scan
-├── SKILL.md            # Portable agent skill file
-└── package.json
-```
-
-**PyPI package** [`aigis-cli`](https://pypi.org/project/aigis-cli/) (Python)
-
-```
-cli-python/
-├── pyproject.toml
-└── aigis_cli/          # click + rich + python-frontmatter; mirrors the JS CLI
-    ├── cli.py
-    ├── classify.py, fetch.py, keywords.py, search.py, annotate.py, init_ide.py
-    ├── content/        # same markdown + JSON as above (bundled as package data)
-    └── SKILL.md
-```
-
-No network calls. No telemetry. No LLM API calls. No databases. Everything runs locally, reads local files, prints to stdout.
+Use `aigis init <ide>` to set up your IDE rules. The resolver's trigger reference is embedded in the rules file with a checksum — editing the resolver triggers automatically refreshes the rules on your next `aigis init --refresh`.
 
 ## Contributing
 
-Content is plain markdown with YAML frontmatter, submitted as pull requests. See the existing files in `content/implement/` for the format.
+Aigis is built around a curated trigger map for classification. New trigger contributions are welcome, but they require one-sentence use-case justification per the template in `.github/PULL_REQUEST_TEMPLATE/trigger_mapping.md`.
 
-To add a new governance pattern:
-1. Create `content/implement/your-pattern.md` following the existing format
-2. Create `content/verify/checklist-your-pattern.md` with verification checks
-3. Add the pattern to the trait-to-file mapping in `content/index/taxonomy.md`
-4. Add control IDs to the YAML frontmatter
-5. Submit a PR
+See `CONTRIBUTING.md` for the full contributor workflow, including how to add new governance areas, workflows, or infrastructure patterns.
 
 ## License
 
-[MIT](LICENSE)
+MIT
+
+## Acknowledgments
+
+Built by [Nayan Kanaparthi](https://github.com/NayanKanaparthi) at NYU Stern's Berkley Center for Entrepreneurship. Inspired by conversations with Shailesh Prakash and the SWE-agent paper from Princeton Language and Intelligence.

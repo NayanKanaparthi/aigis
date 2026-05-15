@@ -406,7 +406,13 @@ _SPECIAL_REGISTRY = {
 
 # ── Public API ─────────────────────────────────────────────────────────
 
-def auto_verify_area(area_id: str, project_dir: str) -> dict[str, Any]:
+def auto_verify_area(area_id: str, project_dir: str, jurisdictions: list[str] | None = None) -> dict[str, Any]:
+    """v2.1: jurisdictions list (e.g. ['eu']) gates EU AI Act control citations
+    in the report. Default empty — verify is conservative; eu_ai_act citations
+    only appear when the user explicitly opts in via --jurisdiction eu.
+    """
+    user_jurisdictions = set(jurisdictions or [])
+
     rules = load_rules()
     area = rules.get(area_id)
     if not area:
@@ -414,6 +420,10 @@ def auto_verify_area(area_id: str, project_dir: str) -> dict[str, Any]:
             f"No auto-verify rules for pattern area '{area_id}'. "
             f"Known: {', '.join(rules.keys())}"
         )
+
+    # v2.1: read area frontmatter controls for citation in the report.
+    all_controls = _read_area_controls(area_id)
+
     root = Path(project_dir).resolve()
     files = _load_files(root)
 
@@ -455,6 +465,17 @@ def auto_verify_area(area_id: str, project_dir: str) -> dict[str, Any]:
     auto_fail = sum(1 for r in auto_results.values() if r["status"] == "FAIL")
     overclaims_raised = sum(1 for r in overclaim_results.values() if r["raised"])
 
+    # v2.1: assemble cited controls. EU AI Act gated on jurisdiction.
+    show_eu = "eu" in user_jurisdictions
+    cited = None
+    if all_controls:
+        cited = {
+            "owasp": all_controls["owasp"],
+            "nist": all_controls["nist"],
+            "iso42001": all_controls["iso42001"],
+            "eu_ai_act": all_controls["eu_ai_act"] if show_eu else [],
+        }
+
     return {
         "area": area_id,
         "project_dir": str(root),
@@ -469,7 +490,32 @@ def auto_verify_area(area_id: str, project_dir: str) -> dict[str, Any]:
         "auto_checks": auto_results,
         "overclaim_checks": overclaim_results,
         "judgment_checks": judgment_results,
+        "cited_controls": cited,
+        "user_jurisdictions": sorted(user_jurisdictions),
     }
+
+
+def _read_area_controls(area_id: str) -> dict[str, list[str]] | None:
+    """Read an area's frontmatter `controls` block (all four frameworks).
+    Returns None on missing file or parse failure.
+    """
+    try:
+        import frontmatter  # local import to keep top-of-file imports lean
+        from pathlib import Path
+        areas_dir = Path(__file__).resolve().parent / "content" / "skills" / "areas"
+        filepath = areas_dir / f"{area_id}.md"
+        if not filepath.exists():
+            return None
+        fm = frontmatter.loads(filepath.read_text(encoding="utf-8")).metadata
+        c = fm.get("controls", {}) or {}
+        return {
+            "owasp": c.get("owasp", []) or [],
+            "nist": c.get("nist", []) or [],
+            "iso42001": c.get("iso42001", []) or [],
+            "eu_ai_act": c.get("eu_ai_act", []) or [],
+        }
+    except Exception:
+        return None
 
 
 def format_text_report(result: dict[str, Any]) -> str:
@@ -481,6 +527,20 @@ def format_text_report(result: dict[str, Any]) -> str:
     lines.append(f"Auto-verified: {s['auto_pass']}/{s['auto_total']} PASS, {s['auto_fail']} FAIL")
     lines.append(f"Overclaim recognizers raised: {s['overclaims_raised']}")
     lines.append(f"Judgment required: {s['judgment_required']} check(s)\n")
+
+    # v2.1: cite framework controls. Mirror of lib/auto-verify.js.
+    cited = result.get("cited_controls")
+    if cited:
+        total_cited = len(cited["owasp"]) + len(cited["nist"]) + len(cited["iso42001"]) + len(cited["eu_ai_act"])
+        if total_cited > 0:
+            all_pass = s["auto_pass"] == s["auto_total"] and s["auto_fail"] == 0
+            header = "Controls satisfied (all auto checks PASS):" if all_pass else "Controls in scope (partial — fix FAIL/OVERCLAIM to fully satisfy):"
+            lines.append(f"── {header} ──")
+            if cited["owasp"]:    lines.append(f"  OWASP LLM Top 10: {', '.join(cited['owasp'])}")
+            if cited["nist"]:     lines.append(f"  NIST AI RMF:      {', '.join(cited['nist'])}")
+            if cited["iso42001"]: lines.append(f"  ISO/IEC 42001:    {', '.join(cited['iso42001'])}")
+            if cited["eu_ai_act"]:lines.append(f"  EU AI Act:        {', '.join(cited['eu_ai_act'])}")
+            lines.append("")
 
     if result["auto_checks"]:
         lines.append("── AUTO CHECKS ──")

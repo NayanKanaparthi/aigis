@@ -13,7 +13,7 @@ const path = require('path');
 const { computeFileChecksum, computeChecksum } = require('../lib/checksum');
 
 const TRIGGERS_PATH = path.join(__dirname, '..', 'content', 'resolvers', 'triggers.json');
-const PINNED_HASH = '2caa1e410b62257d1c13482a8a9f9ec38719aef76a36ebd1c4dc032a1348e9cc';
+const PINNED_HASH = '960c1298cfd70d9094abdb9465ad684288dfcc0ea884745d6b9fe378c5133dd4';
 
 const tests = [];
 function test(name, fn) { tests.push({ name, fn }); }

@@ -6,10 +6,11 @@ ALL_TRAITS = [
     "influences-decisions", "accepts-user-input", "is-external", "is-internal", "is-high-volume",
     "generates-code", "generates-content", "multi-model-pipeline",
     "jurisdiction-eu", "jurisdiction-us-regulated", "jurisdiction-global",
+    "is-eu-high-risk",    # v2.1: EU AI Act Annex III gating trait
 ]
 
 TRAIT_FILES: dict[str, list[str]] = {
-    "uses-llm": ["input-validation", "output-sanitization", "prompt-security", "audit-logging", "monitoring"],
+    "uses-llm": ["input-validation", "output-sanitization", "prompt-security", "audit-logging", "monitoring", "eu-ai-act-art-50-transparency-disclosure"],
     "uses-rag": ["rag-security", "data-integrity"],
     "uses-finetuned": ["data-integrity", "supply-chain"],
     "uses-thirdparty-api": ["supply-chain"],
@@ -21,7 +22,7 @@ TRAIT_FILES: dict[str, list[str]] = {
     "handles-proprietary": ["pii-handling", "prompt-security"],
     "handles-minors": ["pii-handling", "bias-monitoring", "human-oversight"],
     "influences-decisions": ["bias-monitoring", "confidence-scoring", "human-oversight", "explainability"],
-    "accepts-user-input": ["input-validation", "output-sanitization"],
+    "accepts-user-input": ["input-validation", "output-sanitization", "eu-ai-act-art-50-transparency-disclosure"],
     "is-external": ["rate-limiting", "confidence-scoring"],
     "is-internal": [],
     "is-high-volume": ["rate-limiting", "monitoring", "fallback-patterns"],
@@ -31,6 +32,11 @@ TRAIT_FILES: dict[str, list[str]] = {
     "jurisdiction-eu": [],
     "jurisdiction-us-regulated": [],
     "jurisdiction-global": [],
+    "is-eu-high-risk": [
+        "eu-ai-act-art-9-risk-management",
+        "eu-ai-act-art-13-deployer-transparency",
+        "eu-ai-act-art-73-incident-reporting",
+    ],    # v2.1: pulls EU AI Act high-risk areas; brief assembly filters by jurisdiction-eu
 }
 
 FILE_CONTROLS: dict[str, dict[str, list[str]]] = {

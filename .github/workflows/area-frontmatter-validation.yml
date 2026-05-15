@@ -1,0 +1,25 @@
+name: area frontmatter validation
+
+on:
+  pull_request:
+    paths:
+      - 'content/skills/areas/**'
+      - 'scripts/validate-area-frontmatter.js'
+      - 'scripts/area-frontmatter.schema.json'
+      - 'docs/frontmatter-schema.md'
+      - 'lib/classify.js'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install gray-matter
+        run: npm install --no-save gray-matter
+      - name: Validate area frontmatter schema
+        run: node scripts/validate-area-frontmatter.js
+      - name: Run frontmatter test suite
+        run: node test/frontmatter-schema.test.js

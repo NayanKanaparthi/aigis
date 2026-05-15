@@ -5,6 +5,7 @@ controls:
   owasp: []
   nist: [MEASURE-2.8, MANAGE-4.1, MANAGE-4.3]
   iso42001: [Clause-9.1, Annex-A.6]
+  eu_ai_act: [Art-12, Art-12(1), Art-12(2)]
 min_risk_tier: all
 system_traits: [uses-llm]
 ---
@@ -169,6 +170,38 @@ function logDecision(decision, context) {
 - **Log volume at scale.** At high volume, consider sampling non-critical logs while keeping 100% of error and decision logs.
 - **Log retention and compliance.** Different regulations require different retention periods. Configure per data type.
 - **Cross-system correlation.** If the AI system calls external services, propagate trace IDs via headers.
+
+## EU AI Act extensions
+
+> Renders only when `jurisdiction-eu` is in the user's trait set. Article 12 mandates automatic event recording over the AI system's lifetime for high-risk systems, with specific obligations on log content, format, and retention.
+
+### Article 12 — Record-keeping obligations
+
+- **Art 12(1) — Automatic event recording.** Logging must be automatic; manual log entries are not acceptable for compliance demonstration. The procedure above already satisfies this if structured logging is wired into the LLM call path.
+- **Art 12(2) — Traceability of system functioning.** Logs must enable the deployer (or auditors) to trace the system's functioning across:
+  - Period of use (each session start / end timestamps)
+  - The data input that produced each output (input → output linkage via trace ID)
+  - The reference data used (for RAG: which retrieved chunks; for inference: which model version)
+  - Identification of natural persons involved in oversight (Article 14 cross-reference — operator id on every override)
+- **Art 12(3) — For Annex III(1)(a) biometric ID systems** (additional requirements):
+  - Period of each use (start/end)
+  - The reference database against which input data was checked
+  - The input data for which the search led to a match
+  - Identity of the natural persons involved in verifying results (Art 14(5) dual control)
+- **Article 19 retention** — high-risk system logs must be retained for at least **6 months**, longer if required by sector-specific Union or national law (e.g. financial services often requires 5+ years).
+
+### Verification checkpoint (EU jurisdiction)
+
+- Log retention is configured ≥ 6 months in the storage backend.
+- Each LLM call has a trace ID linking input → output → operator (if oversight engaged).
+- For systems doing biometric identification: logs include reference-database identifier + dual-confirmation operator identities per Article 14(5).
+- Log access is audited (who queried what, when) — auditors will check for unauthorized access to the regulated logs themselves.
+
+### Cross-reference
+
+- `aigis get human-oversight` Article 14(5) — operator identity that gets logged here.
+- `aigis get eu-ai-act-art-9-risk-management` — logs are the evidence base for quarterly risk re-evaluation.
+- `aigis get eu-ai-act-art-73-incident-reporting` — logs are the evidence base for incident causal analysis (15-day window).
 
 ## Related infrastructure
 

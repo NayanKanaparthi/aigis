@@ -1,0 +1,188 @@
+{
+  "audit-logging": {
+    "owasp": [],
+    "nist": [
+      "MEASURE-2.8",
+      "MANAGE-4.1",
+      "MANAGE-4.3"
+    ],
+    "iso42001": [
+      "Clause-9.1",
+      "Annex-A.6"
+    ]
+  },
+  "bias-monitoring": {
+    "owasp": [],
+    "nist": [
+      "MAP-2.3",
+      "MEASURE-2.11",
+      "MEASURE-3.1"
+    ],
+    "iso42001": [
+      "Clause-6.1",
+      "Annex-C"
+    ]
+  },
+  "confidence-scoring": {
+    "owasp": [
+      "LLM09"
+    ],
+    "nist": [
+      "MAP-2.2",
+      "MEASURE-2.5",
+      "MEASURE-2.9"
+    ],
+    "iso42001": [
+      "Annex-A.8"
+    ]
+  },
+  "data-integrity": {
+    "owasp": [
+      "LLM04"
+    ],
+    "nist": [
+      "MAP-2.3",
+      "MEASURE-2.6"
+    ],
+    "iso42001": [
+      "Annex-A.7"
+    ]
+  },
+  "explainability": {
+    "owasp": [],
+    "nist": [
+      "MEASURE-2.8",
+      "MEASURE-2.9"
+    ],
+    "iso42001": [
+      "Annex-A.8",
+      "Clause-7.4"
+    ]
+  },
+  "fallback-patterns": {
+    "owasp": [],
+    "nist": [
+      "MEASURE-2.6",
+      "MANAGE-2.3",
+      "MANAGE-2.4"
+    ],
+    "iso42001": [
+      "Clause-8.2"
+    ]
+  },
+  "human-oversight": {
+    "owasp": [
+      "LLM06"
+    ],
+    "nist": [
+      "MAP-3.5",
+      "MANAGE-1.3",
+      "MANAGE-4.1"
+    ],
+    "iso42001": [
+      "Annex-A.9",
+      "Clause-8.4"
+    ]
+  },
+  "input-validation": {
+    "owasp": [
+      "LLM01"
+    ],
+    "nist": [
+      "MEASURE-2.7",
+      "MANAGE-1.3"
+    ],
+    "iso42001": [
+      "Clause-8.2",
+      "Annex-A.6"
+    ]
+  },
+  "monitoring": {
+    "owasp": [],
+    "nist": [
+      "MEASURE-2.4",
+      "MEASURE-3.1",
+      "MANAGE-4.1",
+      "MANAGE-4.2"
+    ],
+    "iso42001": [
+      "Clause-9.1",
+      "Clause-10"
+    ]
+  },
+  "output-sanitization": {
+    "owasp": [
+      "LLM05"
+    ],
+    "nist": [
+      "MEASURE-2.6",
+      "MEASURE-2.7"
+    ],
+    "iso42001": [
+      "Clause-8.2"
+    ]
+  },
+  "pii-handling": {
+    "owasp": [
+      "LLM02"
+    ],
+    "nist": [
+      "MAP-2.1",
+      "MEASURE-2.10"
+    ],
+    "iso42001": [
+      "Annex-A.7",
+      "Annex-A.4"
+    ]
+  },
+  "prompt-security": {
+    "owasp": [
+      "LLM07"
+    ],
+    "nist": [
+      "MEASURE-2.7",
+      "MEASURE-2.8"
+    ],
+    "iso42001": [
+      "Clause-8.2"
+    ]
+  },
+  "rag-security": {
+    "owasp": [
+      "LLM08"
+    ],
+    "nist": [
+      "MEASURE-2.7"
+    ],
+    "iso42001": [
+      "Clause-8.2",
+      "Annex-A.7"
+    ]
+  },
+  "rate-limiting": {
+    "owasp": [
+      "LLM10"
+    ],
+    "nist": [
+      "MEASURE-2.6",
+      "MANAGE-2.4"
+    ],
+    "iso42001": [
+      "Clause-8.2"
+    ]
+  },
+  "supply-chain": {
+    "owasp": [
+      "LLM03"
+    ],
+    "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-3.1",
+      "MANAGE-3.2"
+    ],
+    "iso42001": [
+      "Annex-A.10"
+    ]
+  }
+}

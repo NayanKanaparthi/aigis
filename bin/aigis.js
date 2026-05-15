@@ -5,6 +5,7 @@ const chalk = require('chalk');
 const { classify } = require('../lib/classify');
 const { get, getTemplate, getAuditScan, getWorkflow, listWorkflows, getInfra, listInfras } = require('../lib/fetch');
 const { buildBrief, buildList, BriefTooLargeError } = require('../lib/build');
+const { getUserJurisdictions, filterAreasByJurisdiction } = require('../lib/jurisdiction');
 const { verify } = require('../lib/fetch');
 const { search, listAll } = require('../lib/search');
 const { annotate, listAnnotations, clearAnnotation } = require('../lib/annotate');
@@ -17,7 +18,7 @@ const program = new Command();
 program
   .name('aigis')
   .description('AI governance guardrails for coding agents')
-  .version('2.0.0');
+  .version('2.1.0');
 
 // ============================================================
 // aigis classify
@@ -29,6 +30,7 @@ program
   .option('--json', 'Output as JSON (also enabled automatically when stdout is not a TTY)')
   .option('--confirm <ids>', 'Comma-separated low-confidence suggestion IDs to confirm (no interactive prompt)')
   .option('--reject <ids>', 'Comma-separated low-confidence suggestion IDs to reject (no interactive prompt)')
+  .option('--jurisdiction <codes>', 'Comma-separated jurisdiction codes (eu, us-regulated, global). Adds the matching jurisdiction-* traits to your set, overriding resolver detection.')
   .argument('[description]', 'Natural language description (resolved via content/resolvers/triggers.json)')
   .action(async (description, opts) => {
     // Three modes: --traits only, description only, both (additive).
@@ -72,8 +74,11 @@ program
     }
 
     const resolved = applyConfirmations(detection, decisions);
-    // Merge with --traits
-    const finalTraits = [...new Set([...resolved.final_traits, ...traitsFromFlag])].sort();
+    // Merge with --traits + --jurisdiction-derived traits
+    const jurisdictionTraits = opts.jurisdiction
+      ? opts.jurisdiction.split(',').map((s) => s.trim()).filter(Boolean).map((c) => `jurisdiction-${c}`)
+      : [];
+    const finalTraits = [...new Set([...resolved.final_traits, ...traitsFromFlag, ...jurisdictionTraits])].sort();
 
     // Build a resolver report for transparency (in both JSON and text modes when description was given)
     const resolverReport = description ? {
@@ -103,6 +108,18 @@ program
       console.error(chalk.red(e.message));
       process.exit(1);
     }
+
+    // v2.1: jurisdiction filter. classify produces conceptually-relevant areas;
+    // we drop EU-tagged areas if user is not in EU jurisdiction (and same for
+    // any other jurisdiction-gated area). Universal areas pass through.
+    const userJurisdictions = getUserJurisdictions(finalTraits);
+    const beforeFilter = result.implement_files.length;
+    result.implement_files = filterAreasByJurisdiction(result.implement_files, userJurisdictions);
+    result.filtered_by_jurisdiction = {
+      user_jurisdictions: [...userJurisdictions],
+      dropped_count: beforeFilter - result.implement_files.length,
+    };
+
     if (resolverReport) result.resolver = resolverReport;
 
     if (jsonMode) {
@@ -207,6 +224,7 @@ program
   .argument('<files...>', 'File IDs to verify')
   .option('--auto <path>', 'Run deterministic scanner against the project at <path> instead of returning the blank checklist')
   .option('--json', 'Output auto-verify results as JSON (only with --auto)')
+  .option('--jurisdiction <codes>', 'Comma-separated jurisdiction codes (eu, us-regulated). Surfaces jurisdiction-specific control citations (e.g. EU AI Act articles) in the report.')
   .action((files, opts) => {
     if (!opts.auto) {
       // Backward-compatible behavior: fetch the blank checklist markdown
@@ -223,10 +241,15 @@ program
       process.exit(1);
     }
 
+    // v2.1: parse --jurisdiction once, applied to every area's verify run.
+    const jurisdictions = opts.jurisdiction
+      ? opts.jurisdiction.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+
     const results = [];
     for (const area of files) {
       try {
-        const r = autoVerifyArea(area, projectDir);
+        const r = autoVerifyArea(area, projectDir, { jurisdictions });
         results.push(r);
       } catch (e) {
         console.error(chalk.red(`Error verifying "${area}": ${e.message}`));
@@ -307,6 +330,8 @@ program
   .option('--list', 'Shape A: print area names + traits + pre-built --confirm/--reject flags only')
   .option('--confirm <ids>', 'Comma-separated low-confidence trigger ids/slugs to confirm (no interactive prompt)')
   .option('--reject <ids>', 'Comma-separated low-confidence trigger ids/slugs to reject (no interactive prompt)')
+  .option('--jurisdiction <codes>', 'Comma-separated jurisdiction codes (eu, us-regulated). Adds jurisdiction-* traits and gates EU AI Act / regional content accordingly.')
+  .option('--tight', 'Experimental: require ≥2 trait matches for area inclusion (vs default ≥1). Produces smaller briefs; trades some recall for precision.')
   .option('--json', 'Output JSON (brief + meta) instead of plain markdown to stdout')
   .action(async (description, opts) => {
     if (opts.full && opts.compact) {
@@ -318,10 +343,15 @@ program
       process.exit(1);
     }
 
+    // v2.1: parse --jurisdiction flag once, used by all paths below.
+    const extraJurisdictions = opts.jurisdiction
+      ? opts.jurisdiction.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+
     // --list short-circuit (Shape A)
     if (opts.list) {
       try {
-        process.stdout.write(buildList({ description }));
+        process.stdout.write(buildList({ description, extraJurisdictions, tight: !!opts.tight }));
       } catch (err) {
         console.error(chalk.red(err.message));
         process.exit(1);
@@ -383,7 +413,7 @@ program
 
     let result;
     try {
-      result = buildBrief({ description, decisions, mode });
+      result = buildBrief({ description, decisions, extraJurisdictions, tight: !!opts.tight, mode });
     } catch (err) {
       if (err instanceof BriefTooLargeError) {
         console.error(chalk.red(err.message));
@@ -538,6 +568,105 @@ program
   });
 
 // ============================================================
+// aigis report  (v2.1)
+// ============================================================
+program
+  .command('report')
+  .description('Compile an audit-ready compliance report (verify across multiple areas + cross-framework citations + evidence)')
+  .option('--areas <ids>', 'Comma-separated area ids to evaluate (e.g. pii-handling,audit-logging)')
+  .option('--from-classify <description>', 'Auto-detect areas: run aigis classify on this description first, then report on the recommended areas')
+  .option('--all', 'Evaluate every area in content/skills/areas/ (warning: large output)')
+  .option('--project <path>', 'Path to project to scan (default: current directory)', '.')
+  .option('--jurisdiction <codes>', 'Comma-separated jurisdiction codes (eu, us-regulated). Surfaces jurisdiction-specific control citations.')
+  .option('--format <fmt>', 'Output format: markdown | json (default markdown)', 'markdown')
+  .option('--output <path>', 'Write report to file instead of stdout')
+  .action(async (opts) => {
+    const { buildReport, formatReportMarkdown, formatReportJSON } = require('../lib/report');
+    const fs2 = require('fs');
+    const pathMod = require('path');
+
+    const projectDir = pathMod.resolve(opts.project);
+    if (!fs2.existsSync(projectDir)) {
+      console.error(chalk.red(`Project path does not exist: ${projectDir}`));
+      process.exit(1);
+    }
+
+    // Resolve area list — exactly one source must be provided.
+    const sources = [opts.areas, opts.fromClassify, opts.all].filter(Boolean).length;
+    if (sources === 0) {
+      console.error(chalk.red('Provide one of --areas <ids>, --from-classify "<description>", or --all.'));
+      console.error(chalk.dim('  aigis report --areas pii-handling,audit-logging --project .'));
+      console.error(chalk.dim('  aigis report --from-classify "EU credit scoring system" --project .'));
+      console.error(chalk.dim('  aigis report --all --project .'));
+      process.exit(1);
+    }
+    if (sources > 1) {
+      console.error(chalk.red('Pass exactly one of --areas, --from-classify, --all.'));
+      process.exit(1);
+    }
+
+    let areas = [];
+    const jurisdictions = opts.jurisdiction
+      ? opts.jurisdiction.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+
+    if (opts.areas) {
+      areas = opts.areas.split(',').map((s) => s.trim()).filter(Boolean);
+    } else if (opts.fromClassify) {
+      // Run classify, take its (jurisdiction-filtered) implement_files.
+      const { detectTraitsFromText, applyConfirmations } = require('../lib/keywords');
+      const detection = detectTraitsFromText(opts.fromClassify);
+      const decisions = {};
+      for (const sug of detection.low_confidence_matches) decisions[sug.id] = 'no'; // conservative for non-interactive report
+      const resolved = applyConfirmations(detection, decisions);
+      const jurisdictionTraits = jurisdictions.map((c) => `jurisdiction-${c}`);
+      const finalTraits = [...new Set([...resolved.final_traits, ...jurisdictionTraits])].sort();
+      if (finalTraits.length === 0) {
+        console.error(chalk.red('No traits resolved from --from-classify description. Try --areas <list> instead, or pass a more specific description.'));
+        process.exit(1);
+      }
+      const cls = classify(finalTraits);
+      areas = filterAreasByJurisdiction(cls.implement_files, getUserJurisdictions(finalTraits));
+    } else {
+      // --all: every area markdown file
+      const areasDir = pathMod.join(__dirname, '..', 'content', 'skills', 'areas');
+      areas = fs2.readdirSync(areasDir)
+        .filter((f) => f.endsWith('.md'))
+        .map((f) => f.replace(/\.md$/, ''))
+        .sort();
+      // Apply jurisdiction filter so EU areas don't show for non-EU reports
+      areas = filterAreasByJurisdiction(areas, getUserJurisdictions(jurisdictions.map((c) => `jurisdiction-${c}`)));
+    }
+
+    if (areas.length === 0) {
+      console.error(chalk.red('No areas to evaluate after jurisdiction filtering. Pass --jurisdiction or different --areas.'));
+      process.exit(1);
+    }
+
+    let report;
+    try {
+      report = buildReport({ projectDir, areas, jurisdictions });
+    } catch (err) {
+      console.error(chalk.red(err.message));
+      process.exit(1);
+    }
+
+    const fmt = (opts.format || 'markdown').toLowerCase();
+    let output;
+    if (fmt === 'json') output = formatReportJSON(report);
+    else if (fmt === 'markdown' || fmt === 'md') output = formatReportMarkdown(report);
+    else { console.error(chalk.red(`Unknown --format "${opts.format}". Use markdown or json.`)); process.exit(1); }
+
+    if (opts.output) {
+      fs2.writeFileSync(opts.output, output + (output.endsWith('\n') ? '' : '\n'));
+      console.error(chalk.green(`Report written to ${opts.output} (${output.length} chars, ${areas.length} area${areas.length === 1 ? '' : 's'} evaluated)`));
+    } else {
+      process.stdout.write(output);
+      if (!output.endsWith('\n')) process.stdout.write('\n');
+    }
+  });
+
+// ============================================================
 // aigis search
 // ============================================================
 program
@@ -634,11 +763,13 @@ program
 // ============================================================
 program
   .command('init')
-  .description('Set up aigis for your IDE (writes core skill + resolver block)')
+  .description('Set up aigis for your IDE (writes core skill + resolver block). Optional --ci and --hook activation surfaces.')
   .argument('<ide>', 'IDE to configure: cursor, claude-code, windsurf, copilot')
   .option('--refresh', 'Overwrite existing aigis content (destructive — use after Aigis updates or to fix a stale resolver block checksum)')
+  .option('--ci <provider>', 'Install CI workflow file. Currently supports: github (drops .github/workflows/aigis.yml).')
+  .option('--hook', 'Install .git/hooks/pre-commit that runs aigis verify on areas declared in .aigisrc.json.')
   .action((ide, opts) => {
-    init(ide, { refresh: !!opts.refresh });
+    init(ide, { refresh: !!opts.refresh, ci: opts.ci, hook: !!opts.hook });
   });
 
 // ============================================================

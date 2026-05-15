@@ -5,6 +5,7 @@ controls:
   owasp: [LLM07]
   nist: [MEASURE-2.7, MEASURE-2.8]
   iso42001: [Clause-8.2]
+  eu_ai_act: [Art-15(5)]
 min_risk_tier: all
 system_traits: [uses-llm, handles-proprietary]
 ---
@@ -151,3 +152,31 @@ function enforceOutputRules(llmOutput) {
 - **Multi-turn extraction.** Attackers spread extraction across many turns, each extracting a small fragment. Monitor cumulative similarity.
 - **Encoding tricks.** Requests to "encode in base64" or "translate to another language" can extract prompt content indirectly.
 - **Tool descriptions.** If using function calling, tool descriptions are part of the prompt and can leak implementation details.
+
+## EU AI Act extensions
+
+> Renders only when `jurisdiction-eu` is in the user's trait set. Article 15(5) addresses cybersecurity resilience of high-risk AI systems. This area covers the **adversarial-prompt / prompt-extraction** dimension. Input adversarial inputs are in `aigis get input-validation`; accuracy and robustness are in their respective areas.
+
+### Article 15(5) — Cybersecurity obligations (system-prompt subset)
+
+The procedure above already covers prompt extraction defense. The EU-specific obligations are:
+
+- **Resilience to confidentiality attacks** — Art 15(5) explicitly names "model confidentiality" as a protected target. System prompts ARE part of the model's confidentiality boundary. Demonstrating resilience requires:
+  - Documented red-team exercise testing prompt extraction (frequency: quarterly minimum, after every prompt change)
+  - Documented detection of multi-turn extraction attempts (the Edge Cases section above)
+  - Documented response when extraction is detected (block, throttle, alert oversight role)
+- **Resilience to data poisoning targeting prompts** — if your system supports prompt customization (e.g. tenant-level prompt overrides, retrieval-injected prompt content), document the validation gate that prevents adversarial prompts from being installed.
+- **Cybersecurity measures proportionate to risks** — for high-risk systems, the cybersecurity controls must be commensurate. A simple chatbot has a lower bar than a credit-decisioning system. Document the proportionality assessment.
+
+### Verification checkpoint (EU jurisdiction)
+
+- Most recent red-team exercise is dated within the last 90 days. The exercise included at least three prompt-extraction techniques and at least one multi-turn extraction attempt.
+- Detection signals for extraction attempts are wired into the monitoring stack (`aigis get monitoring`).
+- Prompt customization (if supported) has a validation gate that rejects known adversarial patterns before installation.
+
+### Cross-reference
+
+- `aigis get input-validation` — Art 15(5) adversarial input dimension.
+- `aigis get confidence-scoring` — Art 15(1)–(3) accuracy dimension.
+- `aigis get fallback-patterns` — Art 15(4) robustness dimension.
+- `aigis get monitoring` — where Art 15(5) detection signals fire.

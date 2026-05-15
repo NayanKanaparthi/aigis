@@ -23,6 +23,11 @@ import frontmatter
 from .classify import classify
 from .keywords import detect_traits_from_text
 from .fetch import get_infra
+from .jurisdiction import (
+    get_user_jurisdictions,
+    filter_areas_by_jurisdiction,
+    strip_jurisdiction_gated_sections,
+)
 
 CONTENT_DIR = Path(__file__).resolve().parent / "content"
 
@@ -169,7 +174,21 @@ def _read_version() -> str:
         return "unknown"
 
 
-def _prepare(description: str, decisions: dict) -> dict:
+def _read_area_system_traits(area_id: str) -> list[str] | None:
+    """v2.1: read an area's `system_traits` frontmatter for --tight matching."""
+    try:
+        filepath = CONTENT_DIR / "skills" / "areas" / f"{area_id}.md"
+        if not filepath.exists():
+            return None
+        fm = frontmatter.loads(filepath.read_text(encoding="utf-8")).metadata
+        st = fm.get("system_traits")
+        return list(st) if isinstance(st, list) else None
+    except Exception:
+        return None
+
+
+def _prepare(description: str, decisions: dict, extra_jurisdictions: list[str] | None = None, tight: bool = False) -> dict:
+    extra_jurisdictions = extra_jurisdictions or []
     normalized = normalize_description(description)
     if not normalized:
         raise ValueError('Provide a description in quotes. Example: aigis build "customer chatbot with RAG"')
@@ -185,13 +204,39 @@ def _prepare(description: str, decisions: dict) -> dict:
             numeric_decisions[m["id"]] = decisions[m["id"]]
 
     resolved = resolve_traits(detection_with_slugs, numeric_decisions, uncertain_as_included=True)
-    if not resolved["all_traits"]:
+
+    # v2.1: --jurisdiction flag adds jurisdiction-* traits before classify.
+    extra_jurisdiction_traits = [f"jurisdiction-{c}" for c in (extra_jurisdictions or []) if c]
+    all_traits_with_jurisdiction = sorted(set(resolved["all_traits"]) | set(extra_jurisdiction_traits))
+
+    if not all_traits_with_jurisdiction:
         raise ValueError(
             "No traits resolved from description. Try a more specific description, "
             'or use `aigis classify --traits ...` directly.'
         )
-    cls = classify(resolved["all_traits"])
-    areas = cls["implement_files"]
+    cls = classify(all_traits_with_jurisdiction)
+
+    # v2.1: jurisdiction filter on the area list.
+    user_jurisdictions = get_user_jurisdictions(all_traits_with_jurisdiction)
+    areas_before_filter = cls["implement_files"]
+    areas = filter_areas_by_jurisdiction(areas_before_filter, user_jurisdictions)
+
+    # v2.1 --tight mode: require ≥2 of the user's traits to match an area's system_traits.
+    areas_before_tight: list[str] | None = None
+    tight_dropped: list[dict] = []
+    if tight:
+        areas_before_tight = list(areas)
+        user_trait_set = set(all_traits_with_jurisdiction)
+        kept: list[str] = []
+        for area in areas:
+            sys_traits = _read_area_system_traits(area) or []
+            match_count = sum(1 for t in sys_traits if t in user_trait_set)
+            if match_count >= 2:
+                kept.append(area)
+            else:
+                tight_dropped.append({"area": area, "match_count": match_count})
+        areas = kept
+
     infra_ids = collect_infra_references(areas)
 
     return {
@@ -202,6 +247,11 @@ def _prepare(description: str, decisions: dict) -> dict:
         "resolved": resolved,
         "cls": cls,
         "areas": areas,
+        "areas_before_jurisdiction_filter": areas_before_filter,
+        "areas_before_tight_filter": areas_before_tight,
+        "tight_dropped": tight_dropped,
+        "tight_mode": bool(tight),
+        "user_jurisdictions": sorted(user_jurisdictions),
         "infra_ids": infra_ids,
     }
 
@@ -303,11 +353,13 @@ def _render_verification(*, areas, resolved, cls):
 
 
 def build_compact(description: str, decisions: dict | None = None, *,
+                  extra_jurisdictions: list[str] | None = None,
+                  tight: bool = False,
                   timestamp: datetime | None = None,
                   version_string: str | None = None,
                   fell_back_from_full: bool = False) -> dict:
     decisions = decisions or {}
-    prep = _prepare(description, decisions)
+    prep = _prepare(description, decisions, extra_jurisdictions, tight=tight)
     ts = _iso_ms(timestamp)
     version = version_string or _read_version()
 
@@ -352,11 +404,13 @@ def build_compact(description: str, decisions: dict | None = None, *,
 
 
 def build_full(description: str, decisions: dict | None = None, *,
+               extra_jurisdictions: list[str] | None = None,
+               tight: bool = False,
                char_cap: int = FULL_HARD_CAP,
                timestamp: datetime | None = None,
                version_string: str | None = None) -> dict:
     decisions = decisions or {}
-    prep = _prepare(description, decisions)
+    prep = _prepare(description, decisions, extra_jurisdictions, tight=tight)
     ts = _iso_ms(timestamp)
     version = version_string or _read_version()
 
@@ -364,6 +418,10 @@ def build_full(description: str, decisions: dict | None = None, *,
         normalized=prep["normalized"], version=version, ts=ts, mode_note=None,
         cls=prep["cls"], resolved=prep["resolved"], areas=prep["areas"], infra_ids=prep["infra_ids"],
     )
+
+    # v2.1: for non-EU users, strip `## EU AI Act extensions` sections from
+    # universal-area content before inlining (parity with lib/build.js).
+    user_j = set(prep["user_jurisdictions"])
 
     s.append("## Areas")
     s.append("")
@@ -373,6 +431,7 @@ def build_full(description: str, decisions: dict | None = None, *,
         except FileNotFoundError:
             continue
         stripped = strip_frontmatter_raw(raw)
+        stripped = strip_jurisdiction_gated_sections(stripped, user_j)
         s.append(f"### {i}. {area}")
         s.append("")
         s.append(stripped)
@@ -406,23 +465,25 @@ def build_full(description: str, decisions: dict | None = None, *,
 
 
 def build_brief(description: str, decisions: dict | None = None, *,
+                extra_jurisdictions: list[str] | None = None,
+                tight: bool = False,
                 mode: str = "auto",
                 timestamp: datetime | None = None,
                 version_string: str | None = None) -> dict:
     """Dispatcher. mode ∈ {'auto', 'full', 'compact'}."""
     decisions = decisions or {}
     if mode == "compact":
-        r = build_compact(description, decisions, timestamp=timestamp, version_string=version_string)
+        r = build_compact(description, decisions, extra_jurisdictions=extra_jurisdictions, tight=tight, timestamp=timestamp, version_string=version_string)
         return {**r, "mode": "compact", "auto_fallback": False}
     if mode == "full":
-        r = build_full(description, decisions, char_cap=FULL_HARD_CAP, timestamp=timestamp, version_string=version_string)
+        r = build_full(description, decisions, extra_jurisdictions=extra_jurisdictions, tight=tight, char_cap=FULL_HARD_CAP, timestamp=timestamp, version_string=version_string)
         return {**r, "mode": "full", "auto_fallback": False}
     # auto
     try:
-        r = build_full(description, decisions, char_cap=AUTO_FULL_CAP, timestamp=timestamp, version_string=version_string)
+        r = build_full(description, decisions, extra_jurisdictions=extra_jurisdictions, tight=tight, char_cap=AUTO_FULL_CAP, timestamp=timestamp, version_string=version_string)
         return {**r, "mode": "full", "auto_fallback": False}
     except BriefTooLargeError as e:
-        compact = build_compact(description, decisions, timestamp=timestamp, version_string=version_string, fell_back_from_full=True)
+        compact = build_compact(description, decisions, extra_jurisdictions=extra_jurisdictions, tight=tight, timestamp=timestamp, version_string=version_string, fell_back_from_full=True)
         return {
             **compact,
             "mode": "compact",
@@ -432,9 +493,9 @@ def build_brief(description: str, decisions: dict | None = None, *,
         }
 
 
-def build_list(description: str) -> str:
+def build_list(description: str, extra_jurisdictions: list[str] | None = None, tight: bool = False) -> str:
     """Shape A — text output for `aigis build --list`."""
-    prep = _prepare(description, {})
+    prep = _prepare(description, {}, extra_jurisdictions, tight=tight)
     lines: list[str] = []
     lines.append(f"Description: {prep['normalized']}")
     lines.append(f"Risk tier: {prep['cls']['risk_tier']}")

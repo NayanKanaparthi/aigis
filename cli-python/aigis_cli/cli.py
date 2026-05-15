@@ -10,6 +10,7 @@ from . import __version__
 from .classify import classify as run_classify
 from .fetch import get as fetch_get, get_audit_scan, get_infra, get_template, get_workflow, list_infras, list_workflows, verify as fetch_verify
 from .build import build_brief, build_list, BriefTooLargeError, normalize_description, assign_unique_slugs
+from .report import build_report, format_report_markdown, format_report_json
 from .keywords import detect_traits_from_text
 from .search import list_all, search as run_search
 from .annotate import annotate as add_annotation, clear_annotation, list_annotations
@@ -59,8 +60,10 @@ def cli() -> None:
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON (also enabled automatically when stdout is not a TTY)")
 @click.option("--confirm", "confirm_str", default=None, help="Comma-separated low-confidence suggestion IDs to confirm")
 @click.option("--reject", "reject_str", default=None, help="Comma-separated low-confidence suggestion IDs to reject")
+@click.option("--jurisdiction", "jurisdiction_str", default=None, help="Comma-separated jurisdiction codes (eu, us-regulated, global). Adds the matching jurisdiction-* traits.")
 def classify(description: str | None, traits_str: str | None, as_json: bool,
-             confirm_str: str | None, reject_str: str | None) -> None:
+             confirm_str: str | None, reject_str: str | None,
+             jurisdiction_str: str | None) -> None:
     """Classify an AI system and get recommended governance files."""
     from .keywords import apply_confirmations
     if not traits_str and not description:
@@ -98,7 +101,12 @@ def classify(description: str | None, traits_str: str | None, as_json: bool,
             decisions = _prompt_low_confidence(detection)
 
     resolved = apply_confirmations(detection, decisions)
-    final_traits = sorted(set(resolved["final_traits"]) | set(traits_from_flag))
+    # v2.1: --jurisdiction flag adds jurisdiction-* traits.
+    jurisdiction_traits = (
+        [f"jurisdiction-{c}" for c in (s.strip() for s in jurisdiction_str.split(",")) if c]
+        if jurisdiction_str else []
+    )
+    final_traits = sorted(set(resolved["final_traits"]) | set(traits_from_flag) | set(jurisdiction_traits))
 
     resolver_report = None
     if description:
@@ -125,6 +133,16 @@ def classify(description: str | None, traits_str: str | None, as_json: bool,
     except ValueError as exc:
         console.print(f"[red]{exc}[/red]")
         sys.exit(1)
+
+    # v2.1: jurisdiction filter on the area list (parity with bin/aigis.js).
+    from .jurisdiction import get_user_jurisdictions, filter_areas_by_jurisdiction
+    user_jurisdictions = get_user_jurisdictions(final_traits)
+    before_filter = len(result["implement_files"])
+    result["implement_files"] = filter_areas_by_jurisdiction(result["implement_files"], user_jurisdictions)
+    result["filtered_by_jurisdiction"] = {
+        "user_jurisdictions": sorted(user_jurisdictions),
+        "dropped_count": before_filter - len(result["implement_files"]),
+    }
     if resolver_report:
         result["resolver"] = resolver_report
 
@@ -205,7 +223,8 @@ def get_cmd(files: tuple[str, ...], all_files: bool, lang: str | None,
 @click.argument("files", nargs=-1, required=True)
 @click.option("--auto", "auto_path", default=None, help="Run deterministic scanner against the project at this path instead of returning the blank checklist")
 @click.option("--json", "as_json", is_flag=True, help="Output auto-verify results as JSON (only with --auto)")
-def verify(files: tuple[str, ...], auto_path: str | None, as_json: bool) -> None:
+@click.option("--jurisdiction", "jurisdiction_str", default=None, help="Comma-separated jurisdiction codes (eu, us-regulated). Surfaces jurisdiction-specific control citations (e.g. EU AI Act articles) in the report.")
+def verify(files: tuple[str, ...], auto_path: str | None, as_json: bool, jurisdiction_str: str | None) -> None:
     """Fetch verification checklists, or run deterministic auto-verify with --auto."""
     if not auto_path:
         click.echo(fetch_verify(list(files)))
@@ -219,10 +238,13 @@ def verify(files: tuple[str, ...], auto_path: str | None, as_json: bool) -> None
         console.print(f"[red]Project path does not exist: {proj}[/red]")
         sys.exit(1)
 
+    # v2.1: parse --jurisdiction once, applied to every area.
+    jurisdictions = [s.strip() for s in jurisdiction_str.split(",") if s.strip()] if jurisdiction_str else []
+
     results = []
     for area in files:
         try:
-            results.append(auto_verify_area(area, str(proj)))
+            results.append(auto_verify_area(area, str(proj), jurisdictions=jurisdictions))
         except Exception as e:
             console.print(f"[red]Error verifying '{area}': {e}[/red]")
             sys.exit(1)
@@ -308,9 +330,12 @@ def _prompt_build_low_confidence(low_conf: list[dict]) -> dict[str, str]:
 @click.option("--list", "list_only", is_flag=True, help="Shape A: print area names + traits + pre-built flags only")
 @click.option("--confirm", "confirm_str", default=None, help="Comma-separated low-confidence trigger ids/slugs to confirm")
 @click.option("--reject", "reject_str", default=None, help="Comma-separated low-confidence trigger ids/slugs to reject")
+@click.option("--jurisdiction", "jurisdiction_str", default=None, help="Comma-separated jurisdiction codes (eu, us-regulated). Adds jurisdiction-* traits and gates EU AI Act / regional content accordingly.")
+@click.option("--tight", "tight_flag", is_flag=True, help="Experimental: require ≥2 trait matches for area inclusion (vs default ≥1). Smaller briefs; recall trade-off.")
 @click.option("--json", "as_json", is_flag=True, help="Output JSON (brief + meta) instead of plain markdown")
 def build(description: str, force_full: bool, force_compact: bool, list_only: bool,
-          confirm_str: str | None, reject_str: str | None, as_json: bool) -> None:
+          confirm_str: str | None, reject_str: str | None,
+          jurisdiction_str: str | None, tight_flag: bool, as_json: bool) -> None:
     """Compose a consolidated governance brief for a feature description."""
     if force_full and force_compact:
         console.print("[red]Pass --full or --compact, not both.[/red]")
@@ -319,9 +344,15 @@ def build(description: str, force_full: bool, force_compact: bool, list_only: bo
         console.print("[red]--list is independent of --full/--compact; pass only one.[/red]")
         sys.exit(1)
 
+    # v2.1: parse --jurisdiction once, used by all paths.
+    extra_jurisdictions = (
+        [s.strip() for s in jurisdiction_str.split(",") if s.strip()]
+        if jurisdiction_str else []
+    )
+
     if list_only:
         try:
-            click.echo(build_list(description), nl=False)
+            click.echo(build_list(description, extra_jurisdictions=extra_jurisdictions, tight=tight_flag), nl=False)
         except ValueError as e:
             console.print(f"[red]{e}[/red]")
             sys.exit(1)
@@ -370,7 +401,7 @@ def build(description: str, force_full: bool, force_compact: bool, list_only: bo
         mode = "compact"
 
     try:
-        result = build_brief(description, decisions, mode=mode)
+        result = build_brief(description, decisions, extra_jurisdictions=extra_jurisdictions, tight=tight_flag, mode=mode)
     except BriefTooLargeError as e:
         console.print(f"[red]{e}[/red]")
         sys.exit(2)
@@ -400,6 +431,83 @@ def build(description: str, force_full: bool, force_compact: bool, list_only: bo
         return
 
     click.echo(result["brief"], nl=False)
+
+
+# ── report (v2.1) ───────────────────────────────────────────────────
+@cli.command()
+@click.option("--areas", "areas_str", default=None, help="Comma-separated area ids to evaluate")
+@click.option("--from-classify", "from_classify", default=None, help="Auto-detect areas: run classify on this description first")
+@click.option("--all", "all_areas", is_flag=True, help="Evaluate every area in content/skills/areas/ (warning: large output)")
+@click.option("--project", "project_dir", default=".", help="Path to project to scan (default: current directory)")
+@click.option("--jurisdiction", "jurisdiction_str", default=None, help="Comma-separated jurisdiction codes (eu, us-regulated)")
+@click.option("--format", "fmt", default="markdown", help="Output format: markdown | json")
+@click.option("--output", "output_path", default=None, help="Write report to file instead of stdout")
+def report(areas_str: str | None, from_classify: str | None, all_areas: bool,
+           project_dir: str, jurisdiction_str: str | None, fmt: str,
+           output_path: str | None) -> None:
+    """Compile an audit-ready compliance report (verify across multiple areas + cross-framework citations + evidence)."""
+    from pathlib import Path
+    proj = Path(project_dir).resolve()
+    if not proj.exists():
+        console.print(f"[red]Project path does not exist: {proj}[/red]")
+        sys.exit(1)
+
+    sources = sum(1 for x in [areas_str, from_classify, all_areas] if x)
+    if sources == 0:
+        console.print('[red]Provide one of --areas <ids>, --from-classify "<description>", or --all.[/red]')
+        sys.exit(1)
+    if sources > 1:
+        console.print("[red]Pass exactly one of --areas, --from-classify, --all.[/red]")
+        sys.exit(1)
+
+    jurisdictions = [s.strip() for s in jurisdiction_str.split(",") if s.strip()] if jurisdiction_str else []
+    from .jurisdiction import filter_areas_by_jurisdiction, get_user_jurisdictions
+
+    if areas_str:
+        areas = [s.strip() for s in areas_str.split(",") if s.strip()]
+    elif from_classify:
+        from .keywords import detect_traits_from_text, apply_confirmations
+        det = detect_traits_from_text(from_classify)
+        decisions = {sug["id"]: "no" for sug in det["low_confidence_matches"]}
+        resolved = apply_confirmations(det, decisions)
+        jurisdiction_traits = [f"jurisdiction-{c}" for c in jurisdictions]
+        final_traits = sorted(set(resolved["final_traits"]) | set(jurisdiction_traits))
+        if not final_traits:
+            console.print("[red]No traits resolved from --from-classify description. Try --areas <list> instead.[/red]")
+            sys.exit(1)
+        cls = run_classify(final_traits)
+        areas = filter_areas_by_jurisdiction(cls["implement_files"], get_user_jurisdictions(final_traits))
+    else:
+        from pathlib import Path as _Path
+        areas_dir = _Path(__file__).resolve().parent / "content" / "skills" / "areas"
+        areas = sorted(p.stem for p in areas_dir.iterdir() if p.suffix == ".md")
+        areas = filter_areas_by_jurisdiction(areas, get_user_jurisdictions([f"jurisdiction-{c}" for c in jurisdictions]))
+
+    if not areas:
+        console.print("[red]No areas to evaluate after jurisdiction filtering.[/red]")
+        sys.exit(1)
+
+    try:
+        rep = build_report(project_dir=str(proj), areas=areas, jurisdictions=jurisdictions)
+    except Exception as e:
+        console.print(f"[red]{e}[/red]")
+        sys.exit(1)
+
+    fmt_lower = (fmt or "markdown").lower()
+    if fmt_lower == "json":
+        output = format_report_json(rep)
+    elif fmt_lower in ("markdown", "md"):
+        output = format_report_markdown(rep)
+    else:
+        console.print(f"[red]Unknown --format '{fmt}'. Use markdown or json.[/red]")
+        sys.exit(1)
+
+    if output_path:
+        from pathlib import Path as _Path
+        _Path(output_path).write_text(output + ("" if output.endswith("\n") else "\n"))
+        console.print(f"[green]Report written to {output_path} ({len(output)} chars, {len(areas)} area{'' if len(areas)==1 else 's'} evaluated)[/green]")
+    else:
+        click.echo(output, nl=not output.endswith("\n"))
 
 
 # ── infra ───────────────────────────────────────────────────────────
@@ -595,9 +703,11 @@ def annotate(file_id: str | None, note: str | None,
 @cli.command("init")
 @click.argument("ide")
 @click.option("--refresh", is_flag=True, help="Overwrite existing aigis content (destructive — use after Aigis updates or to fix a stale resolver block checksum)")
-def init_cmd(ide: str, refresh: bool) -> None:
-    """Set up aigis for your IDE (writes core skill + resolver block)."""
-    run_init(ide, refresh=refresh)
+@click.option("--ci", default=None, help="Install CI workflow file. Currently supports: github (drops .github/workflows/aigis.yml).")
+@click.option("--hook", is_flag=True, help="Install .git/hooks/pre-commit that runs aigis verify on areas declared in .aigisrc.json.")
+def init_cmd(ide: str, refresh: bool, ci: str | None, hook: bool) -> None:
+    """Set up aigis for your IDE (writes core skill + resolver block). Optional --ci and --hook activation surfaces."""
+    run_init(ide, refresh=refresh, ci=ci, hook=hook)
 
 
 # ── traits ──────────────────────────────────────────────────────────

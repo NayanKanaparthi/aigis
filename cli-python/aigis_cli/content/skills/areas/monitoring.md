@@ -5,6 +5,7 @@ controls:
   owasp: []
   nist: [MEASURE-2.4, MEASURE-3.1, MANAGE-4.1, MANAGE-4.2]
   iso42001: [Clause-9.1, Clause-10]
+  eu_ai_act: [Art-72, Art-72(1), Art-72(2), Art-72(3), Art-72(4)]
 min_risk_tier: medium
 system_traits: [uses-llm, is-high-volume, multi-model-pipeline]
 ---
@@ -205,3 +206,31 @@ function logIncident(incidentType, details, severity) {
 - **Gradual degradation.** Performance may decline slowly. Use drift detection, not just threshold alerts.
 - **Seasonal patterns.** Some metrics vary by time of day/week/year. Build seasonality into baselines.
 - **Model provider changes.** When the third-party model is updated, reset baselines and monitor closely.
+
+## EU AI Act extensions
+
+> Renders only when `jurisdiction-eu` is in the user's trait set. Article 72 mandates a documented post-market monitoring system for high-risk AI systems. The Aigis monitoring procedure above provides the technical foundation; Art 72 adds documentation, governance, and integration obligations.
+
+### Article 72 — Post-market monitoring obligations
+
+- **Art 72(1) — Documented monitoring system proportionate to nature and risk.** The monitoring you implement using this area's procedure must be DOCUMENTED in a "post-market monitoring plan" — a written artifact that describes what's monitored, how, by whom, with what cadence, and how findings are acted on.
+- **Art 72(2) — Active collection and analysis throughout the lifetime.** "Active" means periodic review, not just dashboards that exist. The risk management owner (`aigis get eu-ai-act-art-9-risk-management` Step 1) reviews monitoring outputs at least quarterly.
+- **Art 72(3) — Continuous compliance assessment with Articles 9–15.** The monitoring plan explicitly maps each monitored signal to which Article 9–15 obligation it informs. Drift in accuracy → Art 15(2) re-evaluation. Bias drift → Art 10(2)(f) re-examination. Override frequency → Art 14 oversight effectiveness.
+- **Art 72(4) — Plan is part of technical documentation.** The post-market monitoring plan is referenced in (or appended to) the Annex IV technical documentation (`aigis template eu-ai-act-annex-iv` Section 9).
+
+### Article 72 ↔ Article 73 integration
+
+Post-market monitoring (Art 72) is the detection mechanism that feeds incident reporting (Art 73). The signals from this area's procedure must be wired into the Article 73 incident workflow (`aigis get eu-ai-act-art-73-incident-reporting` Step 2).
+
+### Verification checkpoint (EU jurisdiction)
+
+- A document titled "Post-Market Monitoring Plan" exists, dated within the last 12 months.
+- The plan maps each monitored signal to the Article 9–15 obligation it informs.
+- Quarterly review log exists; latest review is within 90 days.
+- Annex IV technical documentation Section 9 references this plan.
+
+### Cross-reference
+
+- `aigis get eu-ai-act-art-9-risk-management` — Step 6 of the risk-management area integrates monitoring findings into the risk register.
+- `aigis get eu-ai-act-art-73-incident-reporting` — Step 2 of the incident-reporting area wires this monitoring into the incident workflow.
+- `aigis template eu-ai-act-annex-iv` — Section 9 references the post-market monitoring plan documented here.

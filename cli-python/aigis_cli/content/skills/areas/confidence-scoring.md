@@ -5,6 +5,7 @@ controls:
   owasp: [LLM09]
   nist: [MAP-2.2, MEASURE-2.5, MEASURE-2.9]
   iso42001: [Annex-A.8]
+  eu_ai_act: [Art-15(1), Art-15(2), Art-15(3)]
 min_risk_tier: all
 system_traits: [influences-decisions, is-external, generates-content]
 ---
@@ -178,3 +179,25 @@ function formatForDisplay(assessment) {
 - **Calibration.** LLM confidence scores are often miscalibrated. Validate against ground truth periodically.
 - **Confident hallucinations.** LLMs can be confidently wrong. Grounding verification catches this better than self-reported confidence.
 - **Downstream automation.** If another system consumes the confidence score, ensure it respects low-confidence flags.
+
+## EU AI Act extensions
+
+> Renders only when `jurisdiction-eu` is in the user's trait set. Article 15 addresses accuracy, robustness, and cybersecurity of high-risk AI systems. This area covers the **accuracy** dimension of Art 15. Robustness is in `aigis get fallback-patterns`; cybersecurity is in `aigis get prompt-security` and `aigis get input-validation`.
+
+### Article 15(1)–(3) — Accuracy obligations
+
+- **Art 15(1) — Appropriate level of accuracy.** "Appropriate" is defined by the intended purpose. A medical triage system has a higher accuracy floor than a marketing-copy generator. Document the accuracy floor for your system AND the rationale for choosing it.
+- **Art 15(2) — Performance consistent throughout the lifecycle.** Accuracy is not a one-time measurement. Re-measurement happens on every material change (model upgrade, training data refresh, deployment region added). Each re-measurement is logged with timestamp and result.
+- **Art 15(3) — Metrics declared in instructions for use.** The accuracy metrics + measurement methodology + known limitations must appear in the deployer transparency document (`aigis get eu-ai-act-art-13-deployer-transparency` Step 2). The metric definitions in this area's procedure above are the source for those declarations.
+
+### Verification checkpoint (EU jurisdiction)
+
+- Accuracy floor for the system is documented with rationale.
+- Latest accuracy measurement is dated within the last 90 days OR within the material-change interval (whichever is shorter).
+- Article 13 deployer instructions Section "Performance and accuracy" cites the same metrics + methodology + limitations as this area's measurement output. The two documents stay in sync.
+
+### Cross-reference
+
+- `aigis get fallback-patterns` — Article 15(4) robustness extension.
+- `aigis get prompt-security` and `aigis get input-validation` — Article 15(5) cybersecurity extensions.
+- `aigis get eu-ai-act-art-13-deployer-transparency` — where the declared accuracy metrics get published to deployers.

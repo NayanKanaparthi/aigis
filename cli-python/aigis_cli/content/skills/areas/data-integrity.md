@@ -5,6 +5,7 @@ controls:
   owasp: [LLM04]
   nist: [MAP-2.3, MEASURE-2.6]
   iso42001: [Annex-A.7]
+  eu_ai_act: [Art-10, Art-10(2), Art-10(3), Art-10(4)]
 min_risk_tier: all
 system_traits: [uses-rag, uses-finetuned]
 ---
@@ -255,3 +256,27 @@ class DataBatchManager {
 - **Adversarial documents.** Documents crafted to influence RAG retrieval (SEO-like attacks on vector search).
 - **Slow poisoning.** Gradual introduction of biased data over time. Monitor distribution shifts.
 - **Third-party data feeds.** External data sources can be compromised. Validate at every sync.
+
+## EU AI Act extensions
+
+> Renders only when `jurisdiction-eu` is in the user's trait set. Article 10 of the EU AI Act addresses training, validation, and testing data quality + governance for high-risk AI systems. The procedure above already covers most Article 10 obligations; the additions below are the EU-specific verification points.
+
+### Article 10 specifics for the data-integrity discipline
+
+- **Art 10(2)(a) — Design choices documented.** Each major design choice in the data pipeline (sampling strategy, deduplication, labelling protocol) is documented with its rationale. The Article 9 risk register cross-references these decisions.
+- **Art 10(3) — Relevance + representativeness + completeness.** For each data set, document:
+  - **Relevance**: how the data set matches the system's intended deployment context (geography, language, domain)
+  - **Representativeness**: demographic / contextual distribution; identified gaps; impact on performance for under-represented groups
+  - **Completeness**: known absences, with reasoned explanation of why they are acceptable for the intended purpose
+  - **Free of errors**: error rate measurement and the threshold considered acceptable
+  These four sub-criteria must be assessed for training, validation, AND testing sets independently — not just training.
+- **Art 10(4) — Geographical / behavioural / functional setting.** The data set's coverage of the intended deployment context is documented. A model trained on US English data being deployed for German users is a violation if not surfaced and mitigated.
+
+### Verification checkpoint (EU jurisdiction)
+
+For each training / validation / testing data set, a one-page documentation exists covering Art 10(3) sub-criteria + Art 10(4) deployment setting. This is appended to the Annex IV technical documentation (`aigis template eu-ai-act-annex-iv` Section 2.5).
+
+### Cross-reference
+
+- `aigis get bias-monitoring` covers Art 10(2)(f) bias examination — the bias-specific subset of Article 10.
+- `aigis get eu-ai-act-art-9-risk-management` — the design-choice rationales documented here are inputs to the Article 9 risk register.

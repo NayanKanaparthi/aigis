@@ -5,6 +5,7 @@ controls:
   owasp: [LLM06]
   nist: [MAP-3.5, MANAGE-1.3, MANAGE-4.1]
   iso42001: [Annex-A.9, Clause-8.4]
+  eu_ai_act: [Art-14, Art-14(4)]
 min_risk_tier: all
 system_traits: [is-agentic, influences-decisions, handles-minors, generates-code]
 ---
@@ -218,3 +219,40 @@ function buildResponse(assessment) {
 - **Chained actions.** An agent executing a sequence of individually-harmless actions that are collectively dangerous. Implement cumulative impact assessment.
 - **Approval fatigue.** If every action requires approval, humans rubber-stamp. Design tiered approval: auto-approve reads, flag writes, block deletes.
 - **Time-sensitive decisions.** Some contexts need fast responses. Define fallback behavior for when human review isn't available within the timeout.
+
+## EU AI Act extensions
+
+> Renders only when `jurisdiction-eu` is in the user's trait set. Article 14 mandates effective oversight by natural persons. The procedure above already covers approval gates, override mechanisms, and audit logs; the additions below are the EU-specific obligations on the *natural-person* role itself.
+
+### Article 14(4) — Five oversight capabilities
+
+The natural persons assigned oversight must be enabled to:
+
+- **(a) Understand capabilities and limitations** — they have read the deployer instructions (`aigis get eu-ai-act-art-13-deployer-transparency`); their training is documented.
+- **(b) Remain aware of automation bias** — the operational design includes anti-automation-bias measures: cooling-off periods on high-volume confirms, randomized spot-check requirements, dashboards that surface override frequency.
+- **(c) Correctly interpret output** — output presentation includes uncertainty indicators (cite `aigis get confidence-scoring`); operators know what each metric means and what action it triggers.
+- **(d) Decide not to use, override, or reverse output** — interface enables single-action override AND single-action "do not use this output" (different — override implies replacement; do-not-use implies rejection without replacement).
+- **(e) Intervene or interrupt** — the kill switch from `aigis get fallback-patterns` is operable by oversight personnel without engineering involvement, and tested quarterly.
+
+### Article 14(5) — Dual control for biometric ID systems
+
+For high-risk biometric identification systems (Annex III(1)(a)), Article 14(5) requires that "no action or decision is taken by the deployer on the basis of the identification resulting from the system unless that identification has been separately verified and confirmed by at least two natural persons with the necessary competence, training and authority."
+
+If your system performs biometric identification:
+- Implement a two-person confirmation gate — a single override does NOT enact a decision; two separate operators must independently confirm
+- Each confirmation is logged with operator identity (Art 12 audit log)
+- The two operators must be operationally independent (cannot be the same person logged in twice)
+- Exception: Article 14(5) second paragraph allows single-person operation for narrow law enforcement, border control, migration, or essential public services scenarios — document if this exception is invoked.
+
+### Verification checkpoint (EU jurisdiction)
+
+- Each oversight role has documented training records covering Art 14(4)(a)–(e) capabilities.
+- Override / do-not-use UI elements exist as separate actions, not a single confirmation flow.
+- Kill switch test results within the last 90 days, performed by oversight personnel (not engineers).
+- For biometric ID systems: dual-confirmation flow active in production, with both operator identities logged per decision.
+
+### Cross-reference
+
+- `aigis get fallback-patterns` — the kill switch this procedure references.
+- `aigis get confidence-scoring` — Article 14(4)(c) "correctly interpret output" requires confidence/uncertainty signals.
+- `aigis get eu-ai-act-art-13-deployer-transparency` — Article 14(4)(a) "understand capabilities and limitations" requires the deployer instructions document.

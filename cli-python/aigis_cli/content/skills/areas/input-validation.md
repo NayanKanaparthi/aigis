@@ -5,6 +5,7 @@ controls:
   owasp: [LLM01]
   nist: [MEASURE-2.7, MANAGE-1.3]
   iso42001: [Clause-8.2, Annex-A.6]
+  eu_ai_act: [Art-15(5)]
 min_risk_tier: all
 system_traits: [uses-llm, accepts-user-input]
 ---
@@ -372,6 +373,32 @@ async def assess_claim(body: AssessRequest) -> dict:
         raise HTTPException(status_code=502, detail="Model output schema violation")
     return parsed.model_dump()
 ```
+
+## EU AI Act extensions
+
+> Renders only when `jurisdiction-eu` is in the user's trait set. Article 15(5) addresses cybersecurity resilience including against adversarial input. This area covers the **input adversarial** dimension; system-prompt confidentiality is in `aigis get prompt-security`.
+
+### Article 15(5) — Cybersecurity obligations (input subset)
+
+- **Resilience against attempts to alter use, outputs, or performance by exploiting vulnerabilities.** Prompt injection is the canonical exploitation vector for LLM systems. The procedure above (length limits, character stripping, role separation, schema validation, **detection-and-block**) directly satisfies this.
+- **Specific resilience areas Art 15(5) names**:
+  - Data poisoning (covered partially here for input poisoning; training-data poisoning is in `aigis get data-integrity`)
+  - Model evasion (adversarial inputs designed to elicit harmful output — caught by injection detection)
+  - Adversarial examples (input perturbations that flip model decisions — caught by anomaly detection on input distributions, see `aigis get monitoring`)
+  - Confidentiality attacks (model extraction, system prompt extraction — covered in `aigis get prompt-security`)
+
+### Verification checkpoint (EU jurisdiction)
+
+- Prompt-injection detection-and-block (Step 2 of the procedure above) is active and the rejection rate is monitored.
+- Input anomaly detection is wired into `aigis get monitoring`'s alerting.
+- Adversarial-resilience red-team exercise is dated within the last 90 days; covered injection, evasion, and at least one model-extraction technique.
+
+### Cross-reference
+
+- `aigis get prompt-security` — Art 15(5) system-prompt confidentiality dimension.
+- `aigis get confidence-scoring` — Art 15(1)–(3) accuracy dimension.
+- `aigis get fallback-patterns` — Art 15(4) robustness dimension.
+- `aigis get data-integrity` — Art 15(5) training-data poisoning dimension.
 
 ## Related patterns
 

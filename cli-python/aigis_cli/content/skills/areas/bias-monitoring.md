@@ -5,6 +5,7 @@ controls:
   owasp: []
   nist: [MAP-2.3, MEASURE-2.11, MEASURE-3.1]
   iso42001: [Clause-6.1, Annex-C]
+  eu_ai_act: [Art-10(2)(f), Art-10(5)]
 min_risk_tier: medium
 system_traits: [influences-decisions, handles-health, handles-financial, generates-content, handles-minors]
 ---
@@ -170,3 +171,36 @@ async function generateFairnessReport(period = '30d') {
 - **Intersectional bias.** Bias may only appear at the intersection of two dimensions (e.g., region + claim type).
 - **Small sample sizes.** Statistical tests need sufficient data per segment. Flag when samples are too small.
 - **Feedback loops.** If biased outputs influence future training data, bias compounds over time.
+
+## EU AI Act extensions
+
+> Renders only when `jurisdiction-eu` is in the user's trait set. Article 10(2)(f) addresses bias examination of training/validation/testing data; Article 10(5) creates a narrow carve-out allowing PII processing for bias detection.
+
+### Article 10(2)(f) — Bias examination obligations
+
+The Aigis bias-monitoring procedure above must be ADDITIONALLY documented for EU high-risk systems with:
+
+- **Examination performed pre-deployment** — bias examination must occur before placing the system on the market. Post-deployment monitoring (the procedure above's Pattern 2) is necessary but not sufficient — Art 10 requires the pre-deployment examination as well.
+- **Coverage of biases likely to affect health, safety, or fundamental rights** — not "all biases." Document which protected characteristics + harm modes were examined, and the rationale for the scope.
+- **Mitigation actions documented** — when a bias is found, the action taken (data resampling, model adjustment, deployment restriction, accepted residual risk) is recorded. Article 9 risk register cross-references these.
+
+### Article 10(5) — PII for bias detection (special carve-out)
+
+Article 10(5) permits processing of "special categories of personal data" (Article 9 GDPR — race, ethnicity, religion, biometric data, etc.) for the purpose of bias detection and correction in high-risk AI systems, **only when**:
+
+1. Bias detection cannot be effectively achieved by anonymized or synthetic data
+2. The special-category data is subject to "appropriate safeguards" — pseudonymisation, access controls, deletion when no longer needed
+3. The data is NOT transmitted, transferred, or otherwise accessible to other parties
+
+This is an exception that requires affirmative justification. Document the reason effective bias detection requires special-category data, the safeguards applied, and the deletion timeline.
+
+### Verification checkpoint (EU jurisdiction)
+
+- Pre-deployment bias examination report exists and is dated before market placement.
+- Each examined characteristic has a documented mitigation status.
+- If special-category PII was used for bias detection (Art 10(5)), the justification + safeguards + deletion plan is documented.
+
+### Cross-reference
+
+- `aigis get data-integrity` covers Art 10(2)(a)–(e) — the broader data governance subset.
+- `aigis get pii-handling` covers runtime PII handling (different concern from training-time PII for bias detection).

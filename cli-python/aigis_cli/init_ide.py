@@ -137,7 +137,7 @@ def _write_or_refresh(target: Path, content: str, expected: str, refresh: bool, 
     sys.exit(1)
 
 
-def init(ide: str, refresh: bool = False) -> None:
+def init(ide: str, refresh: bool = False, ci: str | None = None, hook: bool = False) -> None:
     ide_lower = ide.lower()
     dest = IDE_DESTINATIONS.get(ide_lower)
     if not dest:
@@ -152,8 +152,239 @@ def init(ide: str, refresh: bool = False) -> None:
         skill_file = skill_dir / "SKILL.md"
         skill_dir.mkdir(parents=True, exist_ok=True)
         _write_or_refresh(skill_file, content, checksum, refresh, dest["instruction"], ide_lower, str(skill_file))
+    else:
+        target = Path.cwd() / dest["file"]
+        target.parent.mkdir(parents=True, exist_ok=True)
+        _write_or_refresh(target, content, checksum, refresh, dest["instruction"], ide_lower, dest["file"])
+
+    # v2.1: optional activation surfaces — additive, opt-in via flags.
+    if ci == "github":
+        install_github_action(refresh=refresh)
+    if hook:
+        install_pre_commit_hook(refresh=refresh)
+
+
+# ── v2.1 activation surfaces (mirror of lib/init.js) ───────────────────
+
+import hashlib
+
+GITHUB_ACTION_BODY = """name: aigis governance
+
+on:
+  pull_request:
+    branches: ['**']
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: aigis verify (declared areas)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install aigis
+        run: npm install -g @aigis-ai/cli
+
+      - name: Read .aigisrc.json
+        id: config
+        run: |
+          if [ -f .aigisrc.json ]; then
+            AREAS=$(node -e "console.log((JSON.parse(require('fs').readFileSync('.aigisrc.json'))['areas']||[]).join(','))")
+            JUR=$(node -e "console.log(JSON.parse(require('fs').readFileSync('.aigisrc.json'))['jurisdiction']||'')")
+            echo "areas=$AREAS" >> "$GITHUB_OUTPUT"
+            echo "jurisdiction=$JUR" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No .aigisrc.json found. Aigis is installed but no areas declared. See https://github.com/NayanKanaparthi/aigis"
+            echo "areas=" >> "$GITHUB_OUTPUT"
+            echo "jurisdiction=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate compliance report
+        if: steps.config.outputs.areas != ''
+        run: |
+          ARGS="--areas ${{ steps.config.outputs.areas }} --project ."
+          if [ -n "${{ steps.config.outputs.jurisdiction }}" ]; then
+            ARGS="$ARGS --jurisdiction ${{ steps.config.outputs.jurisdiction }}"
+          fi
+          aigis report $ARGS --output aigis-report.md
+          cat aigis-report.md
+
+      - name: Upload report artifact
+        if: steps.config.outputs.areas != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: aigis-compliance-report
+          path: aigis-report.md
+          retention-days: 30
+
+      - name: Run verify (per area, exit on FAIL)
+        if: steps.config.outputs.areas != ''
+        run: |
+          IFS=',' read -ra AREA_LIST <<< "${{ steps.config.outputs.areas }}"
+          FAILED=0
+          for AREA in "${AREA_LIST[@]}"; do
+            AREA=$(echo "$AREA" | xargs)
+            JUR_FLAG=""
+            if [ -n "${{ steps.config.outputs.jurisdiction }}" ]; then
+              JUR_FLAG="--jurisdiction ${{ steps.config.outputs.jurisdiction }}"
+            fi
+            if ! aigis verify "$AREA" --auto . $JUR_FLAG > /tmp/aigis-$AREA.txt; then
+              echo "::error title=aigis verify $AREA::FAIL or OVERCLAIM detected"
+              cat /tmp/aigis-$AREA.txt
+              FAILED=1
+            else
+              echo "::group::aigis verify $AREA"
+              cat /tmp/aigis-$AREA.txt
+              echo "::endgroup::"
+            fi
+          done
+          if [ "$FAILED" -ne 0 ]; then exit 1; fi
+"""
+
+PRE_COMMIT_BODY = """set -e
+
+if [ ! -f .aigisrc.json ]; then
+  echo "[aigis] No .aigisrc.json found. Skipping verify (configure to enable)."
+  exit 0
+fi
+
+if ! command -v aigis > /dev/null 2>&1; then
+  echo "[aigis] aigis CLI not on PATH. Skipping verify (install via 'npm i -g @aigis-ai/cli' or 'pip install aigis-cli')."
+  exit 0
+fi
+
+AREAS=$(node -e "console.log((JSON.parse(require('fs').readFileSync('.aigisrc.json'))['areas']||[]).join(' '))" 2>/dev/null || echo "")
+JUR=$(node -e "console.log(JSON.parse(require('fs').readFileSync('.aigisrc.json'))['jurisdiction']||'')" 2>/dev/null || echo "")
+
+if [ -z "$AREAS" ]; then
+  echo "[aigis] .aigisrc.json found but no 'areas' declared. Skipping."
+  exit 0
+fi
+
+JUR_FLAG=""
+if [ -n "$JUR" ]; then
+  JUR_FLAG="--jurisdiction $JUR"
+fi
+
+FAILED=0
+for AREA in $AREAS; do
+  if ! aigis verify "$AREA" --auto . $JUR_FLAG > /tmp/aigis-precommit-$AREA.txt 2>&1; then
+    echo "[aigis] FAIL or OVERCLAIM in $AREA — blocking commit."
+    echo
+    tail -40 /tmp/aigis-precommit-$AREA.txt
+    echo
+    FAILED=1
+  fi
+done
+
+if [ "$FAILED" -ne 0 ]; then
+  echo
+  echo "[aigis] Commit blocked. Fix the above OR commit with --no-verify to bypass."
+  exit 1
+fi
+
+echo "[aigis] All declared areas pass. Commit proceeding."
+"""
+
+
+def _sha256_short(s: str) -> str:
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()[:12]
+
+
+def render_github_action_workflow() -> str:
+    checksum = _sha256_short(GITHUB_ACTION_BODY)
+    return (
+        f"# aigis-action-checksum: {checksum}\n"
+        "# Installed by `aigis init <ide> --ci github`. Re-run with --refresh to update.\n"
+        "# Configure areas to verify by creating a .aigisrc.json in your repo root:\n"
+        '#   { "areas": ["pii-handling", "audit-logging"], "jurisdiction": "eu" }\n'
+        f"{GITHUB_ACTION_BODY}"
+    )
+
+
+def render_pre_commit_hook() -> str:
+    checksum = _sha256_short(PRE_COMMIT_BODY)
+    return (
+        "#!/usr/bin/env bash\n"
+        f"# aigis-hook-checksum: {checksum}\n"
+        "# Installed by `aigis init <ide> --hook`. Re-run with --refresh to update.\n"
+        "# Configure areas to verify by creating a .aigisrc.json in your repo root:\n"
+        '#   { "areas": ["pii-handling", "audit-logging"], "jurisdiction": "eu" }\n'
+        f"{PRE_COMMIT_BODY}"
+    )
+
+
+def install_github_action(refresh: bool = False) -> None:
+    target_dir = Path.cwd() / ".github" / "workflows"
+    target = target_dir / "aigis.yml"
+    display = ".github/workflows/aigis.yml"
+    content = render_github_action_workflow()
+    checksum = _sha256_short(GITHUB_ACTION_BODY)
+
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    if not target.exists():
+        target.write_text(content)
+        console.print(f"[green]✓ Installed CI workflow: {display}[/green]")
+        console.print("[dim]  Add a .aigisrc.json to your repo root to declare which areas to verify on PRs.[/dim]")
+        console.print('[dim]  Example: { "areas": ["pii-handling", "audit-logging"], "jurisdiction": "eu" }\n[/dim]')
         return
 
-    target = Path.cwd() / dest["file"]
-    target.parent.mkdir(parents=True, exist_ok=True)
-    _write_or_refresh(target, content, checksum, refresh, dest["instruction"], ide_lower, dest["file"])
+    existing = target.read_text(encoding="utf-8")
+    m = re.search(r"# aigis-action-checksum: ([a-f0-9]+)", existing)
+    existing_checksum = m.group(1) if m else None
+    if existing_checksum == checksum:
+        console.print(f"[dim]{display} is up to date.[/dim]")
+        return
+    if refresh:
+        target.write_text(content)
+        console.print(f"[green]✓ Refreshed {display} (checksum: {checksum})[/green]")
+        return
+    console.print(f"[yellow]⚠ {display} exists with a different checksum.[/yellow]")
+    console.print(f"[dim]  Existing: {existing_checksum or '(no checksum tag)'}[/dim]")
+    console.print(f"[dim]  Current:  {checksum}[/dim]")
+    console.print(f"  Re-run with [green]--refresh[/green] to overwrite, or remove the file manually.")
+
+
+def install_pre_commit_hook(refresh: bool = False) -> None:
+    git_dir = Path.cwd() / ".git"
+    if not git_dir.exists():
+        console.print("[yellow]⚠ Not a git repository (.git/ not found). Skipping pre-commit hook installation.[/yellow]")
+        return
+    target_dir = git_dir / "hooks"
+    target = target_dir / "pre-commit"
+    display = ".git/hooks/pre-commit"
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    content = render_pre_commit_hook()
+    checksum = _sha256_short(PRE_COMMIT_BODY)
+
+    if not target.exists():
+        target.write_text(content)
+        target.chmod(0o755)
+        console.print(f"[green]✓ Installed pre-commit hook: {display}[/green]")
+        console.print("[dim]  Add a .aigisrc.json to your repo root to declare which areas to verify on commit.[/dim]")
+        console.print('[dim]  Example: { "areas": ["pii-handling", "audit-logging"], "jurisdiction": "eu" }\n[/dim]')
+        return
+
+    existing = target.read_text(encoding="utf-8")
+    m = re.search(r"# aigis-hook-checksum: ([a-f0-9]+)", existing)
+    existing_checksum = m.group(1) if m else None
+    if existing_checksum == checksum:
+        console.print(f"[dim]{display} is up to date.[/dim]")
+        return
+    if refresh:
+        target.write_text(content)
+        target.chmod(0o755)
+        console.print(f"[green]✓ Refreshed {display} (checksum: {checksum})[/green]")
+        return
+    console.print(f"[yellow]⚠ {display} exists with a different checksum.[/yellow]")
+    console.print(f"[dim]  Existing: {existing_checksum or '(no checksum tag — likely not from aigis)'}[/dim]")
+    console.print(f"[dim]  Current:  {checksum}[/dim]")
+    console.print(f"  Re-run with [green]--refresh[/green] to overwrite (will replace your existing pre-commit hook).")

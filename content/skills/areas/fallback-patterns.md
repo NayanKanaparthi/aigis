@@ -5,6 +5,7 @@ controls:
   owasp: []
   nist: [MEASURE-2.6, MANAGE-2.3, MANAGE-2.4]
   iso42001: [Clause-8.2]
+  eu_ai_act: [Art-15(4)]
 min_risk_tier: all
 system_traits: [uses-llm, is-agentic, is-high-volume]
 ---
@@ -193,6 +194,33 @@ def _invoke_llm(text: str) -> dict[str, Any]:
     # so the breaker can count it.
     ...
 ```
+
+## EU AI Act extensions
+
+> Renders only when `jurisdiction-eu` is in the user's trait set. Article 15(4) addresses robustness — resilience to errors, faults, and inconsistencies. This area's procedure (kill switch, circuit breaker, fallback responses) is the operational implementation of Art 15(4).
+
+### Article 15(4) — Robustness obligations
+
+- **Resilience to errors, faults, inconsistencies.** The kill switch + circuit breaker patterns above directly satisfy this — they handle failures gracefully without cascading. EU compliance additionally requires:
+  - **Documented backup mechanisms** — for systems where availability matters (critical infrastructure, essential services per Annex III), the fallback path is documented in the technical documentation (Annex IV Section 3.2).
+  - **Resilience tested before deployment** — Article 15(4) is not just "have a kill switch"; it requires demonstrating the kill switch works under realistic failure conditions. Quarterly chaos-test exercises that trigger the breaker and confirm safe degradation.
+  - **Lifecycle robustness** — Art 15(2) requires consistent performance throughout lifecycle. When robustness degrades (fallback frequency increases), this is a signal feeding the Art 9 risk register and the Art 72 monitoring plan.
+
+### Article 15(4) ↔ Annex III high-risk specifics
+
+For high-risk systems in Annex III(2) (critical infrastructure), Annex III(5) (essential services), or Annex III(8) (justice administration), the robustness bar is higher: mean-time-to-recovery and graceful-degradation modes must be documented and tested. A "fail closed → 503" response may not be acceptable for an AI controlling traffic light timing or judicial scheduling.
+
+### Verification checkpoint (EU jurisdiction)
+
+- Kill switch test executed within the last 90 days; result documented (PASS/FAIL + recovery time).
+- Fallback responses for each failure mode documented in Annex IV Section 3.2.
+- For Annex III high-risk categories with availability requirements: documented graceful-degradation mode (not just hard-fail).
+
+### Cross-reference
+
+- `aigis get eu-ai-act-art-9-risk-management` — fallback frequency is a risk-register input.
+- `aigis get monitoring` — Article 72 post-market monitoring tracks fallback rates.
+- `aigis get human-oversight` — Article 14 oversight personnel operate the kill switch in production.
 
 ## Related patterns
 

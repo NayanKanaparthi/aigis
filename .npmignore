@@ -30,3 +30,4 @@ benchmarks/
 test/
 .env
 .env.*
+*.tgz

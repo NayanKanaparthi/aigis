@@ -151,16 +151,15 @@ const toolFor = (n) => (Object.hasOwn(TOOLS, n) ? TOOLS[n] : null);
 const keysOf = (o) => JSON.stringify(Object.keys(o).sort());
 
 class Context {
-  #tainted;
   constructor(derivedFrom = null) {
     const d = derivedFrom;
     this.items = []; this.paused = Boolean(d?.paused);
-    this.#tainted = d != null && !(d instanceof Context && !d.tainted);
+    this._tainted = d != null && !(d instanceof Context && !d.tainted);
   }
-  get tainted() { return this.#tainted || this.items.some((i) => i.trustLevel !== TrustLevel.TRUSTED); }
+  get tainted() { return this._tainted || this.items.some((i) => i.trustLevel !== TrustLevel.TRUSTED); }
   add(source, content, trustLevel = TrustLevel.UNTRUSTED) {
     if (this.tainted) trustLevel = TrustLevel.UNTRUSTED;
-    this.#tainted = trustLevel !== TrustLevel.TRUSTED;
+    this._tainted = trustLevel !== TrustLevel.TRUSTED;
     this.items.push({ source, trustLevel, content });
   }
 }

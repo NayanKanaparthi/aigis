@@ -185,7 +185,15 @@ program
       console.log(chalk.green(`  aigis verify ${f}`));
     }
 
-    console.log(chalk.dim(`\nControls: ${result.controls.owasp.length} OWASP, ${result.controls.nist.length} NIST, ${result.controls.iso.length} ISO`));
+    // v3.0 (SPEC S5.7, AC21): ATLAS count and threat-model pointer, only when
+    // classify attached an ATLAS block (absent when the catalog is unavailable).
+    const atlasCount = result.atlas && result.controls.atlas ? `, ${result.controls.atlas.length} ATLAS mitigations` : '';
+    console.log(chalk.dim(`\nControls: ${result.controls.owasp.length} OWASP, ${result.controls.nist.length} NIST, ${result.controls.iso.length} ISO${atlasCount}`));
+    if (result.atlas) {
+      console.log(chalk.bold('Threat model (MITRE ATLAS):'));
+      console.log(chalk.green(`  ${result.atlas.threats_command}`));
+      console.log(chalk.dim(`  ${result.atlas.disclaimer}`));
+    }
 
     // Workflow suggestion. Step 5 ships only fastapi-llm; future workflows will
     // be matched heuristically against the trait set.

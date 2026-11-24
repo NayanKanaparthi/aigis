@@ -1,0 +1,5690 @@
+{
+ "label": "baseline",
+ "generated_by": "build/atlas/evals/run-evals.js",
+ "git_head": "25c439714a9d638b859e9b3ebc70bea64de23011",
+ "product_tree_dirty": false,
+ "package_version": "2.1.1",
+ "atlas_source_sha256": "ac41ee9f99a47084ba5fdfc77ae83a28687e12390240fffeb37df7914ffe142d",
+ "oracle_facts": {
+  "tactics": 16,
+  "techniques": 221,
+  "sub_techniques": 92,
+  "mitigations": 44,
+  "mitigates_links": 494,
+  "case_studies": 77,
+  "maturity": {
+   "Demonstrated": 78,
+   "Feasible": 26,
+   "Realized": 117
+  },
+  "techniques_without_mitigation": 53
+ },
+ "capability": {
+  "threats_command": false,
+  "atlas_keys_in_classify": false
+ },
+ "sets": {
+  "dev": 10,
+  "heldout": 8
+ },
+ "seconds": 11.9,
+ "gates": [
+  {
+   "id": "EV-M5ii",
+   "pass": true,
+   "value": 4150,
+   "target": 5650
+  },
+  {
+   "id": "EV-M5v",
+   "pass": true,
+   "value": 50931,
+   "target": 64000
+  },
+  {
+   "id": "FORBIDDEN",
+   "pass": true,
+   "value": 0,
+   "target": 0
+  },
+  {
+   "id": "EV-M6 determinism",
+   "pass": true,
+   "value": "126/126",
+   "target": "all identical"
+  }
+ ],
+ "metrics": {
+  "resolver": {
+   "dev": {
+    "build_path_traits": {
+     "tp": 25,
+     "pred": 25,
+     "gold": 52,
+     "precision": 1,
+     "recall": 0.4808,
+     "macro_precision": 1,
+     "macro_recall": 0.4814
+    },
+    "classify_path_traits": {
+     "tp": 16,
+     "pred": 16,
+     "gold": 52,
+     "precision": 1,
+     "recall": 0.3077,
+     "macro_precision": 1,
+     "macro_recall": 0.3036
+    },
+    "classify_path_areas_existing": {
+     "tp": 39,
+     "pred": 40,
+     "gold": 104,
+     "precision": 0.975,
+     "recall": 0.375,
+     "macro_precision": 0.9286,
+     "macro_recall": 0.3576
+    },
+    "build_path_areas_existing": {
+     "tp": 57,
+     "pred": 58,
+     "gold": 104,
+     "precision": 0.9828,
+     "recall": 0.5481,
+     "macro_precision": 0.9444,
+     "macro_recall": 0.5299
+    },
+    "description_path_technique_recall_implied_by_build_traits": {
+     "tp": 54,
+     "pred": 54,
+     "gold": 105,
+     "precision": 1,
+     "recall": 0.5143,
+     "macro_precision": 1,
+     "macro_recall": 0.5408
+    }
+   },
+   "heldout": {
+    "build_path_traits": {
+     "tp": 8,
+     "pred": 9,
+     "gold": 39,
+     "precision": 0.8889,
+     "recall": 0.2051,
+     "macro_precision": 0.9167,
+     "macro_recall": 0.2417
+    },
+    "classify_path_traits": {
+     "tp": 8,
+     "pred": 8,
+     "gold": 39,
+     "precision": 1,
+     "recall": 0.2051,
+     "macro_precision": 1,
+     "macro_recall": 0.2417
+    },
+    "classify_path_areas_existing": {
+     "tp": 21,
+     "pred": 22,
+     "gold": 76,
+     "precision": 0.9545,
+     "recall": 0.2763,
+     "macro_precision": 0.875,
+     "macro_recall": 0.2904
+    },
+    "build_path_areas_existing": {
+     "tp": 22,
+     "pred": 24,
+     "gold": 76,
+     "precision": 0.9167,
+     "recall": 0.2895,
+     "macro_precision": 0.8438,
+     "macro_recall": 0.3043
+    },
+    "description_path_technique_recall_implied_by_build_traits": {
+     "tp": 20,
+     "pred": 23,
+     "gold": 90,
+     "precision": 0.8696,
+     "recall": 0.2222,
+     "macro_precision": 0.8929,
+     "macro_recall": 0.2377
+    }
+   }
+  },
+  "gold_in_scope_sizes": {
+   "dev": {
+    "per_description": {
+     "D1": 12,
+     "D2": 15,
+     "D3": 12,
+     "D4": 12,
+     "D5": 7,
+     "D6": 7,
+     "D7": 10,
+     "D8": 7,
+     "D9": 10,
+     "D10": 13
+    },
+    "max": 15
+   },
+   "heldout": {
+    "per_description": {
+     "H1": 17,
+     "H2": 10,
+     "H3": 7,
+     "H4": 12,
+     "H5": 15,
+     "H6": 10,
+     "H7": 4,
+     "H8": 15
+    },
+    "max": 17
+   }
+  },
+  "all_seeded_traits": {
+   "traits": 9,
+   "techniques_in_scope": 29,
+   "mitigation_counts": {
+    "in_scope": 33,
+    "with_area": 12,
+    "without_area": 21
+   },
+   "unmitigated": [
+    "AML.T0110"
+   ]
+  },
+  "EV-M3a": {
+   "ids_printed": 0,
+   "ids_valid": 0,
+   "unknown_ids": [],
+   "name_checks": 0,
+   "name_ok": 0,
+   "name_bad": [],
+   "maturity_checks": 0,
+   "maturity_ok": 0,
+   "maturity_bad": [],
+   "by_command": {},
+   "distinct_ids": 0,
+   "max_distinct_techniques_in_one_output": 0,
+   "accuracy": null,
+   "note": "no ATLAS id printed (no prior capability)"
+  },
+  "EV-M3c": {
+   "note": "no controls.atlas key in any area (no prior capability)"
+  },
+  "EV-M3d": {
+   "note": "content/index/atlas-entry-points.json absent (no prior capability)"
+  },
+  "EV-M3b": {
+   "note": "aigis threats does not exist (no prior capability)"
+  },
+  "EV-M1ii_M2ii": {
+   "note": "aigis threats does not exist (no prior capability)",
+   "recall": 0
+  },
+  "EV-M1iii_M2iii": {
+   "note": "aigis threats does not exist (no prior capability)",
+   "recall": 0
+  },
+  "EV-M5iii": {
+   "note": "aigis threats does not exist (no prior capability)"
+  },
+  "EV-M5iv": {
+   "note": "aigis threats does not exist (no prior capability)"
+  },
+  "EV-RT": {
+   "i_gt_traits_path": {
+    "tp": 0,
+    "positives": 5,
+    "predicted": 0,
+    "recall": 0,
+    "precision": null
+   },
+   "ii_description_path_build": {
+    "dev": {
+     "tp": 0,
+     "positives": 1,
+     "predicted": 0,
+     "recall": 0,
+     "precision": null
+    },
+    "heldout": {
+     "tp": 0,
+     "positives": 4,
+     "predicted": 0,
+     "recall": 0,
+     "precision": null
+    }
+   },
+   "ii_floor_new_areas_iff_resolver_is_agentic": false
+  },
+  "EV-M5ii": {
+   "core_md_chars": 4150,
+   "cap": 5650
+  },
+  "EV-M5v": {
+   "catalog_bytes": 50931,
+   "cap": 64000,
+   "max_distinct_techniques_in_one_output": 0,
+   "printed_whole": false
+  },
+  "new_area_sizes": {},
+  "forbidden_phrase": {
+   "outputs_scanned": 130,
+   "hits": 0,
+   "commands": []
+  },
+  "EV-M6": {
+   "commands": 126,
+   "identical": 126,
+   "differing": [],
+   "runs_per_command": 2
+  }
+ },
+ "static": {
+  "core_md_chars": 4150,
+  "catalog_bytes": 50931,
+  "entry_points_bytes": null,
+  "entry_points": null,
+  "areas": {
+   "audit-logging": {
+    "controls": {
+     "owasp": [],
+     "nist": [
+      "MEASURE-2.8",
+      "MANAGE-4.1",
+      "MANAGE-4.3"
+     ],
+     "iso42001": [
+      "Clause-9.1",
+      "Annex-A.6"
+     ],
+     "eu_ai_act": [
+      "Art-12",
+      "Art-12(1)",
+      "Art-12(2)"
+     ]
+    },
+    "file_chars": 8008,
+    "body_chars": 7751,
+    "body_chars_no_comments": 7751
+   },
+   "bias-monitoring": {
+    "controls": {
+     "owasp": [],
+     "nist": [
+      "MAP-2.3",
+      "MEASURE-2.11",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Clause-6.1",
+      "Annex-C"
+     ],
+     "eu_ai_act": [
+      "Art-10(2)(f)",
+      "Art-10(5)"
+     ]
+    },
+    "file_chars": 9169,
+    "body_chars": 8835,
+    "body_chars_no_comments": 8835
+   },
+   "confidence-scoring": {
+    "controls": {
+     "owasp": [
+      "LLM09"
+     ],
+     "nist": [
+      "MAP-2.2",
+      "MEASURE-2.5",
+      "MEASURE-2.9"
+     ],
+     "iso42001": [
+      "Annex-A.8"
+     ],
+     "eu_ai_act": [
+      "Art-15(1)",
+      "Art-15(2)",
+      "Art-15(3)"
+     ]
+    },
+    "file_chars": 8201,
+    "body_chars": 7883,
+    "body_chars_no_comments": 7883
+   },
+   "data-integrity": {
+    "controls": {
+     "owasp": [
+      "LLM04"
+     ],
+     "nist": [
+      "MAP-2.3",
+      "MEASURE-2.6"
+     ],
+     "iso42001": [
+      "Annex-A.7"
+     ],
+     "eu_ai_act": [
+      "Art-10",
+      "Art-10(2)",
+      "Art-10(3)",
+      "Art-10(4)"
+     ]
+    },
+    "file_chars": 11200,
+    "body_chars": 10928,
+    "body_chars_no_comments": 10928
+   },
+   "eu-ai-act-art-13-deployer-transparency": {
+    "controls": {
+     "owasp": [],
+     "nist": [
+      "MAP-3.4",
+      "MAP-4.1",
+      "MEASURE-2.9"
+     ],
+     "iso42001": [
+      "Clause-7.4",
+      "Annex-A.8"
+     ],
+     "eu_ai_act": [
+      "Art-13",
+      "Art-13(1)",
+      "Art-13(2)",
+      "Art-13(3)"
+     ]
+    },
+    "file_chars": 12901,
+    "body_chars": 12552,
+    "body_chars_no_comments": 12552
+   },
+   "eu-ai-act-art-50-transparency-disclosure": {
+    "controls": {
+     "owasp": [],
+     "nist": [
+      "MEASURE-3.3"
+     ],
+     "iso42001": [
+      "Annex-A.8"
+     ],
+     "eu_ai_act": [
+      "Art-50",
+      "Art-50(1)",
+      "Art-50(2)",
+      "Art-50(3)",
+      "Art-50(4)"
+     ]
+    },
+    "file_chars": 12119,
+    "body_chars": 11730,
+    "body_chars_no_comments": 11730
+   },
+   "eu-ai-act-art-73-incident-reporting": {
+    "controls": {
+     "owasp": [],
+     "nist": [
+      "MANAGE-4.1",
+      "MANAGE-4.3"
+     ],
+     "iso42001": [
+      "Clause-10.1",
+      "Clause-10.2"
+     ],
+     "eu_ai_act": [
+      "Art-73",
+      "Art-73(1)",
+      "Art-73(2)",
+      "Art-73(3)",
+      "Art-73(7)",
+      "Art-73(8)"
+     ]
+    },
+    "file_chars": 12919,
+    "body_chars": 12567,
+    "body_chars_no_comments": 12567
+   },
+   "eu-ai-act-art-9-risk-management": {
+    "controls": {
+     "owasp": [],
+     "nist": [
+      "GOVERN-1.1",
+      "GOVERN-1.2",
+      "MANAGE-1.1",
+      "MANAGE-2.1"
+     ],
+     "iso42001": [
+      "Clause-6.1",
+      "Clause-6.2",
+      "Clause-8.1"
+     ],
+     "eu_ai_act": [
+      "Art-9",
+      "Art-9(2)",
+      "Art-9(5)",
+      "Art-9(7)"
+     ]
+    },
+    "file_chars": 13125,
+    "body_chars": 12766,
+    "body_chars_no_comments": 12766
+   },
+   "explainability": {
+    "controls": {
+     "owasp": [],
+     "nist": [
+      "MEASURE-2.8",
+      "MEASURE-2.9"
+     ],
+     "iso42001": [
+      "Annex-A.8",
+      "Clause-7.4"
+     ]
+    },
+    "file_chars": 6184,
+    "body_chars": 5934,
+    "body_chars_no_comments": 5934
+   },
+   "fallback-patterns": {
+    "controls": {
+     "owasp": [],
+     "nist": [
+      "MEASURE-2.6",
+      "MANAGE-2.3",
+      "MANAGE-2.4"
+     ],
+     "iso42001": [
+      "Clause-8.2"
+     ],
+     "eu_ai_act": [
+      "Art-15(4)"
+     ]
+    },
+    "file_chars": 12683,
+    "body_chars": 12407,
+    "body_chars_no_comments": 12407
+   },
+   "human-oversight": {
+    "controls": {
+     "owasp": [
+      "LLM06"
+     ],
+     "nist": [
+      "MAP-3.5",
+      "MANAGE-1.3",
+      "MANAGE-4.1"
+     ],
+     "iso42001": [
+      "Annex-A.9",
+      "Clause-8.4"
+     ],
+     "eu_ai_act": [
+      "Art-14",
+      "Art-14(4)"
+     ]
+    },
+    "file_chars": 11369,
+    "body_chars": 11060,
+    "body_chars_no_comments": 11060
+   },
+   "input-validation": {
+    "controls": {
+     "owasp": [
+      "LLM01"
+     ],
+     "nist": [
+      "MEASURE-2.7",
+      "MANAGE-1.3"
+     ],
+     "iso42001": [
+      "Clause-8.2",
+      "Annex-A.6"
+     ],
+     "eu_ai_act": [
+      "Art-15(5)"
+     ]
+    },
+    "file_chars": 20579,
+    "body_chars": 20294,
+    "body_chars_no_comments": 19726
+   },
+   "monitoring": {
+    "controls": {
+     "owasp": [],
+     "nist": [
+      "MEASURE-2.4",
+      "MEASURE-3.1",
+      "MANAGE-4.1",
+      "MANAGE-4.2"
+     ],
+     "iso42001": [
+      "Clause-9.1",
+      "Clause-10"
+     ],
+     "eu_ai_act": [
+      "Art-72",
+      "Art-72(1)",
+      "Art-72(2)",
+      "Art-72(3)",
+      "Art-72(4)"
+     ]
+    },
+    "file_chars": 9283,
+    "body_chars": 8957,
+    "body_chars_no_comments": 8957
+   },
+   "output-sanitization": {
+    "controls": {
+     "owasp": [
+      "LLM05"
+     ],
+     "nist": [
+      "MEASURE-2.6",
+      "MEASURE-2.7"
+     ],
+     "iso42001": [
+      "Clause-8.2"
+     ]
+    },
+    "file_chars": 5952,
+    "body_chars": 5748,
+    "body_chars_no_comments": 5748
+   },
+   "pii-handling": {
+    "controls": {
+     "owasp": [
+      "LLM02"
+     ],
+     "nist": [
+      "MAP-2.1",
+      "MEASURE-2.10"
+     ],
+     "iso42001": [
+      "Annex-A.7",
+      "Annex-A.4"
+     ]
+    },
+    "file_chars": 11358,
+    "body_chars": 11097,
+    "body_chars_no_comments": 11097
+   },
+   "prompt-security": {
+    "controls": {
+     "owasp": [
+      "LLM07"
+     ],
+     "nist": [
+      "MEASURE-2.7",
+      "MEASURE-2.8"
+     ],
+     "iso42001": [
+      "Clause-8.2"
+     ],
+     "eu_ai_act": [
+      "Art-15(5)"
+     ]
+    },
+    "file_chars": 7388,
+    "body_chars": 7152,
+    "body_chars_no_comments": 7152
+   },
+   "rag-security": {
+    "controls": {
+     "owasp": [
+      "LLM08"
+     ],
+     "nist": [
+      "MEASURE-2.7"
+     ],
+     "iso42001": [
+      "Clause-8.2",
+      "Annex-A.7"
+     ]
+    },
+    "file_chars": 7974,
+    "body_chars": 7785,
+    "body_chars_no_comments": 7785
+   },
+   "rate-limiting": {
+    "controls": {
+     "owasp": [
+      "LLM10"
+     ],
+     "nist": [
+      "MEASURE-2.6",
+      "MANAGE-2.4"
+     ],
+     "iso42001": [
+      "Clause-8.2"
+     ]
+    },
+    "file_chars": 11825,
+    "body_chars": 11581,
+    "body_chars_no_comments": 10985
+   },
+   "supply-chain": {
+    "controls": {
+     "owasp": [
+      "LLM03"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-3.1",
+      "MANAGE-3.2"
+     ],
+     "iso42001": [
+      "Annex-A.10"
+     ]
+    },
+    "file_chars": 6926,
+    "body_chars": 6670,
+    "body_chars_no_comments": 6670
+   }
+  }
+ },
+ "init": {
+  "cursor": {
+   "exit": 0,
+   "stdout_chars": 100,
+   "stderr_first_line": "",
+   "files": {
+    "proj/.cursorrules": {
+     "chars": 18726,
+     "sha256": "bf370efb86016c8cf34930c1b60c5ff803bb089ed4f5dce900f00846398f796f",
+     "resolver_block_sha256": "87c91d93907fe76704d4f1d9128a2c862c68bd48991d69e4ef846f4b8f96e060"
+    }
+   }
+  },
+  "windsurf": {
+   "exit": 0,
+   "stdout_chars": 104,
+   "stderr_first_line": "",
+   "files": {
+    "proj/.windsurfrules": {
+     "chars": 18726,
+     "sha256": "bf370efb86016c8cf34930c1b60c5ff803bb089ed4f5dce900f00846398f796f",
+     "resolver_block_sha256": "87c91d93907fe76704d4f1d9128a2c862c68bd48991d69e4ef846f4b8f96e060"
+    }
+   }
+  },
+  "copilot": {
+   "exit": 0,
+   "stdout_chars": 103,
+   "stderr_first_line": "",
+   "files": {
+    "proj/.github/copilot-instructions.md": {
+     "chars": 18726,
+     "sha256": "bf370efb86016c8cf34930c1b60c5ff803bb089ed4f5dce900f00846398f796f",
+     "resolver_block_sha256": "87c91d93907fe76704d4f1d9128a2c862c68bd48991d69e4ef846f4b8f96e060"
+    }
+   }
+  },
+  "claude-code": {
+   "exit": 0,
+   "stdout_chars": 136,
+   "stderr_first_line": "",
+   "files": {
+    "home/.claude/skills/aigis/SKILL.md": {
+     "chars": 18726,
+     "sha256": "bf370efb86016c8cf34930c1b60c5ff803bb089ed4f5dce900f00846398f796f",
+     "resolver_block_sha256": "87c91d93907fe76704d4f1d9128a2c862c68bd48991d69e4ef846f4b8f96e060"
+    }
+   }
+  }
+ },
+ "verify": {
+  "audit-logging": {
+   "json": {
+    "exit": 0,
+    "chars": 2413,
+    "sha256": "8e0991770837e81b39ef45bb7d990a2b1e0a90eae892d7423c82df9e310b1a73",
+    "stderr_first_line": ""
+   },
+   "text": {
+    "exit": 0,
+    "chars": 1517,
+    "sha256": "969162e8a94f2b36ff77df08082a4776486606fcb7097d769ea6889f95515113",
+    "stderr_first_line": ""
+   },
+   "cited_controls": {
+    "owasp": [],
+    "nist": [
+     "MEASURE-2.8",
+     "MANAGE-4.1",
+     "MANAGE-4.3"
+    ],
+    "iso42001": [
+     "Clause-9.1",
+     "Annex-A.6"
+    ],
+    "eu_ai_act": []
+   }
+  },
+  "bias-monitoring": {
+   "json": {
+    "exit": 0,
+    "chars": 1877,
+    "sha256": "cb88b2a4a0f7f49b2212e80eea13e68a9d175a4ecd0338b466f659b588fc9645",
+    "stderr_first_line": ""
+   },
+   "text": {
+    "exit": 0,
+    "chars": 1559,
+    "sha256": "f7f388573a8b58b74247da760da3754bd268dd444ab03446e59f5f7e6462505e",
+    "stderr_first_line": ""
+   },
+   "cited_controls": {
+    "owasp": [],
+    "nist": [
+     "MAP-2.3",
+     "MEASURE-2.11",
+     "MEASURE-3.1"
+    ],
+    "iso42001": [
+     "Clause-6.1",
+     "Annex-C"
+    ],
+    "eu_ai_act": []
+   }
+  },
+  "confidence-scoring": {
+   "json": {
+    "exit": 0,
+    "chars": 2326,
+    "sha256": "ca3fdf9ab26574840076a8646c426ae2c45bd91065c58baefdce7fb0a254ba37",
+    "stderr_first_line": ""
+   },
+   "text": {
+    "exit": 0,
+    "chars": 1531,
+    "sha256": "f0fc8cda7e4a7b4520c56d040a9828f23fe4c78bf2212c6be726134832d46e58",
+    "stderr_first_line": ""
+   },
+   "cited_controls": {
+    "owasp": [
+     "LLM09"
+    ],
+    "nist": [
+     "MAP-2.2",
+     "MEASURE-2.5",
+     "MEASURE-2.9"
+    ],
+    "iso42001": [
+     "Annex-A.8"
+    ],
+    "eu_ai_act": []
+   }
+  },
+  "data-integrity": {
+   "json": {
+    "exit": 0,
+    "chars": 1377,
+    "sha256": "6cab972183892d16ffe2c7c98347c34fabbcd3f15219b84de077b5be69278dad",
+    "stderr_first_line": ""
+   },
+   "text": {
+    "exit": 0,
+    "chars": 1340,
+    "sha256": "a058dd25aebb3bd429a672843250dcf0c37fb6bfc6d0afba55141115787cfae7",
+    "stderr_first_line": ""
+   },
+   "cited_controls": {
+    "owasp": [
+     "LLM04"
+    ],
+    "nist": [
+     "MAP-2.3",
+     "MEASURE-2.6"
+    ],
+    "iso42001": [
+     "Annex-A.7"
+    ],
+    "eu_ai_act": []
+   }
+  },
+  "eu-ai-act-art-50-transparency-disclosure": {
+   "json": {
+    "exit": 1,
+    "chars": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_first_line": "Error verifying \"eu-ai-act-art-50-transparency-disclosure\": No auto-verify rules for pattern area \"eu-ai-act-art-50-transparency-disclosure\". Known areas: audit-logging, bias-monitoring, confidence-sc"
+   },
+   "text": {
+    "exit": 1,
+    "chars": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_first_line": "Error verifying \"eu-ai-act-art-50-transparency-disclosure\": No auto-verify rules for pattern area \"eu-ai-act-art-50-transparency-disclosure\". Known areas: audit-logging, bias-monitoring, confidence-sc"
+   },
+   "cited_controls": null,
+   "atlas": null
+  },
+  "explainability": {
+   "json": {
+    "exit": 0,
+    "chars": 2206,
+    "sha256": "5d531529c9b484276160fa73b55a1beca9ef8ea9d901a4cfcc35635561941c73",
+    "stderr_first_line": ""
+   },
+   "text": {
+    "exit": 0,
+    "chars": 1460,
+    "sha256": "ebbd8ecc72c1be078003ea77e2870f0780febddb5f4ab569bd9a147622927f13",
+    "stderr_first_line": ""
+   },
+   "cited_controls": {
+    "owasp": [],
+    "nist": [
+     "MEASURE-2.8",
+     "MEASURE-2.9"
+    ],
+    "iso42001": [
+     "Annex-A.8",
+     "Clause-7.4"
+    ],
+    "eu_ai_act": []
+   }
+  },
+  "fallback-patterns": {
+   "json": {
+    "exit": 0,
+    "chars": 2894,
+    "sha256": "f8ad525e73647e8f8a09fcfaac56e7ea3d1a5d6b3d203eb2e635a4d7b338a8c0",
+    "stderr_first_line": ""
+   },
+   "text": {
+    "exit": 0,
+    "chars": 1781,
+    "sha256": "699484a38d0d26f9f829bdafdaa6b0628c0cfbfbe5ba90b1a971c4f203a596ee",
+    "stderr_first_line": ""
+   },
+   "cited_controls": {
+    "owasp": [],
+    "nist": [
+     "MEASURE-2.6",
+     "MANAGE-2.3",
+     "MANAGE-2.4"
+    ],
+    "iso42001": [
+     "Clause-8.2"
+    ],
+    "eu_ai_act": []
+   }
+  },
+  "human-oversight": {
+   "json": {
+    "exit": 0,
+    "chars": 2609,
+    "sha256": "3e0472c22f7d202bb81c48a1f73237a3e73d6dad337c30ddf118970db075715c",
+    "stderr_first_line": ""
+   },
+   "text": {
+    "exit": 0,
+    "chars": 1636,
+    "sha256": "72af99482fe56172509a63c5920bd24f9084ad91548409ada2d99f59eff10ed7",
+    "stderr_first_line": ""
+   },
+   "cited_controls": {
+    "owasp": [
+     "LLM06"
+    ],
+    "nist": [
+     "MAP-3.5",
+     "MANAGE-1.3",
+     "MANAGE-4.1"
+    ],
+    "iso42001": [
+     "Annex-A.9",
+     "Clause-8.4"
+    ],
+    "eu_ai_act": []
+   }
+  },
+  "input-validation": {
+   "json": {
+    "exit": 0,
+    "chars": 4605,
+    "sha256": "e271b04c50386d000744173c72d9bc0b52e7861a3f5ecd8599b250876d6af1d9",
+    "stderr_first_line": ""
+   },
+   "text": {
+    "exit": 0,
+    "chars": 2239,
+    "sha256": "1dd96aca7c1757a6d5bcfcabe8048a76d2dde7fffacdff6b9dd040cbebccf5e2",
+    "stderr_first_line": ""
+   },
+   "cited_controls": {
+    "owasp": [
+     "LLM01"
+    ],
+    "nist": [
+     "MEASURE-2.7",
+     "MANAGE-1.3"
+    ],
+    "iso42001": [
+     "Clause-8.2",
+     "Annex-A.6"
+    ],
+    "eu_ai_act": []
+   }
+  },
+  "monitoring": {
+   "json": {
+    "exit": 0,
+    "chars": 2333,
+    "sha256": "38509c7dda324722160898a1f1cef6fa84f103e87c18fcc1bc6c46f78da59b57",
+    "stderr_first_line": ""
+   },
+   "text": {
+    "exit": 0,
+    "chars": 1479,
+    "sha256": "13db7af88ea835fcb7e99d892a51bf287eb9a629d851915b131ac1e2fb119196",
+    "stderr_first_line": ""
+   },
+   "cited_controls": {
+    "owasp": [],
+    "nist": [
+     "MEASURE-2.4",
+     "MEASURE-3.1",
+     "MANAGE-4.1",
+     "MANAGE-4.2"
+    ],
+    "iso42001": [
+     "Clause-9.1",
+     "Clause-10"
+    ],
+    "eu_ai_act": []
+   }
+  },
+  "output-sanitization": {
+   "json": {
+    "exit": 0,
+    "chars": 1977,
+    "sha256": "4665828ce2877a90bee6700c46d4810e32f5d988cc2fe859326ac3800ed85d54",
+    "stderr_first_line": ""
+   },
+   "text": {
+    "exit": 0,
+    "chars": 1653,
+    "sha256": "c65ebdf16dcd24dc7fd6d6a971c4cb76c20dfaf3fafe98e8e438d96673776c20",
+    "stderr_first_line": ""
+   },
+   "cited_controls": {
+    "owasp": [
+     "LLM05"
+    ],
+    "nist": [
+     "MEASURE-2.6",
+     "MEASURE-2.7"
+    ],
+    "iso42001": [
+     "Clause-8.2"
+    ],
+    "eu_ai_act": []
+   }
+  },
+  "pii-handling": {
+   "json": {
+    "exit": 0,
+    "chars": 2683,
+    "sha256": "3147ba905b4949cff502b388ccbf6c710b5fd6c3e5c1f4182b1edcb39a33a7b2",
+    "stderr_first_line": ""
+   },
+   "text": {
+    "exit": 0,
+    "chars": 2044,
+    "sha256": "e7f67b8cfbc7179e6892360949677a81b48250163a926c214281680a41c24673",
+    "stderr_first_line": ""
+   },
+   "cited_controls": {
+    "owasp": [
+     "LLM02"
+    ],
+    "nist": [
+     "MAP-2.1",
+     "MEASURE-2.10"
+    ],
+    "iso42001": [
+     "Annex-A.7",
+     "Annex-A.4"
+    ],
+    "eu_ai_act": []
+   }
+  },
+  "prompt-security": {
+   "json": {
+    "exit": 0,
+    "chars": 1662,
+    "sha256": "8da948356704bd69b74ec79277954cf02a47689549ce6287f3b6028d95a6fe1d",
+    "stderr_first_line": ""
+   },
+   "text": {
+    "exit": 0,
+    "chars": 1560,
+    "sha256": "c727cafde1f933a2c2be48a493eca9bdcf1d823441fa405202e6ccdd1c5ec295",
+    "stderr_first_line": ""
+   },
+   "cited_controls": {
+    "owasp": [
+     "LLM07"
+    ],
+    "nist": [
+     "MEASURE-2.7",
+     "MEASURE-2.8"
+    ],
+    "iso42001": [
+     "Clause-8.2"
+    ],
+    "eu_ai_act": []
+   }
+  },
+  "rag-security": {
+   "json": {
+    "exit": 0,
+    "chars": 1023,
+    "sha256": "9da70b45fc8c7c9ef2328e852f271d1b3c4f3c0ce77b9d945b65e296296f49b3",
+    "stderr_first_line": ""
+   },
+   "text": {
+    "exit": 0,
+    "chars": 1174,
+    "sha256": "ed83f125a91a6dd36b1c383763d76b10e1d8c636df1395c72d9c28cc80164b0a",
+    "stderr_first_line": ""
+   },
+   "cited_controls": {
+    "owasp": [
+     "LLM08"
+    ],
+    "nist": [
+     "MEASURE-2.7"
+    ],
+    "iso42001": [
+     "Clause-8.2",
+     "Annex-A.7"
+    ],
+    "eu_ai_act": []
+   }
+  },
+  "rate-limiting": {
+   "json": {
+    "exit": 0,
+    "chars": 2812,
+    "sha256": "f7a3adb7d1104d3e4c7dc92f71fc1ab9e7afe85c065e7dc48a2bec514a68efad",
+    "stderr_first_line": ""
+   },
+   "text": {
+    "exit": 0,
+    "chars": 1708,
+    "sha256": "3e18f1c25143773660d82ee761a71d44d14172f9c9ef5a5bd555acc5c2f446de",
+    "stderr_first_line": ""
+   },
+   "cited_controls": {
+    "owasp": [
+     "LLM10"
+    ],
+    "nist": [
+     "MEASURE-2.6",
+     "MANAGE-2.4"
+    ],
+    "iso42001": [
+     "Clause-8.2"
+    ],
+    "eu_ai_act": []
+   }
+  },
+  "supply-chain": {
+   "json": {
+    "exit": 0,
+    "chars": 2742,
+    "sha256": "4a59d6badd48348cd22d045de881799482c885255c69548ef2ca3bb0064cded1",
+    "stderr_first_line": ""
+   },
+   "text": {
+    "exit": 0,
+    "chars": 1505,
+    "sha256": "b6628494795f8512be01274335cc5c431de4ebd8a87b02a94abb6eacd8cab1e4",
+    "stderr_first_line": ""
+   },
+   "cited_controls": {
+    "owasp": [
+     "LLM03"
+    ],
+    "nist": [
+     "GOVERN-6.1",
+     "GOVERN-6.2",
+     "MANAGE-3.1",
+     "MANAGE-3.2"
+    ],
+    "iso42001": [
+     "Annex-A.10"
+    ],
+    "eu_ai_act": []
+   }
+  }
+ },
+ "descriptions": [
+  {
+   "set": "dev",
+   "id": "D1",
+   "gt_traits": [
+    "accepts-user-input",
+    "is-external",
+    "processes-pii",
+    "uses-llm",
+    "uses-thirdparty-api"
+   ],
+   "needs_agent_security": false,
+   "classify_desc": {
+    "exit": 0,
+    "chars": 2147,
+    "risk_tier": "LOW",
+    "reason": "no high/medium triggers",
+    "traits": [
+     "accepts-user-input",
+     "uses-llm",
+     "uses-thirdparty-api"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "prompt-security",
+     "supply-chain"
+    ],
+    "templates": [],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM03",
+      "LLM05",
+      "LLM07"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.10",
+      "Annex-A.6",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "resolver": {
+     "high_confidence_matches": [
+      {
+       "phrase": "chatbot",
+       "traits": [
+        "uses-llm",
+        "accepts-user-input"
+       ]
+      },
+      {
+       "phrase": "Claude",
+       "traits": [
+        "uses-llm",
+        "uses-thirdparty-api"
+       ]
+      }
+     ],
+     "low_confidence_suggestions": [
+      {
+       "id": "1",
+       "phrase": "customer support",
+       "traits": [
+        "accepts-user-input",
+        "is-external"
+       ],
+       "confirmation_prompt": "You mentioned customer support. Is this exposed directly to customers (external) or only used by your support team (internal)? (yes / no / unsure)",
+       "notes": "Some support tools are agent-only.",
+       "user_decision": "no"
+      }
+     ],
+     "traits_from_description": [
+      "accepts-user-input",
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "traits_from_flag": [],
+     "final_traits": [
+      "accepts-user-input",
+      "uses-llm",
+      "uses-thirdparty-api"
+     ]
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1347,
+    "risk_tier": "MEDIUM",
+    "reason": "processes-pii",
+    "traits": [
+     "accepts-user-input",
+     "is-external",
+     "processes-pii",
+     "uses-llm",
+     "uses-thirdparty-api"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "confidence-scoring",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "pii-handling",
+     "prompt-security",
+     "rate-limiting",
+     "supply-chain"
+    ],
+    "templates": [
+     "intended-purpose-doc",
+     "third-party-assessment"
+    ],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM03",
+      "LLM05",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-2.4",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MEASURE-2.10",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.10",
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 0,
+    "brief_chars": 90672,
+    "char_count": 90672,
+    "mode": "full",
+    "auto_fallback": false,
+    "meta": {
+     "mode": "full",
+     "auto_fallback": false,
+     "input_was_normalized": true,
+     "confirmed_traits": [
+      "accepts-user-input",
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "uncertain_traits": [
+      "is-external"
+     ],
+     "all_traits": [
+      "accepts-user-input",
+      "is-external",
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "risk_tier": "MEDIUM",
+     "areas": [
+      "audit-logging",
+      "confidence-scoring",
+      "input-validation",
+      "monitoring",
+      "output-sanitization",
+      "prompt-security",
+      "rate-limiting",
+      "supply-chain"
+     ],
+     "infra": [
+      "logging",
+      "secrets",
+      "rate-limiting"
+     ],
+     "templates": [
+      "intended-purpose-doc",
+      "third-party-assessment"
+     ],
+     "char_count": 90672,
+     "char_cap": 120000,
+     "low_confidence_matches": [
+      {
+       "slug": "t-customer-support",
+       "phrase": "customer support",
+       "traits": [
+        "accepts-user-input",
+        "is-external"
+       ],
+       "confirmation_prompt": "You mentioned customer support. Is this exposed directly to customers (external) or only used by your support team (internal)? (yes / no / unsure)",
+       "notes": "Some support tools are agent-only."
+      }
+     ],
+     "user_decisions": [
+      {
+       "id": "1",
+       "phrase": "customer support",
+       "traits": [
+        "accepts-user-input",
+        "is-external"
+       ],
+       "confirmation_prompt": "You mentioned customer support. Is this exposed directly to customers (external) or only used by your support team (internal)? (yes / no / unsure)",
+       "notes": "Some support tools are agent-only.",
+       "slug": "t-customer-support",
+       "user_decision": "unsure"
+      }
+     ],
+     "generated_at": "2026-11-24T21:38:22.758Z",
+     "version": "2.1.1"
+    },
+    "has_threat_section": false
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 28736,
+     "sha256": "ebbf636afed96c3eb88ff321a2def819e32d32e24ad0d51ce215712478f14a5c",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 9803,
+     "sha256": "6fc31a00cbd646c6ec717c5c9c9782b0a0985d550531bebce0c4317eff6b624b",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM03",
+      "LLM05",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-2.4",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MEASURE-2.10",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.10",
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "id": "D2",
+   "gt_traits": [
+    "accepts-user-input",
+    "is-external",
+    "uses-llm",
+    "uses-rag"
+   ],
+   "needs_agent_security": false,
+   "classify_desc": {
+    "exit": 1,
+    "chars": 387,
+    "error": "No traits resolved from description or --traits flag.",
+    "resolver": {
+     "high_confidence_matches": [],
+     "low_confidence_suggestions": [],
+     "traits_from_description": [],
+     "traits_from_flag": [],
+     "final_traits": []
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1144,
+    "risk_tier": "MEDIUM",
+    "reason": "is-external",
+    "traits": [
+     "accepts-user-input",
+     "is-external",
+     "uses-llm",
+     "uses-rag"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "confidence-scoring",
+     "data-integrity",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "prompt-security",
+     "rag-security",
+     "rate-limiting"
+    ],
+    "templates": [
+     "intended-purpose-doc"
+    ],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM04",
+      "LLM05",
+      "LLM07",
+      "LLM08",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 1,
+    "stderr_first_line": "No traits resolved from description. Try a more specific description, or use `aigis classify --traits ...` directly.",
+    "stdout_chars": 0,
+    "no_brief": true
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 25169,
+     "sha256": "4ac43353905c8bc26a061756f2228a76bb40285d6e043f640c8677f032d07e69",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 8765,
+     "sha256": "26557a5b913218b4aa4aa49cdb1e5fc14c533b53d9856c732a0b956cc1d6818f",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM04",
+      "LLM05",
+      "LLM07",
+      "LLM08",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "id": "D3",
+   "gt_traits": [
+    "accepts-user-input",
+    "influences-decisions",
+    "is-external",
+    "uses-llm",
+    "uses-thirdparty-api"
+   ],
+   "needs_agent_security": false,
+   "classify_desc": {
+    "exit": 0,
+    "chars": 2380,
+    "risk_tier": "LOW",
+    "reason": "no high/medium triggers",
+    "traits": [
+     "uses-llm",
+     "uses-thirdparty-api"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "prompt-security",
+     "supply-chain"
+    ],
+    "templates": [],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM03",
+      "LLM05",
+      "LLM07"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.10",
+      "Annex-A.6",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "resolver": {
+     "high_confidence_matches": [
+      {
+       "phrase": "Claude",
+       "traits": [
+        "uses-llm",
+        "uses-thirdparty-api"
+       ]
+      }
+     ],
+     "low_confidence_suggestions": [
+      {
+       "id": "1",
+       "phrase": "content moderation",
+       "traits": [
+        "influences-decisions",
+        "accepts-user-input"
+       ],
+       "confirmation_prompt": "You mentioned content moderation. Does the AI's classification act on content directly (delete/hide), or does a human reviewer make the final call? (yes / no / unsure)",
+       "notes": "Same as 'moderation' but explicit two-trait suggestion.",
+       "user_decision": "no"
+      },
+      {
+       "id": "2",
+       "phrase": "moderation",
+       "traits": [
+        "influences-decisions"
+       ],
+       "confirmation_prompt": "You mentioned moderation. Does the AI act directly on user content (delete, hide, suspend) without a human reviewer in the loop? (yes / no / unsure)",
+       "notes": "Human-in-the-loop moderation is advisory, not deciding.",
+       "user_decision": "no"
+      }
+     ],
+     "traits_from_description": [
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "traits_from_flag": [],
+     "final_traits": [
+      "uses-llm",
+      "uses-thirdparty-api"
+     ]
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1715,
+    "risk_tier": "HIGH",
+    "reason": "influences-decisions",
+    "traits": [
+     "accepts-user-input",
+     "influences-decisions",
+     "is-external",
+     "uses-llm",
+     "uses-thirdparty-api"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "bias-monitoring",
+     "confidence-scoring",
+     "explainability",
+     "fallback-patterns",
+     "human-oversight",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "prompt-security",
+     "rate-limiting",
+     "supply-chain"
+    ],
+    "templates": [
+     "ai-impact-assessment",
+     "intended-purpose-doc",
+     "risk-characterization",
+     "third-party-assessment"
+    ],
+    "guardrails_fired": [
+     {
+      "id": "G11",
+      "action": "ADD fallback-patterns",
+      "rationale": "High-risk systems must fail safely"
+     }
+    ],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM03",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MAP-3.5",
+      "MEASURE-2.11",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.10",
+      "Annex-A.6",
+      "Annex-A.8",
+      "Annex-A.9",
+      "Annex-C",
+      "Clause-10",
+      "Clause-6.1",
+      "Clause-7.4",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 0,
+    "brief_chars": 102712,
+    "char_count": 102712,
+    "mode": "full",
+    "auto_fallback": false,
+    "meta": {
+     "mode": "full",
+     "auto_fallback": false,
+     "input_was_normalized": true,
+     "confirmed_traits": [
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "uncertain_traits": [
+      "accepts-user-input",
+      "influences-decisions"
+     ],
+     "all_traits": [
+      "accepts-user-input",
+      "influences-decisions",
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "risk_tier": "HIGH",
+     "areas": [
+      "audit-logging",
+      "bias-monitoring",
+      "confidence-scoring",
+      "explainability",
+      "fallback-patterns",
+      "human-oversight",
+      "input-validation",
+      "monitoring",
+      "output-sanitization",
+      "prompt-security",
+      "supply-chain"
+     ],
+     "infra": [
+      "logging",
+      "secrets"
+     ],
+     "templates": [
+      "ai-impact-assessment",
+      "intended-purpose-doc",
+      "risk-characterization",
+      "third-party-assessment"
+     ],
+     "char_count": 102712,
+     "char_cap": 120000,
+     "low_confidence_matches": [
+      {
+       "slug": "t-content-moderation",
+       "phrase": "content moderation",
+       "traits": [
+        "influences-decisions",
+        "accepts-user-input"
+       ],
+       "confirmation_prompt": "You mentioned content moderation. Does the AI's classification act on content directly (delete/hide), or does a human reviewer make the final call? (yes / no / unsure)",
+       "notes": "Same as 'moderation' but explicit two-trait suggestion."
+      },
+      {
+       "slug": "t-moderation",
+       "phrase": "moderation",
+       "traits": [
+        "influences-decisions"
+       ],
+       "confirmation_prompt": "You mentioned moderation. Does the AI act directly on user content (delete, hide, suspend) without a human reviewer in the loop? (yes / no / unsure)",
+       "notes": "Human-in-the-loop moderation is advisory, not deciding."
+      }
+     ],
+     "user_decisions": [
+      {
+       "id": "1",
+       "phrase": "content moderation",
+       "traits": [
+        "influences-decisions",
+        "accepts-user-input"
+       ],
+       "confirmation_prompt": "You mentioned content moderation. Does the AI's classification act on content directly (delete/hide), or does a human reviewer make the final call? (yes / no / unsure)",
+       "notes": "Same as 'moderation' but explicit two-trait suggestion.",
+       "slug": "t-content-moderation",
+       "user_decision": "unsure"
+      },
+      {
+       "id": "2",
+       "phrase": "moderation",
+       "traits": [
+        "influences-decisions"
+       ],
+       "confirmation_prompt": "You mentioned moderation. Does the AI act directly on user content (delete, hide, suspend) without a human reviewer in the loop? (yes / no / unsure)",
+       "notes": "Human-in-the-loop moderation is advisory, not deciding.",
+       "slug": "t-moderation",
+       "user_decision": "unsure"
+      }
+     ],
+     "generated_at": "2026-11-24T21:38:23.563Z",
+     "version": "2.1.1"
+    },
+    "has_threat_section": false
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 36671,
+     "sha256": "43881cb951fb3601465b72b8787caf839001804f26657fe9d321d587c3700beb",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 12356,
+     "sha256": "8a348b197b3e0f7c951737c076d646926b23c3e27523277ec91fd7b1741acedd",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM03",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MAP-3.5",
+      "MEASURE-2.11",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.10",
+      "Annex-A.6",
+      "Annex-A.8",
+      "Annex-A.9",
+      "Annex-C",
+      "Clause-10",
+      "Clause-6.1",
+      "Clause-7.4",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "id": "D4",
+   "gt_traits": [
+    "accepts-user-input",
+    "handles-minors",
+    "is-external",
+    "processes-pii",
+    "uses-llm",
+    "uses-thirdparty-api"
+   ],
+   "needs_agent_security": false,
+   "classify_desc": {
+    "exit": 0,
+    "chars": 1653,
+    "risk_tier": "LOW",
+    "reason": "no high/medium triggers",
+    "traits": [
+     "accepts-user-input",
+     "uses-llm",
+     "uses-thirdparty-api"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "prompt-security",
+     "supply-chain"
+    ],
+    "templates": [],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM03",
+      "LLM05",
+      "LLM07"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.10",
+      "Annex-A.6",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "resolver": {
+     "high_confidence_matches": [
+      {
+       "phrase": "chatbot",
+       "traits": [
+        "uses-llm",
+        "accepts-user-input"
+       ]
+      },
+      {
+       "phrase": "OpenAI",
+       "traits": [
+        "uses-llm",
+        "uses-thirdparty-api"
+       ]
+      }
+     ],
+     "low_confidence_suggestions": [],
+     "traits_from_description": [
+      "accepts-user-input",
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "traits_from_flag": [],
+     "final_traits": [
+      "accepts-user-input",
+      "uses-llm",
+      "uses-thirdparty-api"
+     ]
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1794,
+    "risk_tier": "HIGH",
+    "reason": "handles-minors",
+    "traits": [
+     "accepts-user-input",
+     "handles-minors",
+     "is-external",
+     "processes-pii",
+     "uses-llm",
+     "uses-thirdparty-api"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "bias-monitoring",
+     "confidence-scoring",
+     "fallback-patterns",
+     "human-oversight",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "pii-handling",
+     "prompt-security",
+     "rate-limiting",
+     "supply-chain"
+    ],
+    "templates": [
+     "ai-impact-assessment",
+     "intended-purpose-doc",
+     "risk-characterization",
+     "third-party-assessment"
+    ],
+    "guardrails_fired": [
+     {
+      "id": "G11",
+      "action": "ADD fallback-patterns",
+      "rationale": "High-risk systems must fail safely"
+     }
+    ],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM03",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MAP-3.5",
+      "MEASURE-2.10",
+      "MEASURE-2.11",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.10",
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Annex-A.9",
+      "Annex-C",
+      "Clause-10",
+      "Clause-6.1",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 0,
+    "brief_chars": 65514,
+    "char_count": 65514,
+    "mode": "full",
+    "auto_fallback": false,
+    "meta": {
+     "mode": "full",
+     "auto_fallback": false,
+     "input_was_normalized": true,
+     "confirmed_traits": [
+      "accepts-user-input",
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "uncertain_traits": [],
+     "all_traits": [
+      "accepts-user-input",
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "risk_tier": "LOW",
+     "areas": [
+      "audit-logging",
+      "input-validation",
+      "monitoring",
+      "output-sanitization",
+      "prompt-security",
+      "supply-chain"
+     ],
+     "infra": [
+      "logging",
+      "secrets"
+     ],
+     "templates": [],
+     "char_count": 65514,
+     "char_cap": 120000,
+     "low_confidence_matches": [],
+     "user_decisions": [],
+     "generated_at": "2026-11-24T21:38:23.985Z",
+     "version": "2.1.1"
+    },
+    "has_threat_section": false
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 37228,
+     "sha256": "7d29e2ef0ff349de3aa89e53476384fa848838be330608621b3703faf883745c",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 12199,
+     "sha256": "0eb952abd77d12bd02c68a16b1f67abe2e259c62e33ae8b46d3bbcf6b58fcf2f",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM03",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MAP-3.5",
+      "MEASURE-2.10",
+      "MEASURE-2.11",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.10",
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Annex-A.9",
+      "Annex-C",
+      "Clause-10",
+      "Clause-6.1",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "id": "D5",
+   "gt_traits": [
+    "accepts-user-input",
+    "handles-health",
+    "processes-pii",
+    "uses-llm",
+    "uses-thirdparty-api"
+   ],
+   "needs_agent_security": false,
+   "classify_desc": {
+    "exit": 0,
+    "chars": 1469,
+    "risk_tier": "LOW",
+    "reason": "no high/medium triggers",
+    "traits": [
+     "uses-llm",
+     "uses-thirdparty-api"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "prompt-security",
+     "supply-chain"
+    ],
+    "templates": [],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM03",
+      "LLM05",
+      "LLM07"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.10",
+      "Annex-A.6",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "resolver": {
+     "high_confidence_matches": [
+      {
+       "phrase": "GPT-4",
+       "traits": [
+        "uses-llm",
+        "uses-thirdparty-api"
+       ]
+      }
+     ],
+     "low_confidence_suggestions": [],
+     "traits_from_description": [
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "traits_from_flag": [],
+     "final_traits": [
+      "uses-llm",
+      "uses-thirdparty-api"
+     ]
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1608,
+    "risk_tier": "HIGH",
+    "reason": "handles-health",
+    "traits": [
+     "accepts-user-input",
+     "handles-health",
+     "processes-pii",
+     "uses-llm",
+     "uses-thirdparty-api"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "bias-monitoring",
+     "explainability",
+     "fallback-patterns",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "pii-handling",
+     "prompt-security",
+     "supply-chain"
+    ],
+    "templates": [
+     "ai-impact-assessment",
+     "intended-purpose-doc",
+     "risk-characterization",
+     "third-party-assessment"
+    ],
+    "guardrails_fired": [
+     {
+      "id": "G11",
+      "action": "ADD fallback-patterns",
+      "rationale": "High-risk systems must fail safely"
+     }
+    ],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM03",
+      "LLM05",
+      "LLM07"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.3",
+      "MEASURE-2.10",
+      "MEASURE-2.11",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.10",
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Annex-C",
+      "Clause-10",
+      "Clause-6.1",
+      "Clause-7.4",
+      "Clause-8.2",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 0,
+    "brief_chars": 65548,
+    "char_count": 65548,
+    "mode": "full",
+    "auto_fallback": false,
+    "meta": {
+     "mode": "full",
+     "auto_fallback": false,
+     "input_was_normalized": true,
+     "confirmed_traits": [
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "uncertain_traits": [],
+     "all_traits": [
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "risk_tier": "LOW",
+     "areas": [
+      "audit-logging",
+      "input-validation",
+      "monitoring",
+      "output-sanitization",
+      "prompt-security",
+      "supply-chain"
+     ],
+     "infra": [
+      "logging",
+      "secrets"
+     ],
+     "templates": [],
+     "char_count": 65548,
+     "char_cap": 120000,
+     "low_confidence_matches": [],
+     "user_decisions": [],
+     "generated_at": "2026-11-24T21:38:24.411Z",
+     "version": "2.1.1"
+    },
+    "has_threat_section": false
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 30595,
+     "sha256": "92285e73ed677a9515cb03efb13e635400cc5c72901c9ba7973c7f33c3498fa7",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 10357,
+     "sha256": "8f9c096552d6102f639e00be1f39fe893497ee282ff1311332727dccd83abef9",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM03",
+      "LLM05",
+      "LLM07"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.3",
+      "MEASURE-2.10",
+      "MEASURE-2.11",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.10",
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Annex-C",
+      "Clause-10",
+      "Clause-6.1",
+      "Clause-7.4",
+      "Clause-8.2",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "id": "D6",
+   "gt_traits": [
+    "accepts-user-input",
+    "handles-financial",
+    "influences-decisions",
+    "is-internal",
+    "processes-pii",
+    "uses-llm",
+    "uses-thirdparty-api"
+   ],
+   "needs_agent_security": false,
+   "classify_desc": {
+    "exit": 0,
+    "chars": 1912,
+    "risk_tier": "LOW",
+    "reason": "no high/medium triggers",
+    "traits": [
+     "uses-llm",
+     "uses-thirdparty-api"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "prompt-security",
+     "supply-chain"
+    ],
+    "templates": [],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM03",
+      "LLM05",
+      "LLM07"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.10",
+      "Annex-A.6",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "resolver": {
+     "high_confidence_matches": [
+      {
+       "phrase": "Claude",
+       "traits": [
+        "uses-llm",
+        "uses-thirdparty-api"
+       ]
+      }
+     ],
+     "low_confidence_suggestions": [
+      {
+       "id": "1",
+       "phrase": "internal tool",
+       "traits": [
+        "is-internal"
+       ],
+       "confirmation_prompt": "You mentioned an internal tool. Is access restricted to employees only (no external users), or is 'internal' a marketing term? (yes / no / unsure)",
+       "notes": "Some 'internal' tools have customer-facing surfaces.",
+       "user_decision": "no"
+      }
+     ],
+     "traits_from_description": [
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "traits_from_flag": [],
+     "final_traits": [
+      "uses-llm",
+      "uses-thirdparty-api"
+     ]
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1839,
+    "risk_tier": "HIGH",
+    "reason": "influences-decisions",
+    "traits": [
+     "accepts-user-input",
+     "handles-financial",
+     "influences-decisions",
+     "is-internal",
+     "processes-pii",
+     "uses-llm",
+     "uses-thirdparty-api"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "bias-monitoring",
+     "confidence-scoring",
+     "explainability",
+     "fallback-patterns",
+     "human-oversight",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "pii-handling",
+     "prompt-security",
+     "supply-chain"
+    ],
+    "templates": [
+     "ai-impact-assessment",
+     "intended-purpose-doc",
+     "risk-characterization",
+     "third-party-assessment"
+    ],
+    "guardrails_fired": [
+     {
+      "id": "G3",
+      "action": "ADD fallback-patterns",
+      "rationale": "Financial decisions need safe failure"
+     }
+    ],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM03",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM09"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MAP-3.5",
+      "MEASURE-2.10",
+      "MEASURE-2.11",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.10",
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Annex-A.9",
+      "Annex-C",
+      "Clause-10",
+      "Clause-6.1",
+      "Clause-7.4",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 0,
+    "brief_chars": 65863,
+    "char_count": 65863,
+    "mode": "full",
+    "auto_fallback": false,
+    "meta": {
+     "mode": "full",
+     "auto_fallback": false,
+     "input_was_normalized": true,
+     "confirmed_traits": [
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "uncertain_traits": [
+      "is-internal"
+     ],
+     "all_traits": [
+      "is-internal",
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "risk_tier": "LOW",
+     "areas": [
+      "audit-logging",
+      "input-validation",
+      "monitoring",
+      "output-sanitization",
+      "prompt-security",
+      "supply-chain"
+     ],
+     "infra": [
+      "logging",
+      "secrets"
+     ],
+     "templates": [],
+     "char_count": 65863,
+     "char_cap": 120000,
+     "low_confidence_matches": [
+      {
+       "slug": "t-internal-tool",
+       "phrase": "internal tool",
+       "traits": [
+        "is-internal"
+       ],
+       "confirmation_prompt": "You mentioned an internal tool. Is access restricted to employees only (no external users), or is 'internal' a marketing term? (yes / no / unsure)",
+       "notes": "Some 'internal' tools have customer-facing surfaces."
+      }
+     ],
+     "user_decisions": [
+      {
+       "id": "1",
+       "phrase": "internal tool",
+       "traits": [
+        "is-internal"
+       ],
+       "confirmation_prompt": "You mentioned an internal tool. Is access restricted to employees only (no external users), or is 'internal' a marketing term? (yes / no / unsure)",
+       "notes": "Some 'internal' tools have customer-facing surfaces.",
+       "slug": "t-internal-tool",
+       "user_decision": "unsure"
+      }
+     ],
+     "generated_at": "2026-11-24T21:38:24.833Z",
+     "version": "2.1.1"
+    },
+    "has_threat_section": false
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 36352,
+     "sha256": "e0b37c55b2bafc74d4d175c52a86a7ebe70a83706511d9ba760e26efd0f867ef",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 12205,
+     "sha256": "4baad935de20e935f429d2ac2e7b6f2746b2d46280dc50b2100a5564be9d061f",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM03",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM09"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MAP-3.5",
+      "MEASURE-2.10",
+      "MEASURE-2.11",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.10",
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Annex-A.9",
+      "Annex-C",
+      "Clause-10",
+      "Clause-6.1",
+      "Clause-7.4",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "id": "D7",
+   "gt_traits": [
+    "accepts-user-input",
+    "is-external",
+    "jurisdiction-eu",
+    "processes-pii",
+    "uses-llm"
+   ],
+   "needs_agent_security": false,
+   "classify_desc": {
+    "exit": 0,
+    "chars": 2236,
+    "risk_tier": "MEDIUM",
+    "reason": "no high/medium triggers (elevated from LOW by EU/global jurisdiction)",
+    "traits": [
+     "accepts-user-input",
+     "jurisdiction-eu",
+     "uses-llm"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "bias-monitoring",
+     "eu-ai-act-art-50-transparency-disclosure",
+     "explainability",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "prompt-security"
+    ],
+    "templates": [
+     "ai-impact-assessment",
+     "intended-purpose-doc",
+     "risk-characterization"
+    ],
+    "guardrails_fired": [
+     {
+      "id": "G6",
+      "action": "ADD explainability",
+      "rationale": "EU AI Act requires explainability"
+     },
+     {
+      "id": "G7",
+      "action": "ADD bias-monitoring",
+      "rationale": "EU AI Act mandates non-discrimination"
+     }
+    ],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM05",
+      "LLM07"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.3",
+      "MEASURE-2.11",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.6",
+      "Annex-A.8",
+      "Annex-C",
+      "Clause-10",
+      "Clause-6.1",
+      "Clause-7.4",
+      "Clause-8.2",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [
+      "eu"
+     ],
+     "dropped_count": 0
+    },
+    "resolver": {
+     "high_confidence_matches": [
+      {
+       "phrase": "chatbot",
+       "traits": [
+        "uses-llm",
+        "accepts-user-input"
+       ]
+      },
+      {
+       "phrase": "EU AI Act",
+       "traits": [
+        "jurisdiction-eu"
+       ]
+      },
+      {
+       "phrase": "GDPR",
+       "traits": [
+        "jurisdiction-eu"
+       ]
+      }
+     ],
+     "low_confidence_suggestions": [],
+     "traits_from_description": [
+      "accepts-user-input",
+      "jurisdiction-eu",
+      "uses-llm"
+     ],
+     "traits_from_flag": [],
+     "final_traits": [
+      "accepts-user-input",
+      "jurisdiction-eu",
+      "uses-llm"
+     ]
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1886,
+    "risk_tier": "HIGH",
+    "reason": "jurisdiction-eu + sensitive data",
+    "traits": [
+     "accepts-user-input",
+     "is-external",
+     "jurisdiction-eu",
+     "processes-pii",
+     "uses-llm"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "bias-monitoring",
+     "confidence-scoring",
+     "eu-ai-act-art-50-transparency-disclosure",
+     "explainability",
+     "fallback-patterns",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "pii-handling",
+     "prompt-security",
+     "rate-limiting"
+    ],
+    "templates": [
+     "ai-impact-assessment",
+     "intended-purpose-doc",
+     "risk-characterization"
+    ],
+    "guardrails_fired": [
+     {
+      "id": "G6",
+      "action": "ADD explainability",
+      "rationale": "EU AI Act requires explainability"
+     },
+     {
+      "id": "G7",
+      "action": "ADD bias-monitoring",
+      "rationale": "EU AI Act mandates non-discrimination"
+     },
+     {
+      "id": "G11",
+      "action": "ADD fallback-patterns",
+      "rationale": "High-risk systems must fail safely"
+     }
+    ],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM05",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MEASURE-2.10",
+      "MEASURE-2.11",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Annex-C",
+      "Clause-10",
+      "Clause-6.1",
+      "Clause-7.4",
+      "Clause-8.2",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [
+      "eu"
+     ],
+     "dropped_count": 0
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 0,
+    "brief_chars": 95034,
+    "char_count": 95034,
+    "mode": "full",
+    "auto_fallback": false,
+    "meta": {
+     "mode": "full",
+     "auto_fallback": false,
+     "input_was_normalized": true,
+     "confirmed_traits": [
+      "accepts-user-input",
+      "jurisdiction-eu",
+      "uses-llm"
+     ],
+     "uncertain_traits": [],
+     "all_traits": [
+      "accepts-user-input",
+      "jurisdiction-eu",
+      "uses-llm"
+     ],
+     "risk_tier": "MEDIUM",
+     "areas": [
+      "audit-logging",
+      "bias-monitoring",
+      "eu-ai-act-art-50-transparency-disclosure",
+      "explainability",
+      "input-validation",
+      "monitoring",
+      "output-sanitization",
+      "prompt-security"
+     ],
+     "infra": [
+      "logging",
+      "secrets"
+     ],
+     "templates": [
+      "ai-impact-assessment",
+      "intended-purpose-doc",
+      "risk-characterization"
+     ],
+     "char_count": 95034,
+     "char_cap": 120000,
+     "low_confidence_matches": [],
+     "user_decisions": [],
+     "generated_at": "2026-11-24T21:38:25.259Z",
+     "version": "2.1.1"
+    },
+    "has_threat_section": false
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 34136,
+     "sha256": "10f6abf9213c15d4fed85dbb633c3bf365ca6b40294f8b6f4e653288e6dfc9fe",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 11329,
+     "sha256": "cda5ce8c9bdd503aad459cd9abcf1858e83d3f9830c6b3383ca29c46f14dedfe",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM05",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MEASURE-2.10",
+      "MEASURE-2.11",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Annex-C",
+      "Clause-10",
+      "Clause-6.1",
+      "Clause-7.4",
+      "Clause-8.2",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "id": "D8",
+   "gt_traits": [
+    "handles-proprietary",
+    "is-internal",
+    "uses-finetuned",
+    "uses-llm"
+   ],
+   "needs_agent_security": false,
+   "classify_desc": {
+    "exit": 0,
+    "chars": 1062,
+    "risk_tier": "LOW",
+    "reason": "no high/medium triggers",
+    "traits": [
+     "uses-finetuned"
+    ],
+    "implement_files": [
+     "data-integrity",
+     "supply-chain"
+    ],
+    "templates": [],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM03",
+      "LLM04"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MAP-2.3",
+      "MEASURE-2.6"
+     ],
+     "iso": [
+      "Annex-A.10",
+      "Annex-A.7"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 0
+    },
+    "resolver": {
+     "high_confidence_matches": [
+      {
+       "phrase": "fine-tune",
+       "traits": [
+        "uses-finetuned"
+       ]
+      }
+     ],
+     "low_confidence_suggestions": [],
+     "traits_from_description": [
+      "uses-finetuned"
+     ],
+     "traits_from_flag": [],
+     "final_traits": [
+      "uses-finetuned"
+     ]
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1181,
+    "risk_tier": "MEDIUM",
+    "reason": "handles-proprietary",
+    "traits": [
+     "handles-proprietary",
+     "is-internal",
+     "uses-finetuned",
+     "uses-llm"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "data-integrity",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "pii-handling",
+     "prompt-security"
+    ],
+    "templates": [
+     "intended-purpose-doc"
+    ],
+    "guardrails_fired": [
+     {
+      "id": "G12",
+      "action": "REMOVE supply-chain",
+      "rationale": "Self-hosted models skip third-party controls"
+     }
+    ],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM04",
+      "LLM05",
+      "LLM07"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.3",
+      "MEASURE-2.10",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 0,
+    "brief_chars": 17622,
+    "char_count": 17622,
+    "mode": "full",
+    "auto_fallback": false,
+    "meta": {
+     "mode": "full",
+     "auto_fallback": false,
+     "input_was_normalized": true,
+     "confirmed_traits": [
+      "uses-finetuned"
+     ],
+     "uncertain_traits": [],
+     "all_traits": [
+      "uses-finetuned"
+     ],
+     "risk_tier": "LOW",
+     "areas": [
+      "data-integrity",
+      "supply-chain"
+     ],
+     "infra": [],
+     "templates": [],
+     "char_count": 17622,
+     "char_cap": 120000,
+     "low_confidence_matches": [],
+     "user_decisions": [],
+     "generated_at": "2026-11-24T21:38:25.685Z",
+     "version": "2.1.1"
+    },
+    "has_threat_section": false
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 20888,
+     "sha256": "6ed212bcca9e76f4a5b5729c7a9d8539ca32f02f0e6147b07eda187724c14446",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 7465,
+     "sha256": "436da08d180cdb1488f38a2e8e407b09fdb84adffdd761e4f04da00d58247dad",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM04",
+      "LLM05",
+      "LLM07"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.3",
+      "MEASURE-2.10",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "id": "D9",
+   "gt_traits": [
+    "accepts-user-input",
+    "is-agentic",
+    "is-multimodal",
+    "uses-llm"
+   ],
+   "needs_agent_security": true,
+   "classify_desc": {
+    "exit": 1,
+    "chars": 939,
+    "error": "No traits resolved from description or --traits flag.",
+    "resolver": {
+     "high_confidence_matches": [],
+     "low_confidence_suggestions": [
+      {
+       "id": "1",
+       "phrase": "voice assistant",
+       "traits": [
+        "is-multimodal",
+        "accepts-user-input",
+        "uses-llm"
+       ],
+       "confirmation_prompt": "You mentioned voice. Is voice the input/output modality (multimodal LLM), or is voice transcribed to text first by a separate service before reaching your LLM? (yes / no / unsure)",
+       "notes": "STT-then-LLM is text-only at the LLM layer.",
+       "user_decision": "no"
+      }
+     ],
+     "traits_from_description": [],
+     "traits_from_flag": [],
+     "final_traits": []
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1171,
+    "risk_tier": "MEDIUM",
+    "reason": "is-agentic",
+    "traits": [
+     "accepts-user-input",
+     "is-agentic",
+     "is-multimodal",
+     "uses-llm"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "fallback-patterns",
+     "human-oversight",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "pii-handling",
+     "prompt-security",
+     "rate-limiting"
+    ],
+    "templates": [
+     "intended-purpose-doc"
+    ],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM10"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-3.5",
+      "MEASURE-2.10",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.9",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 0,
+    "brief_chars": 70655,
+    "char_count": 70655,
+    "mode": "full",
+    "auto_fallback": false,
+    "meta": {
+     "mode": "full",
+     "auto_fallback": false,
+     "input_was_normalized": true,
+     "confirmed_traits": [],
+     "uncertain_traits": [
+      "accepts-user-input",
+      "is-multimodal",
+      "uses-llm"
+     ],
+     "all_traits": [
+      "accepts-user-input",
+      "is-multimodal",
+      "uses-llm"
+     ],
+     "risk_tier": "LOW",
+     "areas": [
+      "audit-logging",
+      "input-validation",
+      "monitoring",
+      "output-sanitization",
+      "pii-handling",
+      "prompt-security"
+     ],
+     "infra": [
+      "logging",
+      "secrets"
+     ],
+     "templates": [],
+     "char_count": 70655,
+     "char_cap": 120000,
+     "low_confidence_matches": [
+      {
+       "slug": "t-voice-assistant",
+       "phrase": "voice assistant",
+       "traits": [
+        "is-multimodal",
+        "accepts-user-input",
+        "uses-llm"
+       ],
+       "confirmation_prompt": "You mentioned voice. Is voice the input/output modality (multimodal LLM), or is voice transcribed to text first by a separate service before reaching your LLM? (yes / no / unsure)",
+       "notes": "STT-then-LLM is text-only at the LLM layer."
+      }
+     ],
+     "user_decisions": [
+      {
+       "id": "1",
+       "phrase": "voice assistant",
+       "traits": [
+        "is-multimodal",
+        "accepts-user-input",
+        "uses-llm"
+       ],
+       "confirmation_prompt": "You mentioned voice. Is voice the input/output modality (multimodal LLM), or is voice transcribed to text first by a separate service before reaching your LLM? (yes / no / unsure)",
+       "notes": "STT-then-LLM is text-only at the LLM layer.",
+       "slug": "t-voice-assistant",
+       "user_decision": "unsure"
+      }
+     ],
+     "generated_at": "2026-11-24T21:38:26.100Z",
+     "version": "2.1.1"
+    },
+    "has_threat_section": false
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 29048,
+     "sha256": "0864325737e42a14dea02dc3217d0ad827682887c47acbaaf437d5d5e8052955",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 9669,
+     "sha256": "ceaa1fc915b831302a62e57902b1aa71476d7617de0207eca0b77a9cc408afb4",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM10"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-3.5",
+      "MEASURE-2.10",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.9",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  },
+  {
+   "set": "dev",
+   "id": "D10",
+   "gt_traits": [
+    "accepts-user-input",
+    "generates-content",
+    "handles-financial",
+    "influences-decisions",
+    "is-external",
+    "processes-pii",
+    "uses-llm"
+   ],
+   "needs_agent_security": false,
+   "classify_desc": {
+    "exit": 1,
+    "chars": 820,
+    "error": "No traits resolved from description or --traits flag.",
+    "resolver": {
+     "high_confidence_matches": [],
+     "low_confidence_suggestions": [
+      {
+       "id": "1",
+       "phrase": "marketplace",
+       "traits": [
+        "handles-financial",
+        "is-external"
+       ],
+       "confirmation_prompt": "You mentioned a marketplace. Does it process payments directly, or just facilitate connections (no money flow through your service)? (yes / no / unsure)",
+       "notes": "Lead-gen marketplaces don't always touch money.",
+       "user_decision": "no"
+      }
+     ],
+     "traits_from_description": [],
+     "traits_from_flag": [],
+     "final_traits": []
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1708,
+    "risk_tier": "HIGH",
+    "reason": "influences-decisions",
+    "traits": [
+     "accepts-user-input",
+     "generates-content",
+     "handles-financial",
+     "influences-decisions",
+     "is-external",
+     "processes-pii",
+     "uses-llm"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "bias-monitoring",
+     "confidence-scoring",
+     "explainability",
+     "fallback-patterns",
+     "human-oversight",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "pii-handling",
+     "prompt-security",
+     "rate-limiting"
+    ],
+    "templates": [
+     "ai-impact-assessment",
+     "intended-purpose-doc",
+     "risk-characterization"
+    ],
+    "guardrails_fired": [
+     {
+      "id": "G3",
+      "action": "ADD fallback-patterns",
+      "rationale": "Financial decisions need safe failure"
+     }
+    ],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MAP-3.5",
+      "MEASURE-2.10",
+      "MEASURE-2.11",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Annex-A.9",
+      "Annex-C",
+      "Clause-10",
+      "Clause-6.1",
+      "Clause-7.4",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 0,
+    "brief_chars": 65782,
+    "char_count": 65782,
+    "mode": "full",
+    "auto_fallback": false,
+    "meta": {
+     "mode": "full",
+     "auto_fallback": false,
+     "input_was_normalized": true,
+     "confirmed_traits": [],
+     "uncertain_traits": [
+      "handles-financial",
+      "is-external"
+     ],
+     "all_traits": [
+      "handles-financial",
+      "is-external"
+     ],
+     "risk_tier": "MEDIUM",
+     "areas": [
+      "audit-logging",
+      "bias-monitoring",
+      "confidence-scoring",
+      "pii-handling",
+      "rate-limiting"
+     ],
+     "infra": [
+      "logging",
+      "secrets",
+      "rate-limiting"
+     ],
+     "templates": [
+      "intended-purpose-doc"
+     ],
+     "char_count": 65782,
+     "char_cap": 120000,
+     "low_confidence_matches": [
+      {
+       "slug": "t-marketplace",
+       "phrase": "marketplace",
+       "traits": [
+        "handles-financial",
+        "is-external"
+       ],
+       "confirmation_prompt": "You mentioned a marketplace. Does it process payments directly, or just facilitate connections (no money flow through your service)? (yes / no / unsure)",
+       "notes": "Lead-gen marketplaces don't always touch money."
+      }
+     ],
+     "user_decisions": [
+      {
+       "id": "1",
+       "phrase": "marketplace",
+       "traits": [
+        "handles-financial",
+        "is-external"
+       ],
+       "confirmation_prompt": "You mentioned a marketplace. Does it process payments directly, or just facilitate connections (no money flow through your service)? (yes / no / unsure)",
+       "notes": "Lead-gen marketplaces don't always touch money.",
+       "slug": "t-marketplace",
+       "user_decision": "unsure"
+      }
+     ],
+     "generated_at": "2026-11-24T21:38:26.511Z",
+     "version": "2.1.1"
+    },
+    "has_threat_section": false
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 36530,
+     "sha256": "157f53e1bc6e12880203b40bb83d9f4888ff59b9712102537722a79948732733",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 11900,
+     "sha256": "462f75e580adef4fbb8749ab67a1759ba5bf4426da55679304122ec5cd44a435",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MAP-3.5",
+      "MEASURE-2.10",
+      "MEASURE-2.11",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Annex-A.9",
+      "Annex-C",
+      "Clause-10",
+      "Clause-6.1",
+      "Clause-7.4",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  },
+  {
+   "set": "heldout",
+   "id": "H1",
+   "gt_traits": [
+    "accepts-user-input",
+    "is-agentic",
+    "is-external",
+    "processes-pii",
+    "uses-llm",
+    "uses-thirdparty-api"
+   ],
+   "needs_agent_security": true,
+   "classify_desc": {
+    "exit": 0,
+    "chars": 1513,
+    "risk_tier": "LOW",
+    "reason": "no high/medium triggers",
+    "traits": [
+     "uses-llm",
+     "uses-thirdparty-api"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "prompt-security",
+     "supply-chain"
+    ],
+    "templates": [],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM03",
+      "LLM05",
+      "LLM07"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.10",
+      "Annex-A.6",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "resolver": {
+     "high_confidence_matches": [
+      {
+       "phrase": "Claude",
+       "traits": [
+        "uses-llm",
+        "uses-thirdparty-api"
+       ]
+      }
+     ],
+     "low_confidence_suggestions": [],
+     "traits_from_description": [
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "traits_from_flag": [],
+     "final_traits": [
+      "uses-llm",
+      "uses-thirdparty-api"
+     ]
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1504,
+    "risk_tier": "MEDIUM",
+    "reason": "processes-pii",
+    "traits": [
+     "accepts-user-input",
+     "is-agentic",
+     "is-external",
+     "processes-pii",
+     "uses-llm",
+     "uses-thirdparty-api"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "confidence-scoring",
+     "fallback-patterns",
+     "human-oversight",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "pii-handling",
+     "prompt-security",
+     "rate-limiting",
+     "supply-chain"
+    ],
+    "templates": [
+     "intended-purpose-doc",
+     "third-party-assessment"
+    ],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM03",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MAP-3.5",
+      "MEASURE-2.10",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.10",
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Annex-A.9",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 0,
+    "brief_chars": 65634,
+    "char_count": 65634,
+    "mode": "full",
+    "auto_fallback": false,
+    "meta": {
+     "mode": "full",
+     "auto_fallback": false,
+     "input_was_normalized": true,
+     "confirmed_traits": [
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "uncertain_traits": [],
+     "all_traits": [
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "risk_tier": "LOW",
+     "areas": [
+      "audit-logging",
+      "input-validation",
+      "monitoring",
+      "output-sanitization",
+      "prompt-security",
+      "supply-chain"
+     ],
+     "infra": [
+      "logging",
+      "secrets"
+     ],
+     "templates": [],
+     "char_count": 65634,
+     "char_cap": 120000,
+     "low_confidence_matches": [],
+     "user_decisions": [],
+     "generated_at": "2026-11-24T21:38:26.949Z",
+     "version": "2.1.1"
+    },
+    "has_threat_section": false
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 35049,
+     "sha256": "1fdfb14579be9a84cc91417e7d802abdc5980e2ce4d9166b5619df5327d6d623",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 11663,
+     "sha256": "79b0f3bb5913e13dc3a09a4b3233b71e3c56084129a35bcc0abcf361a4251008",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM03",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MAP-3.5",
+      "MEASURE-2.10",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.10",
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Annex-A.9",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  },
+  {
+   "set": "heldout",
+   "id": "H2",
+   "gt_traits": [
+    "accepts-user-input",
+    "handles-proprietary",
+    "is-internal",
+    "uses-llm",
+    "uses-rag"
+   ],
+   "needs_agent_security": false,
+   "classify_desc": {
+    "exit": 1,
+    "chars": 420,
+    "error": "No traits resolved from description or --traits flag.",
+    "resolver": {
+     "high_confidence_matches": [],
+     "low_confidence_suggestions": [],
+     "traits_from_description": [],
+     "traits_from_flag": [],
+     "final_traits": []
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1097,
+    "risk_tier": "MEDIUM",
+    "reason": "handles-proprietary",
+    "traits": [
+     "accepts-user-input",
+     "handles-proprietary",
+     "is-internal",
+     "uses-llm",
+     "uses-rag"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "data-integrity",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "pii-handling",
+     "prompt-security",
+     "rag-security"
+    ],
+    "templates": [
+     "intended-purpose-doc"
+    ],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM04",
+      "LLM05",
+      "LLM07",
+      "LLM08"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.3",
+      "MEASURE-2.10",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 1,
+    "stderr_first_line": "No traits resolved from description. Try a more specific description, or use `aigis classify --traits ...` directly.",
+    "stdout_chars": 0,
+    "no_brief": true
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 22038,
+     "sha256": "837ea5b68972c22105418b42f89e8d7ee81fecbf8da8e7299046d05db492c11d",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 7743,
+     "sha256": "ef73bbfd8bb702b956f6e8944736a96d048ed199d60b467cddac13efe27f58d0",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM04",
+      "LLM05",
+      "LLM07",
+      "LLM08"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.3",
+      "MEASURE-2.10",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  },
+  {
+   "set": "heldout",
+   "id": "H3",
+   "gt_traits": [
+    "generates-code",
+    "is-agentic",
+    "uses-llm"
+   ],
+   "needs_agent_security": true,
+   "classify_desc": {
+    "exit": 0,
+    "chars": 1697,
+    "risk_tier": "HIGH",
+    "reason": "generates-code + is-agentic",
+    "traits": [
+     "generates-code",
+     "is-agentic",
+     "uses-llm"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "fallback-patterns",
+     "human-oversight",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "prompt-security",
+     "rate-limiting"
+    ],
+    "templates": [
+     "ai-impact-assessment",
+     "intended-purpose-doc",
+     "risk-characterization"
+    ],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM10"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-3.5",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.6",
+      "Annex-A.9",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "resolver": {
+     "high_confidence_matches": [
+      {
+       "phrase": "coding agent",
+       "traits": [
+        "uses-llm",
+        "generates-code",
+        "is-agentic"
+       ]
+      }
+     ],
+     "low_confidence_suggestions": [],
+     "traits_from_description": [
+      "generates-code",
+      "is-agentic",
+      "uses-llm"
+     ],
+     "traits_from_flag": [],
+     "final_traits": [
+      "generates-code",
+      "is-agentic",
+      "uses-llm"
+     ]
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1106,
+    "risk_tier": "HIGH",
+    "reason": "generates-code + is-agentic",
+    "traits": [
+     "generates-code",
+     "is-agentic",
+     "uses-llm"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "fallback-patterns",
+     "human-oversight",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "prompt-security",
+     "rate-limiting"
+    ],
+    "templates": [
+     "ai-impact-assessment",
+     "intended-purpose-doc",
+     "risk-characterization"
+    ],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM10"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-3.5",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.6",
+      "Annex-A.9",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 0,
+    "brief_chars": 95677,
+    "char_count": 95677,
+    "mode": "full",
+    "auto_fallback": false,
+    "meta": {
+     "mode": "full",
+     "auto_fallback": false,
+     "input_was_normalized": true,
+     "confirmed_traits": [
+      "generates-code",
+      "is-agentic",
+      "uses-llm"
+     ],
+     "uncertain_traits": [],
+     "all_traits": [
+      "generates-code",
+      "is-agentic",
+      "uses-llm"
+     ],
+     "risk_tier": "HIGH",
+     "areas": [
+      "audit-logging",
+      "fallback-patterns",
+      "human-oversight",
+      "input-validation",
+      "monitoring",
+      "output-sanitization",
+      "prompt-security",
+      "rate-limiting"
+     ],
+     "infra": [
+      "logging",
+      "secrets",
+      "rate-limiting"
+     ],
+     "templates": [
+      "ai-impact-assessment",
+      "intended-purpose-doc",
+      "risk-characterization"
+     ],
+     "char_count": 95677,
+     "char_cap": 120000,
+     "low_confidence_matches": [],
+     "user_decisions": [],
+     "generated_at": "2026-11-24T21:38:27.780Z",
+     "version": "2.1.1"
+    },
+    "has_threat_section": false
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 25959,
+     "sha256": "d6d3577a4413e87e3952a77e88d6dff81affe9281a0f550dab6a15c4cdcbe700",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 9005,
+     "sha256": "9a3304343492835b96315f29021671f0f80f4b24a0062425a98097dcc902c5a0",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM10"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-3.5",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.6",
+      "Annex-A.9",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  },
+  {
+   "set": "heldout",
+   "id": "H4",
+   "gt_traits": [
+    "accepts-user-input",
+    "handles-proprietary",
+    "is-external",
+    "uses-llm",
+    "uses-thirdparty-api"
+   ],
+   "needs_agent_security": false,
+   "classify_desc": {
+    "exit": 0,
+    "chars": 1889,
+    "risk_tier": "LOW",
+    "reason": "no high/medium triggers",
+    "traits": [
+     "uses-llm",
+     "uses-thirdparty-api"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "prompt-security",
+     "supply-chain"
+    ],
+    "templates": [],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM03",
+      "LLM05",
+      "LLM07"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.10",
+      "Annex-A.6",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "resolver": {
+     "high_confidence_matches": [
+      {
+       "phrase": "GPT-4",
+       "traits": [
+        "uses-llm",
+        "uses-thirdparty-api"
+       ]
+      }
+     ],
+     "low_confidence_suggestions": [
+      {
+       "id": "1",
+       "phrase": "summarize",
+       "traits": [
+        "uses-llm",
+        "generates-content"
+       ],
+       "confirmation_prompt": "You mentioned summarization. Is this an LLM summary, or extractive (pulling sentences out without an LLM)? (yes / no / unsure)",
+       "notes": "Extractive summarization predates LLMs.",
+       "user_decision": "no"
+      }
+     ],
+     "traits_from_description": [
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "traits_from_flag": [],
+     "final_traits": [
+      "uses-llm",
+      "uses-thirdparty-api"
+     ]
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1351,
+    "risk_tier": "MEDIUM",
+    "reason": "is-external",
+    "traits": [
+     "accepts-user-input",
+     "handles-proprietary",
+     "is-external",
+     "uses-llm",
+     "uses-thirdparty-api"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "confidence-scoring",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "pii-handling",
+     "prompt-security",
+     "rate-limiting",
+     "supply-chain"
+    ],
+    "templates": [
+     "intended-purpose-doc",
+     "third-party-assessment"
+    ],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM03",
+      "LLM05",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-2.4",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MEASURE-2.10",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.10",
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 0,
+    "brief_chars": 78432,
+    "char_count": 78432,
+    "mode": "full",
+    "auto_fallback": false,
+    "meta": {
+     "mode": "full",
+     "auto_fallback": false,
+     "input_was_normalized": true,
+     "confirmed_traits": [
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "uncertain_traits": [
+      "generates-content"
+     ],
+     "all_traits": [
+      "generates-content",
+      "uses-llm",
+      "uses-thirdparty-api"
+     ],
+     "risk_tier": "MEDIUM",
+     "areas": [
+      "audit-logging",
+      "bias-monitoring",
+      "confidence-scoring",
+      "input-validation",
+      "monitoring",
+      "output-sanitization",
+      "prompt-security",
+      "supply-chain"
+     ],
+     "infra": [
+      "logging",
+      "secrets"
+     ],
+     "templates": [
+      "intended-purpose-doc",
+      "third-party-assessment"
+     ],
+     "char_count": 78432,
+     "char_cap": 120000,
+     "low_confidence_matches": [
+      {
+       "slug": "t-summarize",
+       "phrase": "summarize",
+       "traits": [
+        "uses-llm",
+        "generates-content"
+       ],
+       "confirmation_prompt": "You mentioned summarization. Is this an LLM summary, or extractive (pulling sentences out without an LLM)? (yes / no / unsure)",
+       "notes": "Extractive summarization predates LLMs."
+      }
+     ],
+     "user_decisions": [
+      {
+       "id": "1",
+       "phrase": "summarize",
+       "traits": [
+        "uses-llm",
+        "generates-content"
+       ],
+       "confirmation_prompt": "You mentioned summarization. Is this an LLM summary, or extractive (pulling sentences out without an LLM)? (yes / no / unsure)",
+       "notes": "Extractive summarization predates LLMs.",
+       "slug": "t-summarize",
+       "user_decision": "unsure"
+      }
+     ],
+     "generated_at": "2026-11-24T21:38:28.190Z",
+     "version": "2.1.1"
+    },
+    "has_threat_section": false
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 28736,
+     "sha256": "ebbf636afed96c3eb88ff321a2def819e32d32e24ad0d51ce215712478f14a5c",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 9803,
+     "sha256": "6fc31a00cbd646c6ec717c5c9c9782b0a0985d550531bebce0c4317eff6b624b",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM03",
+      "LLM05",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-1.3",
+      "MANAGE-2.4",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MEASURE-2.10",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.10",
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  },
+  {
+   "set": "heldout",
+   "id": "H5",
+   "gt_traits": [
+    "accepts-user-input",
+    "is-external",
+    "processes-pii",
+    "uses-finetuned",
+    "uses-llm"
+   ],
+   "needs_agent_security": false,
+   "classify_desc": {
+    "exit": 0,
+    "chars": 1079,
+    "risk_tier": "LOW",
+    "reason": "no high/medium triggers",
+    "traits": [
+     "uses-finetuned"
+    ],
+    "implement_files": [
+     "data-integrity",
+     "supply-chain"
+    ],
+    "templates": [],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM03",
+      "LLM04"
+     ],
+     "nist": [
+      "GOVERN-6.1",
+      "GOVERN-6.2",
+      "MANAGE-3.1",
+      "MANAGE-3.2",
+      "MAP-2.3",
+      "MEASURE-2.6"
+     ],
+     "iso": [
+      "Annex-A.10",
+      "Annex-A.7"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 0
+    },
+    "resolver": {
+     "high_confidence_matches": [
+      {
+       "phrase": "fine-tune",
+       "traits": [
+        "uses-finetuned"
+       ]
+      }
+     ],
+     "low_confidence_suggestions": [],
+     "traits_from_description": [
+      "uses-finetuned"
+     ],
+     "traits_from_flag": [],
+     "final_traits": [
+      "uses-finetuned"
+     ]
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1370,
+    "risk_tier": "MEDIUM",
+    "reason": "processes-pii",
+    "traits": [
+     "accepts-user-input",
+     "is-external",
+     "processes-pii",
+     "uses-finetuned",
+     "uses-llm"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "confidence-scoring",
+     "data-integrity",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "pii-handling",
+     "prompt-security",
+     "rate-limiting"
+    ],
+    "templates": [
+     "intended-purpose-doc"
+    ],
+    "guardrails_fired": [
+     {
+      "id": "G12",
+      "action": "REMOVE supply-chain",
+      "rationale": "Self-hosted models skip third-party controls"
+     }
+    ],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM04",
+      "LLM05",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MEASURE-2.10",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 0,
+    "brief_chars": 17656,
+    "char_count": 17656,
+    "mode": "full",
+    "auto_fallback": false,
+    "meta": {
+     "mode": "full",
+     "auto_fallback": false,
+     "input_was_normalized": true,
+     "confirmed_traits": [
+      "uses-finetuned"
+     ],
+     "uncertain_traits": [],
+     "all_traits": [
+      "uses-finetuned"
+     ],
+     "risk_tier": "LOW",
+     "areas": [
+      "data-integrity",
+      "supply-chain"
+     ],
+     "infra": [],
+     "templates": [],
+     "char_count": 17656,
+     "char_cap": 120000,
+     "low_confidence_matches": [],
+     "user_decisions": [],
+     "generated_at": "2026-11-24T21:38:28.600Z",
+     "version": "2.1.1"
+    },
+    "has_threat_section": false
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 27087,
+     "sha256": "d5adbc04d3a390553e53588195cfce45b97936acd67938101e76de07c01ed41b",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 9151,
+     "sha256": "a6b90d1253574d0bc1e7c9164cee9f5b5ffbc1d9936c46ad8092f191284382ab",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM04",
+      "LLM05",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MEASURE-2.10",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  },
+  {
+   "set": "heldout",
+   "id": "H6",
+   "gt_traits": [
+    "accepts-user-input",
+    "is-agentic",
+    "uses-llm"
+   ],
+   "needs_agent_security": true,
+   "classify_desc": {
+    "exit": 1,
+    "chars": 388,
+    "error": "No traits resolved from description or --traits flag.",
+    "resolver": {
+     "high_confidence_matches": [],
+     "low_confidence_suggestions": [],
+     "traits_from_description": [],
+     "traits_from_flag": [],
+     "final_traits": []
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1038,
+    "risk_tier": "MEDIUM",
+    "reason": "is-agentic",
+    "traits": [
+     "accepts-user-input",
+     "is-agentic",
+     "uses-llm"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "fallback-patterns",
+     "human-oversight",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "prompt-security",
+     "rate-limiting"
+    ],
+    "templates": [
+     "intended-purpose-doc"
+    ],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM10"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-3.5",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.6",
+      "Annex-A.9",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 1,
+    "stderr_first_line": "No traits resolved from description. Try a more specific description, or use `aigis classify --traits ...` directly.",
+    "stdout_chars": 0,
+    "no_brief": true
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 25959,
+     "sha256": "d6d3577a4413e87e3952a77e88d6dff81affe9281a0f550dab6a15c4cdcbe700",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 9005,
+     "sha256": "9a3304343492835b96315f29021671f0f80f4b24a0062425a98097dcc902c5a0",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM10"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-3.5",
+      "MEASURE-2.4",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.6",
+      "Annex-A.9",
+      "Clause-10",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  },
+  {
+   "set": "heldout",
+   "id": "H7",
+   "gt_traits": [
+    "handles-financial",
+    "influences-decisions",
+    "is-multimodal",
+    "multi-model-pipeline",
+    "uses-llm"
+   ],
+   "needs_agent_security": false,
+   "classify_desc": {
+    "exit": 1,
+    "chars": 389,
+    "error": "No traits resolved from description or --traits flag.",
+    "resolver": {
+     "high_confidence_matches": [],
+     "low_confidence_suggestions": [],
+     "traits_from_description": [],
+     "traits_from_flag": [],
+     "final_traits": []
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1534,
+    "risk_tier": "HIGH",
+    "reason": "influences-decisions",
+    "traits": [
+     "handles-financial",
+     "influences-decisions",
+     "is-multimodal",
+     "multi-model-pipeline",
+     "uses-llm"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "bias-monitoring",
+     "confidence-scoring",
+     "data-integrity",
+     "explainability",
+     "fallback-patterns",
+     "human-oversight",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "pii-handling",
+     "prompt-security"
+    ],
+    "templates": [
+     "ai-impact-assessment",
+     "intended-purpose-doc",
+     "risk-characterization"
+    ],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM04",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM09"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MAP-3.5",
+      "MEASURE-2.10",
+      "MEASURE-2.11",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Annex-A.9",
+      "Annex-C",
+      "Clause-10",
+      "Clause-6.1",
+      "Clause-7.4",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 1,
+    "stderr_first_line": "No traits resolved from description. Try a more specific description, or use `aigis classify --traits ...` directly.",
+    "stdout_chars": 0,
+    "no_brief": true
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 34684,
+     "sha256": "67b3e02f7308414f20a1f9c3a9c0c4c215201d6dcc0abf86d8309824b56f8b92",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 11553,
+     "sha256": "398937095be603a881fb447740106a941baabe49e894ae3e860b4a5cfb714716",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM04",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM09"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MAP-3.5",
+      "MEASURE-2.10",
+      "MEASURE-2.11",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Annex-A.9",
+      "Annex-C",
+      "Clause-10",
+      "Clause-6.1",
+      "Clause-7.4",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  },
+  {
+   "set": "heldout",
+   "id": "H8",
+   "gt_traits": [
+    "accepts-user-input",
+    "handles-financial",
+    "is-agentic",
+    "is-external",
+    "is-multimodal",
+    "processes-pii",
+    "uses-llm"
+   ],
+   "needs_agent_security": true,
+   "classify_desc": {
+    "exit": 1,
+    "chars": 382,
+    "error": "No traits resolved from description or --traits flag.",
+    "resolver": {
+     "high_confidence_matches": [],
+     "low_confidence_suggestions": [],
+     "traits_from_description": [],
+     "traits_from_flag": [],
+     "final_traits": []
+    },
+    "has_atlas_key": false
+   },
+   "classify_gt": {
+    "exit": 0,
+    "chars": 1537,
+    "risk_tier": "HIGH",
+    "reason": "handles-financial + accepts-user-input",
+    "traits": [
+     "accepts-user-input",
+     "handles-financial",
+     "is-agentic",
+     "is-external",
+     "is-multimodal",
+     "processes-pii",
+     "uses-llm"
+    ],
+    "implement_files": [
+     "audit-logging",
+     "bias-monitoring",
+     "confidence-scoring",
+     "fallback-patterns",
+     "human-oversight",
+     "input-validation",
+     "monitoring",
+     "output-sanitization",
+     "pii-handling",
+     "prompt-security",
+     "rate-limiting"
+    ],
+    "templates": [
+     "ai-impact-assessment",
+     "intended-purpose-doc",
+     "risk-characterization"
+    ],
+    "guardrails_fired": [],
+    "warnings": [],
+    "controls": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MAP-3.5",
+      "MEASURE-2.10",
+      "MEASURE-2.11",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso": [
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Annex-A.9",
+      "Annex-C",
+      "Clause-10",
+      "Clause-6.1",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ]
+    },
+    "filtered_by_jurisdiction": {
+     "user_jurisdictions": [],
+     "dropped_count": 1
+    },
+    "has_atlas_key": false
+   },
+   "build": {
+    "exit": 1,
+    "stderr_first_line": "No traits resolved from description. Try a more specific description, or use `aigis classify --traits ...` directly.",
+    "stdout_chars": 0,
+    "no_brief": true
+   },
+   "report": {
+    "json": {
+     "exit": 0,
+     "chars": 33998,
+     "sha256": "43fe0961e3cc59eeac7431c4c778e75c3da47f9c416be9c0239666ccaa75223a",
+     "stderr_first_line": ""
+    },
+    "md": {
+     "exit": 0,
+     "chars": 11079,
+     "sha256": "d6d3035a556cc3d9c93f1ebc369bf84b5b3cc5453316acfc9138094dd17cc7f1",
+     "stderr_first_line": ""
+    },
+    "has_atlas_key": false,
+    "cross_framework_citations": {
+     "owasp": [
+      "LLM01",
+      "LLM02",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+     ],
+     "nist": [
+      "MANAGE-1.3",
+      "MANAGE-2.3",
+      "MANAGE-2.4",
+      "MANAGE-4.1",
+      "MANAGE-4.2",
+      "MANAGE-4.3",
+      "MAP-2.1",
+      "MAP-2.2",
+      "MAP-2.3",
+      "MAP-3.5",
+      "MEASURE-2.10",
+      "MEASURE-2.11",
+      "MEASURE-2.4",
+      "MEASURE-2.5",
+      "MEASURE-2.6",
+      "MEASURE-2.7",
+      "MEASURE-2.8",
+      "MEASURE-2.9",
+      "MEASURE-3.1"
+     ],
+     "iso42001": [
+      "Annex-A.4",
+      "Annex-A.6",
+      "Annex-A.7",
+      "Annex-A.8",
+      "Annex-A.9",
+      "Annex-C",
+      "Clause-10",
+      "Clause-6.1",
+      "Clause-8.2",
+      "Clause-8.4",
+      "Clause-9.1"
+     ],
+     "eu_ai_act": []
+    }
+   }
+  }
+ ]
+}

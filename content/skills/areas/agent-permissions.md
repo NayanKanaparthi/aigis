@@ -2,15 +2,15 @@
 id: agent-permissions
 title: Agent identity, tool permissions and authority limits
 controls:
-  owasp: []
-  nist: []
+  owasp: [LLM01, LLM02, LLM05, LLM06, LLM07]
+  nist: [MEASURE-2.7]
   iso42001: []
-  atlas: []
+  atlas: [AML.M0026, AML.M0027, AML.M0028, AML.M0037, AML.M0043]
 min_risk_tier: all
 system_traits: [is-agentic]
 ---
 
-This area limits what an AI agent can do with its identity and permissions when it calls tools or acts for someone. Checks run in code outside the model, deny by default and fail closed. It does not stop prompt injection; it limits what injected text can make the agent do.
+This area limits what an AI agent can do when it calls tools or acts with someone's permissions. Checks run in code outside the model, deny by default and fail closed. It does not stop prompt injection; it limits what injected text can make the agent do.
 
 ## Common incomplete implementations
 
@@ -29,13 +29,13 @@ This area limits what an AI agent can do with its identity and permissions when 
 
 ### Step 2 — Bind every service identity to an explicit list of authorized workflows
 
-**What to do.** In `AUTHORIZED_WORKFLOWS`, list each service agent's workflows with their operations, allowed initiators and resource root. At run start, deny unless the workflow is listed for that agent and the verified initiator may start it; the run gets only its operations.
+**What to do.** In `AUTHORIZED_WORKFLOWS`, list each service agent's workflows with operations, allowed initiators and resource root. At run start, deny unless the agent lists the workflow and the verified initiator may start it; the run gets only its operations.
 
 **Verification checkpoint.** Starting `bot` with an unlisted workflow or initiator raises `Denied`.
 
 ### Step 3 — Cap a delegated agent at the intersection of the user's permissions and the task scope
 
-**What to do.** Set the run's operations to `effective_permissions(user_permissions, task)`: the user's permissions intersected with the task scope in trusted config (`TASK_SCOPES`). List write operations in `TASK_SCOPES` only for tasks that need them; the task id comes from the authenticated request. Re-check the user's permissions on every call.
+**What to do.** Set the run's operations to `effective_permissions(user_permissions, task)`: the user's permissions intersected with the task scope in trusted `TASK_SCOPES`. List write operations in `TASK_SCOPES` only for tasks that need them; the task id comes from the authenticated request. Re-check the user's permissions on every call.
 
 **Verification checkpoint.** A user with `mail:read` and `mail:send` on `triage` gets only `mail:read`, denied once they lose it.
 
@@ -47,21 +47,21 @@ This area limits what an AI agent can do with its identity and permissions when 
 
 ### Step 5 — Fix the maximum authority before the run and block self-granting
 
-**What to do.** Declare `MAX_AUTHORITY` per agent in reviewed config. At run start, intersect the run's operations with it, drop self-granting (creating credentials, keys, roles or service accounts; editing the agent's own scopes) and freeze the result. Only a human editing config out of band grants more; a sub-agent gets a subset of its parent's operations.
+**What to do.** Declare `MAX_AUTHORITY` per agent in reviewed config. At run start, intersect the run's operations with it, drop self-granting (creating credentials, keys, roles or service accounts; editing the agent's own scopes) and freeze the result. Only a human editing config out of band grants more; sub-agents get a subset of the parent's operations.
 
 **Verification checkpoint.** `iam:create_key` is denied even when a workflow lists it.
 
 ### Step 6 — Register, attribute and expire every external resource the agent creates
 
-**What to do.** Make `register_agent_resource(run, kind, create, ttl_seconds)` the only way tools create cloud resources, accounts, tokens, webhooks or scheduled jobs. It refuses kinds without a revoker or over-long lifetimes and records agent, principal, run and expiry. A scheduler outside the agent runs `sweep_agent_resources`: on run end or expiry it revokes credentials, deletes the resource, confirms both and retries failures.
+**What to do.** Make `register_agent_resource(run, kind, create, ttl_seconds)` the only way tools create cloud resources, accounts, tokens, webhooks or scheduled jobs. It refuses kinds without a revoker or long lifetimes and records agent, principal, run and expiry. A scheduler outside the agent runs `sweep_agent_resources`: at run end or expiry it revokes credentials, deletes the resource, confirms both, retries failures.
 
 **Verification checkpoint.** Sweeping after run end marks its records `revoked`.
 
 ### Step 7 — Prove the denials with negative tests
 
-**What to do.** Against the real dispatcher, assert `Denied` and that no tool ran for: unlisted agent, workflow or initiator; operation outside the task; permission lost mid-run; other tenant; another user's resource, same tenant; `..`, `%` or `\` in the path; undeclared args; self-granting; unknown tool. Include one allowed call as a control.
+**What to do.** Via the real dispatcher, assert `Denied` and no tool run for: unlisted agent, workflow or initiator; operation outside the task; permission lost mid-run; other tenant; another user's resource, same tenant; `..`, `%` or `\` in the path; undeclared args; self-granting; unknown tool. Include one allowed call.
 
-**Verification checkpoint.** Deleting the root check from `authorize_tool_call` makes the other-user test fail.
+**Verification checkpoint.** Removing the root check in `authorize_tool_call` fails the other-user test.
 
 ## Complete working example
 
@@ -225,4 +225,4 @@ Prompt injection detection (`input-validation`), tool gating on untrusted contex
 
 ## Related patterns
 
-`human-oversight`, `agent-tool-safety`, `audit-logging`.
+`human-oversight`, `agent-tool-safety`.

@@ -1,0 +1,551 @@
+{
+ "atlas_version": "2026.10",
+ "rows": [
+  {
+   "trait": "accepts-user-input",
+   "technique": "AML.T0051.000",
+   "technique_name": "Direct",
+   "maturity": "Realized",
+   "atlas_quote": "An adversary may inject prompts directly as a user of the LLM.",
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "accepts-user-input",
+   "technique": "AML.T0054",
+   "technique_name": "LLM Jailbreak",
+   "maturity": "Realized",
+   "atlas_quote": "Jailbreaks may be achieved via adversarial prompting, or by modifying model weights or safety mechanisms.",
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "accepts-user-input",
+   "technique": "AML.T0068",
+   "technique_name": "LLM Prompt Obfuscation",
+   "maturity": "Realized",
+   "atlas_quote": "Adversaries may hide or otherwise obfuscate prompt injections or retrieval content to avoid detection from humans, large language model (LLM) guardrails, or other detection mechanisms.",
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "generates-code",
+   "technique": "AML.T0060",
+   "technique_name": "Publish Hallucinated Entities",
+   "maturity": "Demonstrated",
+   "atlas_quote": "Adversaries may create an entity they control, such as a software package, website, or email address corresponding to a source hallucinated by an LLM. The hallucinations may take the form of package names, commands, URLs...",
+   "labelers": {
+    "planner": true,
+    "second": false
+   },
+   "basis": "adjudicated: Package and URL hallucination in executed generated code is the precondition for slopsquatting; although tagged Resource Development, the defender can act on it by vetting dependencies in generated code, and it is the only code-specific entry point proposed.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "generates-content",
+   "technique": "AML.T0061",
+   "technique_name": "LLM Prompt Self-Replication",
+   "maturity": "Demonstrated",
+   "atlas_quote": "The reproduced instructions may appear in generated messages, documents, source-code, files, or other artifacts.",
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: Externally published generated artifacts are where self-replicating prompts persist and are re-ingested by other LLMs; Demonstrated, distinct from propagation.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "generates-content",
+   "technique": "AML.T0067",
+   "technique_name": "LLM Trusted Output Components Manipulation",
+   "maturity": "Demonstrated",
+   "atlas_quote": "Adversaries may utilize prompts to a large language model (LLM) which manipulate various components of its response in order to make it appear trustworthy to the user.",
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: Published responses expose links, citations and recommended actions to adversarial manipulation aimed at the audience's trust; Demonstrated.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "generates-content",
+   "technique": "AML.T0143",
+   "technique_name": "LLM Prompt Propagation",
+   "maturity": "Demonstrated",
+   "atlas_quote": "Adversaries may cause malicious instructions already introduced into an AI-enabled environment to be transferred onward to additional storage locations, agents, applications, or resources where they can influence subsequent AI activity.",
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: Externally published content is a carrier that transfers injected instructions to later storage and AI consumers; Demonstrated.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "is-agentic",
+   "technique": "AML.T0051.001",
+   "technique_name": "Indirect",
+   "maturity": "Realized",
+   "atlas_quote": "An adversary may inject prompts indirectly via a separate data channel that the LLM or AI agent ingests, such as text or multimedia pulled from documents, emails, databases or websites.",
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "is-agentic",
+   "technique": "AML.T0053",
+   "technique_name": "AI Agent Tool Invocation",
+   "maturity": "Demonstrated",
+   "atlas_quote": "Adversaries may use their access to an AI agent to invoke tools the agent has access to.",
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "is-agentic",
+   "technique": "AML.T0080.000",
+   "technique_name": "Memory",
+   "maturity": "Realized",
+   "atlas_quote": "Adversaries may manipulate the memory of a large language model (LLM) in order to persist changes to the LLM across future chat sessions. Memory is a common feature in LLMs that allows them to remember information across...",
+   "labelers": {
+    "planner": true,
+    "second": false
+   },
+   "basis": "adjudicated: Agent memory is the precondition for persistent context poisoning; Realized with case studies, and preferred over the parent T0080.",
+   "decision": "exclude",
+   "note": "Requires agent memory; is-agentic does not imply memory."
+  },
+  {
+   "trait": "is-agentic",
+   "technique": "AML.T0086",
+   "technique_name": "Exfiltration via AI Agent Tool Invocation",
+   "maturity": "Realized",
+   "atlas_quote": "AI agent tools capable of performing write operations may be invoked to exfiltrate data to an adversary. Sensitive information can be encoded into the tool's input parameters and transmitted to an adversary-controlled lo...",
+   "labelers": {
+    "planner": true,
+    "second": false
+   },
+   "basis": "adjudicated: Write-capable agent tools are the exfiltration channel; Realized with many case studies.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "is-agentic",
+   "technique": "AML.T0101",
+   "technique_name": "Data Destruction via AI Agent Tool Invocation",
+   "maturity": "Realized",
+   "atlas_quote": "Adversaries may invoke an AI agent's tool capable of performing mutative operations to perform Data Destruction. Adversaries may destroy data and files on specific systems or in large numbers on a network to interrupt av...",
+   "labelers": {
+    "planner": true,
+    "second": false
+   },
+   "basis": "adjudicated: Mutating agent tools are the precondition for data destruction; Realized.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "is-agentic",
+   "technique": "AML.T0110",
+   "technique_name": "AI Agent Tool Poisoning",
+   "maturity": "Realized",
+   "atlas_quote": "Adversaries may poison tools used by AI agents by introducing or modifying malicious content or behavior in a tool's model-visible definition, executable implementation, or runtime responses.",
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "is-external",
+   "technique": "AML.T0024",
+   "technique_name": "Exfiltration via AI Inference API",
+   "maturity": "Realized",
+   "atlas_quote": "Adversaries may exfiltrate information from a victim-controlled AI model or service through responses returned by its inference API. Transferred information may include predictions, scores, embeddings, generated content ...",
+   "labelers": {
+    "planner": true,
+    "second": false
+   },
+   "basis": "adjudicated: Public access to the inference API is the precondition for exfiltration through model responses; Realized.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "is-external",
+   "technique": "AML.T0029",
+   "technique_name": "Denial of AI Service",
+   "maturity": "Demonstrated",
+   "atlas_quote": "Adversaries may target AI-enabled systems with a flood of requests for the purpose of degrading or shutting down the service. Since many AI systems require significant amounts of specialized compute, they are often expen...",
+   "labelers": {
+    "planner": true,
+    "second": false
+   },
+   "basis": "adjudicated: A publicly reachable AI endpoint is the precondition for request flooding and compute exhaustion; Demonstrated, and it covers the cost/DoS surface.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "is-external",
+   "technique": "AML.T0049",
+   "technique_name": "Exploit Public-Facing Application",
+   "maturity": "Realized",
+   "atlas_quote": "Adversaries may attempt to take advantage of a weakness in an Internet-facing computer or program using software, data, or commands in order to cause unintended or unanticipated behavior.",
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: Internet exposure is the precondition for exploiting the serving application itself (e.g. AI runtime RCEs); Realized with many AI case studies.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "is-external",
+   "technique": "AML.T0093",
+   "technique_name": "Prompt Infiltration via Public-Facing Application",
+   "maturity": "Realized",
+   "atlas_quote": "Any public-facing application that accepts text input could be a target.",
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "is-external",
+   "technique": "AML.T0132",
+   "technique_name": "Misconfigured or Publicly Exposed AI Services",
+   "maturity": "Demonstrated",
+   "atlas_quote": "For example, one internet-facing AI service could be more easily discoverable by any unauthenticated user, while another may require compromised credentials to even be discovered.",
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: Public exposure is the precondition for misconfigured or unauthenticated AI services being found and used; Demonstrated and AI-specific.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "is-multimodal",
+   "technique": "AML.T0051.001",
+   "technique_name": "Indirect",
+   "maturity": "Realized",
+   "atlas_quote": "An adversary may inject prompts indirectly via a separate data channel that the LLM or AI agent ingests, such as text or multimedia pulled from documents, emails, databases or websites.",
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: Images, audio and documents are an indirect injection channel that exists because the system ingests those modalities; Realized.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "is-multimodal",
+   "technique": "AML.T0068",
+   "technique_name": "LLM Prompt Obfuscation",
+   "maturity": "Realized",
+   "atlas_quote": "Similarly, approaches for other modalities include low-contrast or tiny text placed inside an image, text overlaid on a busy or camouflaging background, instructions spoken faintly or sped up in audio, or text shown briefly in a single video frame.",
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: The description explicitly covers hiding instructions in images, audio and video frames; Realized.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "is-multimodal",
+   "technique": "AML.T0129",
+   "technique_name": "Triggers in Multimodal Inputs",
+   "maturity": "Feasible",
+   "atlas_quote": "Adversaries may place instructions or triggers in one part of a multimodal input to influence the model while staying unnoticed by human reviewers and by defenses that do not inspect all input modalities.",
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "multi-model-pipeline",
+   "technique": "AML.T0061",
+   "technique_name": "LLM Prompt Self-Replication",
+   "maturity": "Demonstrated",
+   "atlas_quote": "When retrieved and ingested by another LLM, the adversary's instructions are re-introduced, potentially long after the original interaction has ended.",
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: Chaining models lets one model's output re-introduce a self-replicating prompt to the next; Demonstrated and distinct from propagation.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "multi-model-pipeline",
+   "technique": "AML.T0143",
+   "technique_name": "LLM Prompt Propagation",
+   "maturity": "Demonstrated",
+   "atlas_quote": "This extends the attack beyond its initial point of introduction and may allow adversaries to influence additional targets without directly delivering a malicious prompt payload to each one.",
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "processes-pii",
+   "technique": "AML.T0085.002",
+   "technique_name": "Conversation Context and Memory",
+   "maturity": "Demonstrated",
+   "atlas_quote": "Adversaries may collect sensitive information from an AI service's current or stored interactions and memory. This may include user messages, model responses, conversation summaries, and retained user facts and preferenc...",
+   "labelers": {
+    "planner": true,
+    "second": false
+   },
+   "basis": "adjudicated: PII held in conversation context and memory is what this collection technique targets; Demonstrated and the most specific ATLAS fit for PII leakage.",
+   "decision": "exclude",
+   "note": "Requires stored conversation context or memory; processes-pii does not imply it."
+  },
+  {
+   "trait": "uses-finetuned",
+   "technique": "AML.T0010.002",
+   "technique_name": "Data Repository",
+   "maturity": "Realized",
+   "atlas_quote": "Adversaries may abuse data repositories or other dataset distribution services to introduce compromised data into downstream AI workflows. They may replace or modify published datasets, manipulate versions or references ...",
+   "labelers": {
+    "planner": true,
+    "second": false
+   },
+   "basis": "adjudicated: Fine-tuning pulls training data from data repositories that can be compromised; Realized.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "uses-finetuned",
+   "technique": "AML.T0010.003",
+   "technique_name": "Model Repository",
+   "maturity": "Realized",
+   "atlas_quote": "Adversaries may abuse model repositories or other model distribution services to introduce compromised models into downstream AI systems. They may replace published artifacts, manipulate model versions or references that...",
+   "labelers": {
+    "planner": true,
+    "second": false
+   },
+   "basis": "adjudicated: Custom models start from downloaded base models in model repositories; Realized with several case studies.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "uses-finetuned",
+   "technique": "AML.T0011.000",
+   "technique_name": "Unsafe AI Artifacts",
+   "maturity": "Realized",
+   "atlas_quote": "Adversaries may develop new AI artifacts or manipulate existing AI artifacts that have a deleterious effect when loaded, executed, interpreted, or used for inference by a victim. The unsafe artifacts may continue to work...",
+   "labelers": {
+    "planner": true,
+    "second": false
+   },
+   "basis": "adjudicated: Loading self-managed model artifacts (serialized weights, templates) is the precondition for unsafe-artifact execution; Realized.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "uses-finetuned",
+   "technique": "AML.T0020",
+   "technique_name": "Training Data Poisoning",
+   "maturity": "Realized",
+   "atlas_quote": "Adversaries may manipulate data used for training or fine-tuning an AI model to influence the resulting model's behavior.",
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "uses-finetuned",
+   "technique": "AML.T0137.003",
+   "technique_name": "Extract Memorized Data",
+   "maturity": "Demonstrated",
+   "atlas_quote": "Adversaries may elicit and recover sensitive content memorized by a generative AI model during training or fine-tuning.",
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: Fine-tuning on the defender's own data creates memorized content that can be extracted; Demonstrated.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "uses-llm",
+   "technique": "AML.T0051",
+   "technique_name": "LLM Prompt Injection",
+   "maturity": "Realized",
+   "atlas_quote": "An adversary may craft malicious prompts as inputs to an LLM that cause the LLM to act in unintended ways.",
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: Any LLM integration has an instruction channel; the parent covers systems whose injection path is not captured by a more specific trait (e.g. batch document processing).",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "uses-llm",
+   "technique": "AML.T0069.002",
+   "technique_name": "System Prompt",
+   "maturity": "Demonstrated",
+   "atlas_quote": "Adversaries may discover a large language model's system instructions provided by the AI system builder to learn about the system's capabilities and circumvent its guardrails.",
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: Every LLM application with a system prompt has this surface; Demonstrated, and it feeds tailored follow-on attacks.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "uses-llm",
+   "technique": "AML.T0077",
+   "technique_name": "LLM Response Rendering",
+   "maturity": "Demonstrated",
+   "atlas_quote": "Adversaries may induce a large language model (LLM) to respond with private information structured in a reference to external content that, when rendered by the user's client, makes a request to an adversary-controlled s...",
+   "labelers": {
+    "planner": true,
+    "second": false
+   },
+   "basis": "adjudicated: Rendering LLM output (Markdown, HTML, images) in a client is the precondition for response-rendering exfiltration; Demonstrated with case studies.",
+   "decision": "exclude",
+   "note": "Requires a client that renders model output; uses-llm does not imply it."
+  },
+  {
+   "trait": "uses-rag",
+   "technique": "AML.T0051.001",
+   "technique_name": "Indirect",
+   "maturity": "Realized",
+   "atlas_quote": "An adversary may inject prompts indirectly via a separate data channel that the LLM or AI agent ingests, such as text or multimedia pulled from documents, emails, databases or websites. These instructions originate from ...",
+   "labelers": {
+    "planner": true,
+    "second": false
+   },
+   "basis": "adjudicated: Retrieved documents are the canonical indirect prompt injection channel; Realized with the most case studies of any candidate.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "uses-rag",
+   "technique": "AML.T0070",
+   "technique_name": "RAG Poisoning",
+   "maturity": "Demonstrated",
+   "atlas_quote": "Adversaries may inject malicious content into data indexed by a retrieval augmented generation (RAG) system to contaminate a future thread through RAG-based search results.",
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "uses-rag",
+   "technique": "AML.T0071",
+   "technique_name": "False RAG Entry Injection",
+   "maturity": "Demonstrated",
+   "atlas_quote": "Adversaries may introduce false entries into a victim's retrieval augmented generation (RAG) database.",
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "uses-rag",
+   "technique": "AML.T0082",
+   "technique_name": "RAG Credential Harvesting",
+   "maturity": "Demonstrated",
+   "atlas_quote": "Credentials may be stored in internal documents which can inadvertently be ingested into a RAG database, where they can ultimately be retrieved by an AI agent.",
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: Indexing internal documents is the precondition for retrieving credentials through the model; Demonstrated.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "uses-rag",
+   "technique": "AML.T0085.000",
+   "technique_name": "RAG Databases",
+   "maturity": "Demonstrated",
+   "atlas_quote": "Adversaries may collect sensitive information from data sources that an AI service accesses to retrieve context for its responses.",
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "uses-thirdparty-api",
+   "technique": "AML.T0010.001",
+   "technique_name": "Software",
+   "maturity": "Realized",
+   "atlas_quote": "Adversaries may target software packages that are commonly used in AI-enabled systems or are part of the AI DevOps lifecycle. This can include deep learning frameworks used to build AI models (e.g. PyTorch, TensorFlow, J...",
+   "labelers": {
+    "planner": true,
+    "second": false
+   },
+   "basis": "adjudicated: Calling a provider relies on AI SDKs and integration frameworks that the description names as supply-chain targets; Realized.",
+   "decision": "include",
+   "note": null
+  },
+  {
+   "trait": "uses-thirdparty-api",
+   "technique": "AML.T0109",
+   "technique_name": "AI Supply Chain Rug Pull",
+   "maturity": "Realized",
+   "atlas_quote": "Adversaries may publish legitimate AI components or software, gain user adoption, then push an update with a malicious variant, leading to [Supply Chain Compromise](/techniques/AML.T0010). More scrutiny is often placed o...",
+   "labelers": {
+    "planner": true,
+    "second": false
+   },
+   "basis": "adjudicated: Depending on third-party AI components is the precondition for a malicious update after adoption; Realized, and the supply-chain area's version pinning addresses it.",
+   "decision": "include",
+   "note": null
+  }
+ ]
+}

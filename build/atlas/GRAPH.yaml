@@ -1,0 +1,243 @@
+# GRAPH: MITRE ATLAS in Aigis (feature id: atlas)   rev 2 (after plan review round 1)
+# Makers: Opus 5.5 (high). Checker: Fable 5.2. Test writer and second labeler: GPT-5.6 Sol, fresh sessions.
+# Every file the feature edits has exactly ONE owning node. No file is listed twice. Locked tests are `reads`.
+# Mirror rule: a node that owns a file under content/ also owns its copy under cli-python/aigis_cli/content/
+# and syncs it before its fast-suite run (the existing content-sync check is part of `npm test`).
+# Per-file test rule: a node is done when its own test files are green, every test that was green before
+# is still green, and the checker approves its rubric items. Test files of unbuilt nodes are expected red.
+# INT owns no product file. If integration needs a product edit, it goes back to the owning node.
+
+feature: atlas
+version_target: 2.2.0
+base_commit: 07ef537
+stop_times_et: { gate_a: "16:15", tests_locked: "17:00", cut_decisions_final: "20:00", feature_freeze: "20:30", integration_done: "21:30", gate_b: "22:00" }
+
+pre_build:            # 16:15 to 17:00, parallel, none of them write product code
+  - id: T0
+    role: test writer (GPT-5.6 Sol, fresh session)
+    depends_on: [GATE_A]
+    owns_files:
+      - test/atlas-catalog.test.js
+      - test/atlas-lib.test.js
+      - test/atlas-frontmatter.test.js
+      - test/atlas-surfaces.test.js
+      - test/atlas-failsoft.test.js
+      - test/atlas-regression.test.js
+      - test/atlas-threats.test.js
+      - test/atlas-version.test.js
+      - test/atlas-docs.test.js
+      - test/atlas-honesty.test.js
+      - test/atlas-python-parity.test.js
+      - test/atlas-release.test.js
+      - test/fixtures/atlas/**          # baseline outputs captured from 07ef537, fixture areas dir, fixture project
+      - build/atlas/TESTLOCK
+    reads: [build/atlas/TESTPLAN.md, build/atlas/SPEC.md, build/atlas/gold/**]
+    goal: "Test-acceptance gate (BUILD-SYSTEM §4.3): existing 11 checks green, every new test red for the expected reason, each AC mapped, hashes in TESTLOCK"
+    timebox_min: 45
+  - id: E0
+    role: eval harness and baseline (Opus 5.5 session that is not a feature maker; checker reviews)
+    depends_on: [GATE_A]
+    owns_files:
+      - build/atlas/evals/oracle.py         # independent of lib/atlas.js; reads the pinned YAML with python3 -I
+      - build/atlas/evals/run-evals.js
+      - build/atlas/evals/check-gold.py
+      - build/atlas/evals/e2e.sh
+      - build/atlas/evals/dev.json           # the 10 v2 descriptions, copied with their ground-truth traits
+      - build/atlas/evals/heldout.json       # H1..H8 from EVALS.md; never shown to makers
+      - build/atlas/evals/results/baseline.json
+    reads: [build/atlas/EVALS.md]
+    goal: "Baseline measured on 07ef537 for dev and held-out; oracle reproduces the pinned counts"
+    timebox_min: 45
+  - id: G0
+    role: gold labels (second labeler GPT-5.6 Sol blind to the planner draft; orchestrator merges; Nayan approves)
+    depends_on: [GATE_A]
+    owns_files:
+      - build/atlas/gold/area-mitigations.json
+      - build/atlas/gold/entry-points.json
+      - build/atlas/gold/APPROVAL.md
+    reads: [build/atlas/EVALS.md]
+    goal: "Both gold files approved by Nayan and pass check-gold.py; deadline 17:00"
+    timebox_min: 45
+
+nodes:
+  - id: N1
+    name: catalog, generator, notice
+    stream: A
+    depends_on: [T0]
+    owns_files:
+      - scripts/build-atlas-index.js
+      - content/index/atlas.json
+      - content/index/atlas-NOTICE.md
+      - cli-python/aigis_cli/content/index/atlas.json
+      - cli-python/aigis_cli/content/index/atlas-NOTICE.md
+    reads: [test/atlas-catalog.test.js, /tmp/atlas-src/ATLAS-2026.10.yaml, /tmp/atlas-src/LICENSE, /tmp/atlas-apache/LICENSE-2.0.txt]
+    exposes: "content/index/atlas.json with the shape in SPEC S1.1; `node scripts/build-atlas-index.js --source <path> [--check]`"
+    spec: [S0, S1]
+    tests: [T-CAT-01, T-CAT-02, T-CAT-03, T-CAT-04, T-CAT-05, T-CAT-06, T-CAT-07, T-CAT-08, T-CAT-09, T-CAT-10]
+    goal: [AC1, AC2, AC3]
+    rubric: [R-N1-1, R-N1-2, R-N1-3, R-N1-4]
+    timebox_min: 35
+
+  - id: N2
+    name: lib/atlas.js
+    stream: A
+    depends_on: [N1]
+    owns_files: [lib/atlas.js]
+    reads: [test/atlas-lib.test.js, test/fixtures/atlas/**, content/index/atlas.json]
+    exposes: "PINNED, DISCLAIMER, AtlasCatalogError, loadCatalog, loadEntryPoints, technique, mitigation, mitigationsForTechnique (direct MITRE links only), techniquesForMitigations, compareTechniques, areaMitigations, mitigationAreas, summarizeAreas, withAtlas (SPEC S2)"
+    spec: [S0, S2]
+    tests: [T-LIB-01, T-LIB-02, T-LIB-03, T-LIB-04, T-LIB-05, T-LIB-06, T-LIB-07, T-LIB-08, T-LIB-09, T-LIB-10, T-LIB-11, T-LIB-12, T-LIB-13, T-LIB-14, T-CAT-11]
+    goal: [AC2]          # the no-network half; N2 is otherwise an enabler for AC5 to AC11 and AC23
+    rubric: [R-N2-1, R-N2-2, R-N2-3]
+    timebox_min: 45
+
+  - id: N3
+    name: area labels, entry points, validator
+    stream: B
+    depends_on: [N1, G0]
+    owns_files:
+      - content/skills/areas/audit-logging.md          # frontmatter line only, for all 15 below
+      - content/skills/areas/bias-monitoring.md
+      - content/skills/areas/confidence-scoring.md
+      - content/skills/areas/data-integrity.md
+      - content/skills/areas/explainability.md
+      - content/skills/areas/fallback-patterns.md
+      - content/skills/areas/human-oversight.md
+      - content/skills/areas/input-validation.md
+      - content/skills/areas/monitoring.md
+      - content/skills/areas/output-sanitization.md
+      - content/skills/areas/pii-handling.md
+      - content/skills/areas/prompt-security.md
+      - content/skills/areas/rag-security.md
+      - content/skills/areas/rate-limiting.md
+      - content/skills/areas/supply-chain.md
+      - content/index/atlas-entry-points.json
+      - cli-python/aigis_cli/content/skills/areas/*.md  # mirrors of the 15
+      - cli-python/aigis_cli/content/index/atlas-entry-points.json
+      - scripts/validate-area-frontmatter.js
+      - scripts/area-frontmatter.schema.json
+      - scripts/area-controls-baseline.json
+      - docs/frontmatter-schema.md
+    reads: [test/atlas-frontmatter.test.js, test/frontmatter-schema.test.js, build/atlas/gold/**, content/index/atlas.json]
+    exposes: "controls.atlas in area frontmatter; content/index/atlas-entry-points.json (SPEC S3.3)"
+    spec: [S0, S3]
+    tests: [T-FM-01, T-FM-02, T-FM-03, T-FM-04, T-FM-05, T-FM-06, T-FM-07]
+    goal: [AC4]
+    rubric: [R-N3-1, R-N3-2, R-N3-3, R-N3-4]
+    timebox_min: 40
+
+  - id: N4
+    name: citation surfaces (lib only)
+    stream: A
+    depends_on: [N2, N3]
+    owns_files: [lib/classify.js, lib/auto-verify.js, lib/report.js, lib/build.js]
+    reads: [test/atlas-surfaces.test.js, test/atlas-failsoft.test.js, test/atlas-regression.test.js, test/fixtures/atlas/**, lib/atlas.js]
+    exposes: "classify().controls.atlas and .atlas; autoVerifyArea().cited_controls.atlas and .atlas; report atlas keys; brief section and meta.atlas (SPEC S4)"
+    spec: [S0, S4]
+    tests: [T-SUR-01, T-SUR-02, T-SUR-03, T-SUR-04, T-SUR-05, T-SUR-06, T-SUR-07, T-SUR-08, T-SUR-09, T-SUR-10, T-SUR-11, T-FS-01, T-FS-02, T-FS-03, T-FS-04, T-FS-05, T-REG-01, T-REG-02, T-REG-03, T-REG-04, T-REG-05]
+    goal: [AC5, AC6, AC7, AC8, AC15, AC22, AC23]
+    rubric: [R-N4-1, R-N4-2, R-N4-3, R-N4-4]
+    timebox_min: 50
+
+  - id: N5
+    name: aigis threats, CLI entry file, version strings
+    stream: B
+    depends_on: [N2, N3]
+    owns_files:
+      - lib/threats.js
+      - bin/aigis.js                 # whole file, including the .version('...') line
+      - package.json                 # version field only
+      - package-lock.json            # version fields only
+      - cli-python/pyproject.toml    # version field only
+    reads: [test/atlas-threats.test.js, test/atlas-version.test.js, lib/atlas.js, lib/build.js, lib/keywords.js, lib/classify.js, lib/jurisdiction.js]
+    exposes: "resolveThreatTraits, buildThreatModel, formatThreatsText, formatThreatsJSON; CLI `aigis threats` (SPEC S5); version 2.2.0 in all five places, changed in one commit"
+    spec: [S0, S5]
+    tests: [T-THR-01, T-THR-02, T-THR-03, T-THR-04, T-THR-05, T-THR-06, T-THR-07, T-THR-08, T-THR-09, T-THR-10, T-THR-11, T-THR-12, T-THR-13, T-THR-14, T-THR-15, T-THR-17, T-THR-18, T-THR-19, T-THR-20, T-REL-01]
+    goal: [AC9, AC10, AC11, AC19, AC21, AC23]
+    rubric: [R-N5-1, R-N5-2, R-N5-3, R-N5-4, R-N5-5, R-N5-6]
+    timebox_min: 60      # red-team stubs (AC19) add up to 30 more only if the reserve is intact; AC19 shipped-or-cut is final at N5 approval
+    why_version_here: "bin/aigis.js holds a version literal that the frozen version-agreement check parses, so all five strings must change in one commit by the node that owns bin/aigis.js. Regression tests mask the version, so other streams are unaffected."
+
+  - id: N6
+    name: core skill, template, README, changelog
+    stream: C
+    depends_on: [N1, N3]
+    finalize_after: [N5, PY]       # N6 is not done until its reconcile pass has run on the final cut state
+    passes:
+      - { name: draft,     window: "18:15 to 18:55", scope: "everything in SPEC S6, written for the all-SHOULDs-shipped state" }
+      - { name: reconcile, window: "20:00 to 20:15", scope: "SPEC S6.6: apply the fixed edits for whatever was cut (AC19, AC20, AC21, AC22), rerun T-DOC-*; only README.md, cli-python/README.md, CHANGELOG.md, IMPROVEMENTS.md may change in this pass" }
+    owns_files:
+      - content/skills/core.md               # cut-independent by design: not touched in the reconcile pass
+      - content/templates/threat-model.md
+      - cli-python/aigis_cli/content/skills/core.md
+      - cli-python/aigis_cli/content/templates/threat-model.md
+      - README.md
+      - cli-python/README.md
+      - CHANGELOG.md
+      - CONTRIBUTING.md
+      - IMPROVEMENTS.md
+    reads: [test/atlas-docs.test.js, build/atlas/gold/**, content/index/atlas.json]
+    exposes: "aigis template threat-model"
+    spec: [S0, S6]
+    tests: [T-DOC-01, T-DOC-02, T-DOC-03, T-DOC-04, T-DOC-05, T-DOC-06, T-DOC-07, T-DOC-08]
+    goal: [AC12, AC13, AC14]
+    rubric: [R-N6-1, R-N6-2, R-N6-3, R-N6-4, R-N6-5]
+    timebox_min: 40      # draft; plus 15 for reconcile
+
+  - id: PY
+    name: Python port
+    optional: true         # SHOULD (AC20). Exactly one of two end states at 20:00, recorded in the trace:
+    end_states:
+      shipped: "checker-approved by 20:00; branch merged; T-PY-02 prints RAN and passes"
+      cut_complete: "branch NOT merged, all or nothing: no cli-python/aigis_cli/atlas.py or threats.py in the tree and no edit to any Python CLI file; T-PY-01 green; T-PY-02 prints `CUT python port`; N6 reconcile adds the README note (T-DOC-07) and the IMPROVEMENTS item"
+    stream: D
+    depends_on: [N2, N3]       # builds from SPEC contracts; parity is measured against N4 and N5 before 20:00
+    owns_files:
+      - cli-python/aigis_cli/atlas.py
+      - cli-python/aigis_cli/threats.py
+      - cli-python/aigis_cli/classify.py
+      - cli-python/aigis_cli/auto_verify.py
+      - cli-python/aigis_cli/report.py
+      - cli-python/aigis_cli/build.py
+      - cli-python/aigis_cli/cli.py
+    reads: [test/atlas-python-parity.test.js, lib/atlas.js, lib/threats.js]
+    exposes: "same CLI contract as Node for the ATLAS fields and `aigis threats`"
+    spec: [S0, S2, S4, S5, SPY]
+    tests: [T-PY-02]
+    goal: [AC20]
+    rubric: [R-PY-2]
+    timebox_min: 90
+
+integration_node: INT
+integration:
+  depends_on: [N1, N2, N3, N4, N5, N6]     # required. N6 here means N6 after its reconcile pass.
+  optional_inputs: [PY]                    # merged only in end state `shipped`
+  merge_order: [N1, N2, N3, N4, N5, PY, N6]
+  owns_files:                              # no product files
+    - build/atlas/REVIEW.md
+    - build/atlas/evals/results/**         # except baseline.json (E0)
+  spec: [SINT]
+  tests: [T-HON-01, T-PY-01, T-REL-02, E2E-01, E2E-02, E2E-03, E2E-04, E2E-05, E2E-06, E2E-07, E2E-08, EV-M1, EV-M2, EV-M3, EV-M5, EV-M6]
+  goal: [AC14, AC16, AC17, AC18]     # AC14: N6 owns the docs half; the full-surface scan T-HON-01 can only pass here
+  rubric: [R-INT-1, R-INT-2, R-INT-3, R-INT-4, R-INT-5, R-INT-6, R-PY-1]
+  timebox_min: 60
+
+streams:                 # parallel worktrees; a stream is one maker session at a time
+  A: [N1, N2, N4]        # 17:00 -> 17:35 -> 18:20 -> 19:10
+  B: [N3, N5]            # 17:35 -> 18:15, then N5 18:20 -> 19:20 (N2 merged into B first)
+  C: [N6]                # draft 18:15 -> 18:55; reconcile 20:00 -> 20:15
+  D: [PY]                # 18:20 -> 19:50, hard decision at 20:00
+
+critical_path: [N1, N2, N5]     # 140 of 210 build minutes
+should_cut_order: [AC21, AC19, AC20, AC22]
+cut_rules:
+  - "AC19 and AC21 are decided when N5 is approved (inside N5). AC22 is decided when N4 is approved. AC20 is decided at 20:00 at the latest."
+  - "After 20:00 no SHOULD changes state. N6 reconcile runs on that final state and must finish by 20:15, leaving 15 minutes before freeze."
+
+file_conflict_notes:
+  - "bin/aigis.js: N5 only, whole file. N4 must not touch it; the JSON paths already print the lib results."
+  - "Version strings: N5 only, one commit. INT never edits them."
+  - "lib/build.js: N4 only. N5 uses the already exported normalizeDescription, assignUniqueSlugs, resolveTraits."
+  - "lib/classify.js: N4 only. N5 reads ALL_TRAITS and calls classify()."
+  - "README.md, cli-python/README.md, CHANGELOG.md, IMPROVEMENTS.md: N6 only, in both passes."
+  - "Mirror under cli-python/aigis_cli/content/: each file belongs to the node that owns its source. INT only runs the sync check."

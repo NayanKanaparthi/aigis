@@ -1,0 +1,349 @@
+{
+  "labeler": "gpt-5.6-sol",
+  "rows": [
+    {
+      "area": "audit-logging",
+      "mitigation": "AML.M0024",
+      "mitigation_name": "AI Telemetry Logging and Monitoring",
+      "atlas_quote": "Preserve sufficient context to trace activity across components and identify coordinated behavior across accounts and access pathways.",
+      "area_evidence": [
+        "### Pattern 1: Structured log entry for every LLM interaction",
+        "### Pattern 2: Trace ID propagation",
+        "### Pattern 3: Decision audit trail"
+      ],
+      "confidence": "high",
+      "note": "Structured request metadata, propagated trace IDs, and decision records provide the cross-component context the mitigation calls for."
+    },
+    {
+      "area": "confidence-scoring",
+      "mitigation": "AML.M0020",
+      "mitigation_name": "Generative AI Guardrails",
+      "atlas_quote": "Compare model responses against trusted source material or approved knowledge bases to detect unsupported or hallucinated claims.",
+      "area_evidence": [
+        "### Pattern 2: RAG-based grounding verification"
+      ],
+      "confidence": "high",
+      "note": "The grounding verifier compares extracted claims with retrieved source content and identifies unsupported claims."
+    },
+    {
+      "area": "data-integrity",
+      "mitigation": "AML.M0007",
+      "mitigation_name": "Sanitize Training Data",
+      "atlas_quote": "Inspect data samples, annotations, and metadata for evidence of manipulation.",
+      "area_evidence": [
+        "### Pattern 2: RAG data validation pipeline",
+        "### Pattern 4: Anomaly detection on embedding distributions",
+        "### Pattern 5: Batch rollback for poisoned data"
+      ],
+      "confidence": "high",
+      "note": "The procedure rejects suspicious data, detects distribution anomalies, and rolls back a batch when validation fails."
+    },
+    {
+      "area": "data-integrity",
+      "mitigation": "AML.M0014",
+      "mitigation_name": "Verify AI Artifacts",
+      "atlas_quote": "Verify artifacts when they are acquired, transferred, or updated, and before they are loaded or interpreted.",
+      "area_evidence": [
+        "### Pattern 1: Data provenance tracking",
+        "### Pattern 3: Fine-tuning data checksums"
+      ],
+      "confidence": "medium",
+      "note": "The procedure records and rechecks hashes for ingested and fine-tuning data, implementing integrity verification but not signature-based authenticity."
+    },
+    {
+      "area": "data-integrity",
+      "mitigation": "AML.M0025",
+      "mitigation_name": "Maintain AI Dataset Provenance",
+      "atlas_quote": "The history should include information about the dataset's source as well as a complete record of any modifications.",
+      "area_evidence": [
+        "### Pattern 1: Data provenance tracking"
+      ],
+      "confidence": "high",
+      "note": "The provenance record stores source, ingestion time, checksum, actor, size, and verification state for each document."
+    },
+    {
+      "area": "fallback-patterns",
+      "mitigation": "AML.M0036",
+      "mitigation_name": "Limit AI Workload Resource Consumption",
+      "atlas_quote": "Use timeouts, cost ceilings, circuit breakers, and safe termination conditions to prevent individual workloads from exhausting shared resources.",
+      "area_evidence": [
+        "### Step 2 — Implement a circuit breaker with three states",
+        "### Step 4 — Kill switch read per-request ⚠ CRITICAL",
+        "### Step 6 — Wrap every LLM call in exception handling"
+      ],
+      "confidence": "high",
+      "note": "The three-state breaker, live kill switch, and safe exception fallback implement circuit breaking and safe termination."
+    },
+    {
+      "area": "human-oversight",
+      "mitigation": "AML.M0020",
+      "mitigation_name": "Generative AI Guardrails",
+      "atlas_quote": "Require human approval for high-impact, irreversible, privileged, or externally visible actions (See [Human In-the-Loop for AI Agent Actions](/mitigations/AML.M0029), [Input and Output Validation for AI Agent Components](/mitigations/AML.M0033)).",
+      "area_evidence": [
+        "### Pattern 1: Principle of least privilege for tools",
+        "### Pattern 2: Human-in-the-loop for high-impact decisions"
+      ],
+      "confidence": "high",
+      "note": "Write tools require approval, and high-impact decisions are routed to a human review gate."
+    },
+    {
+      "area": "human-oversight",
+      "mitigation": "AML.M0028",
+      "mitigation_name": "Enforce Access Controls for AI Agent Tools",
+      "atlas_quote": "Enforce controls outside the model, in the tool implementation, MCP server, gateway, or underlying service.",
+      "area_evidence": [
+        "### Pattern 1: Principle of least privilege for tools"
+      ],
+      "confidence": "medium",
+      "note": "The external tool dispatcher enforces an allowlist and approval requirement rather than relying on model behavior."
+    },
+    {
+      "area": "human-oversight",
+      "mitigation": "AML.M0029",
+      "mitigation_name": "Human In-the-Loop for AI Agent Actions",
+      "atlas_quote": "Systems should require the user or another human stakeholder to approve AI agent actions before the agent takes them.",
+      "area_evidence": [
+        "### Pattern 1: Principle of least privilege for tools",
+        "### Pattern 2: Human-in-the-loop for high-impact decisions"
+      ],
+      "confidence": "high",
+      "note": "The procedure places approval before write-tool execution and escalates high-impact decisions to a reviewer."
+    },
+    {
+      "area": "human-oversight",
+      "mitigation": "AML.M0030",
+      "mitigation_name": "Restrict AI Agent Tool Invocation on Untrusted Data",
+      "atlas_quote": "For high consequence actions, consider always requiring user confirmation.",
+      "area_evidence": [
+        "### Pattern 1: Principle of least privilege for tools",
+        "### Pattern 2: Human-in-the-loop for high-impact decisions"
+      ],
+      "confidence": "medium",
+      "note": "The procedure requires approval for mutating tools and review for high-impact decisions, though it does not condition the gate specifically on untrusted context."
+    },
+    {
+      "area": "human-oversight",
+      "mitigation": "AML.M0036",
+      "mitigation_name": "Limit AI Workload Resource Consumption",
+      "atlas_quote": "Agentic AI systems should limit iterations, retries, tool calls, parallel tasks, delegation depth, and downstream spending.",
+      "area_evidence": [
+        "### Pattern 3: Action rate limiting"
+      ],
+      "confidence": "high",
+      "note": "The action limiter caps tool-action counts within a time window."
+    },
+    {
+      "area": "human-oversight",
+      "mitigation": "AML.M0037",
+      "mitigation_name": "AI Agent Authority Expansion Controls",
+      "atlas_quote": "The maximum authority available to the agent should be explicitly granted prior to runtime.",
+      "area_evidence": [
+        "### Pattern 1: Principle of least privilege for tools"
+      ],
+      "confidence": "medium",
+      "note": "The explicit tool allowlist predefines the agent's maximum available tool authority."
+    },
+    {
+      "area": "input-validation",
+      "mitigation": "AML.M0020",
+      "mitigation_name": "Generative AI Guardrails",
+      "atlas_quote": "Guardrails can be implemented using rule-based controls such as filters, allowlists, blocklists, regular expressions, schema validation, policy rules, and permission checks, or using AI-based techniques such as classifiers, LLM reviewers/judges, named entity recognition, groundedness checks, and task-adherence checks.",
+      "area_evidence": [
+        "### Step 4 — Validate LLM output against a schema",
+        "### Step 5 — Implement injection detection across three categories",
+        "### Step 6 — Block on detection, not just log ⚠ CRITICAL"
+      ],
+      "confidence": "high",
+      "note": "The procedure combines regex and structural injection checks with schema validation and blocks detected attacks before inference."
+    },
+    {
+      "area": "input-validation",
+      "mitigation": "AML.M0036",
+      "mitigation_name": "Limit AI Workload Resource Consumption",
+      "atlas_quote": "Set bounds on input size, batch size, execution time, memory, compute, and output size.",
+      "area_evidence": [
+        "### Step 1 — Enforce an input length ceiling that raises on violation"
+      ],
+      "confidence": "high",
+      "note": "The procedure enforces character and estimated-token ceilings before the LLM call."
+    },
+    {
+      "area": "monitoring",
+      "mitigation": "AML.M0008",
+      "mitigation_name": "Validate AI Model",
+      "atlas_quote": "During deployment, monitor for changes in model performance and use significant changes to trigger revalidation.",
+      "area_evidence": [
+        "### Pattern 2: Output drift detection"
+      ],
+      "confidence": "medium",
+      "note": "The drift detector compares recent output distributions to a baseline; the procedure implements monitoring but does not itself run revalidation."
+    },
+    {
+      "area": "monitoring",
+      "mitigation": "AML.M0024",
+      "mitigation_name": "AI Telemetry Logging and Monitoring",
+      "atlas_quote": "Monitor individual events and patterns over time for anomalous access, unauthorized changes, unusual usage, and unexpected model behavior or external actions.",
+      "area_evidence": [
+        "### Pattern 1: Key metrics dashboard",
+        "### Pattern 2: Output drift detection",
+        "### Pattern 3: User feedback integration",
+        "### Pattern 4: Incident response logging"
+      ],
+      "confidence": "high",
+      "note": "Metrics, drift, feedback, and incident records provide both point-in-time and longitudinal monitoring."
+    },
+    {
+      "area": "output-sanitization",
+      "mitigation": "AML.M0020",
+      "mitigation_name": "Generative AI Guardrails",
+      "atlas_quote": "Guardrails are safety controls placed between users, tools, and generative AI models to evaluate prompts, retrieved context, model outputs, and agent actions before they are accepted, executed, or shown to a user.",
+      "area_evidence": [
+        "### Pattern 1: Treat LLM output as untrusted user input",
+        "### Pattern 5: Content type validation"
+      ],
+      "confidence": "high",
+      "note": "The procedure validates output schemas, content types, enums, and context-specific safe encodings before downstream use."
+    },
+    {
+      "area": "output-sanitization",
+      "mitigation": "AML.M0032",
+      "mitigation_name": "Segmentation of AI Agent Components",
+      "atlas_quote": "Mediate access through authenticated APIs, isolate code execution via containers or virtual machines, restrict filesystem and network access, and limit tool invocation rates.",
+      "area_evidence": [
+        "### Pattern 4: Sandbox execution for generated code"
+      ],
+      "confidence": "high",
+      "note": "Generated code is run in a bounded sandbox with timeout and restricted environment rather than by direct eval or exec."
+    },
+    {
+      "area": "pii-handling",
+      "mitigation": "AML.M0020",
+      "mitigation_name": "Generative AI Guardrails",
+      "atlas_quote": "Detect, redact, or block personal information, credentials, tokens, proprietary data, system prompts, and other confidential information in prompts, retrieved context, tool outputs, and model responses.",
+      "area_evidence": [
+        "### Step 2 — Write a redaction function with non-reversible placeholders",
+        "### Step 3 — Call the redactor on every LLM input path",
+        "### Step 6 — Redact the model's output too"
+      ],
+      "confidence": "high",
+      "note": "The procedure detects and non-reversibly redacts PII on both model inputs and outputs."
+    },
+    {
+      "area": "pii-handling",
+      "mitigation": "AML.M0024",
+      "mitigation_name": "AI Telemetry Logging and Monitoring",
+      "atlas_quote": "Limit the collection of sensitive content through metadata, references, or redaction where these preserve investigative value, and apply appropriate retention controls.",
+      "area_evidence": [
+        "### Step 4 — Redact PII from log output as well"
+      ],
+      "confidence": "high",
+      "note": "Logs use redacted text or a hash for correlation instead of raw sensitive content."
+    },
+    {
+      "area": "prompt-security",
+      "mitigation": "AML.M0020",
+      "mitigation_name": "Generative AI Guardrails",
+      "atlas_quote": "Detect, redact, or block personal information, credentials, tokens, proprietary data, system prompts, and other confidential information in prompts, retrieved context, tool outputs, and model responses.",
+      "area_evidence": [
+        "### Pattern 1: Never embed secrets in system prompts",
+        "### Pattern 3: Leakage detection in output"
+      ],
+      "confidence": "high",
+      "note": "The procedure keeps credentials out of prompts and detects prompt fragments or high prompt similarity in output."
+    },
+    {
+      "area": "prompt-security",
+      "mitigation": "AML.M0021",
+      "mitigation_name": "Generative AI Guidelines",
+      "atlas_quote": "Guidelines can be implemented as system prompts, prompt templates, policy text appended to user prompts, or task-specific instructions included during prompt construction.",
+      "area_evidence": [
+        "### Pattern 1: Never embed secrets in system prompts",
+        "### Pattern 2: Minimal system prompts"
+      ],
+      "confidence": "high",
+      "note": "The system prompt omits secrets and implementation detail and explicitly instructs the model not to discuss its instructions."
+    },
+    {
+      "area": "rag-security",
+      "mitigation": "AML.M0019",
+      "mitigation_name": "Control Access to AI Models and Data in Production",
+      "atlas_quote": "Require authentication for API endpoints and monitor production model queries to ensure compliance with usage policies and to prevent model misuse.",
+      "area_evidence": [
+        "### Pattern 1: Access control on vector databases",
+        "### Pattern 4: Embedding endpoint access control"
+      ],
+      "confidence": "medium",
+      "note": "The procedure authorizes embedding operations and applies user-specific access filters while logging retrieval queries."
+    },
+    {
+      "area": "rag-security",
+      "mitigation": "AML.M0020",
+      "mitigation_name": "Generative AI Guardrails",
+      "atlas_quote": "Filter and validate retrieved documents before they are added to model context, including checks for untrusted sources, malicious instructions, irrelevant context, or sensitive data.",
+      "area_evidence": [
+        "### Pattern 3: Retrieved context validation"
+      ],
+      "confidence": "high",
+      "note": "Retrieved results are filtered for relevance, injection patterns, and freshness before entering context."
+    },
+    {
+      "area": "rag-security",
+      "mitigation": "AML.M0024",
+      "mitigation_name": "AI Telemetry Logging and Monitoring",
+      "atlas_quote": "Capture security-relevant access, changes, and operations across data pipelines, model development, deployment, and connected systems.",
+      "area_evidence": [
+        "### Pattern 1: Access control on vector databases",
+        "### Pattern 4: Embedding endpoint access control"
+      ],
+      "confidence": "medium",
+      "note": "The access-control examples log vector retrievals, authorization failures, and embedding operations."
+    },
+    {
+      "area": "rate-limiting",
+      "mitigation": "AML.M0004",
+      "mitigation_name": "Limit AI Service Query Volume and Rate",
+      "atlas_quote": "Apply limits by user, API key, tenant, device, or other authenticated identity.",
+      "area_evidence": [
+        "### Step 1 — Use a durable backing store (Redis or DB) ⚠ CRITICAL",
+        "### Step 2 — Key on authenticated user first",
+        "### Step 3 — Return 429 with Retry-After on block ⚠ CRITICAL"
+      ],
+      "confidence": "high",
+      "note": "The durable limiter keys quotas by API key or user ID and returns a timed 429 when the quota is exceeded."
+    },
+    {
+      "area": "rate-limiting",
+      "mitigation": "AML.M0036",
+      "mitigation_name": "Limit AI Workload Resource Consumption",
+      "atlas_quote": "Generative AI services should also limit context and output tokens.",
+      "area_evidence": [
+        "### Step 4 — Separate token budget from request count",
+        "### Step 5 — Timeout every LLM call"
+      ],
+      "confidence": "high",
+      "note": "The procedure enforces a per-user token ceiling separately from request count and bounds provider-call time."
+    },
+    {
+      "area": "supply-chain",
+      "mitigation": "AML.M0008",
+      "mitigation_name": "Validate AI Model",
+      "atlas_quote": "Validate newly trained or acquired models and repeat evaluation after fine-tuning, model updates, or changes to the conditions in which the model is used.",
+      "area_evidence": [
+        "### Pattern 3: Regression testing before model upgrades"
+      ],
+      "confidence": "high",
+      "note": "The upgrade validator compares the candidate model with the current version and blocks regressions before approval."
+    },
+    {
+      "area": "supply-chain",
+      "mitigation": "AML.M0014",
+      "mitigation_name": "Verify AI Artifacts",
+      "atlas_quote": "Pin approved artifacts to specific versions and cryptographic digests rather than relying on mutable names, tags, or download locations.",
+      "area_evidence": [
+        "### Pattern 1: Pin model versions"
+      ],
+      "confidence": "medium",
+      "note": "The procedure pins a specific provider model version rather than a mutable alias, but does not add a cryptographic digest for the hosted model."
+    }
+  ]
+}

@@ -12,6 +12,9 @@
  *   0  All area files satisfy the schema.
  *   1  At least one file failed; offending entries printed to stderr.
  *
+ * controls.atlas (optional) is checked against the pinned MITRE ATLAS catalog
+ * at content/index/atlas.json via lib/atlas.js; a missing catalog fails.
+ *
  * Used by .github/workflows/area-frontmatter-validation.yml on PRs that touch
  * content/skills/areas/. Also runs locally:
  *   node scripts/validate-area-frontmatter.js
@@ -26,6 +29,18 @@ const AREAS_DIR = path.join(ROOT, 'content', 'skills', 'areas');
 const BASELINE_PATH = path.join(__dirname, 'area-controls-baseline.json');
 const { ALL_TRAITS } = require(path.join(ROOT, 'lib', 'classify.js'));
 const ALL_TRAITS_SET = new Set(ALL_TRAITS);
+const atlasLib = require(path.join(ROOT, 'lib', 'atlas.js'));
+
+// ATLAS mitigation ids (controls.atlas) are checked against the vendored,
+// pinned catalog at content/index/atlas.json. Loaded once; a missing or
+// corrupt catalog is reported as an error rather than silently skipped.
+let _atlasMitigations = null;
+function loadAtlasMitigations() {
+  if (_atlasMitigations) return _atlasMitigations;
+  const catalog = atlasLib.loadCatalog();
+  _atlasMitigations = new Set(Object.keys(catalog.mitigations));
+  return _atlasMitigations;
+}
 
 // v2.1 no-deletion baseline: existing area files (those listed in
 // area-controls-baseline.json, captured at v2.0.2) must preserve their
@@ -58,6 +73,8 @@ const RE_OWASP = /^LLM\d{2}$/;
 const RE_NIST = /^(MAP|MEASURE|MANAGE|GOVERN)-\d+(\.\d+)?$/;
 const RE_ISO = /^(Clause-\d+(\.\d+)?|Annex-[A-Z](\.\d+)?|Annex-[A-Z])$/;
 const RE_EU_AI_ACT = /^(Art-\d+(\([0-9a-z]+\))*|Annex-[IVX]+(\([0-9a-z]+\))*)$/;
+const RE_ATLAS = /^AML\.M\d{4}$/;
+const CONTROL_KEYS = ['owasp', 'nist', 'iso42001', 'eu_ai_act', 'atlas'];
 
 function listAreaFiles() {
   return fs.readdirSync(AREAS_DIR)
@@ -136,18 +153,49 @@ function validateOne(filename) {
         }
       }
     }
+    // atlas is OPTIONAL: ATLAS mitigation ids this area implements in part.
+    if ('atlas' in fm.controls) {
+      if (!Array.isArray(fm.controls.atlas)) {
+        errors.push('controls.atlas must be an array if present');
+      } else {
+        let known = null;
+        try {
+          known = loadAtlasMitigations();
+        } catch (e) {
+          errors.push(`controls.atlas cannot be checked: ${e.message}`);
+        }
+        const seen = new Set();
+        for (const v of fm.controls.atlas) {
+          if (typeof v !== 'string' || !RE_ATLAS.test(v)) {
+            errors.push(`controls.atlas value "${v}" does not match AML.M####`);
+          } else if (known && !known.has(v)) {
+            errors.push(`controls.atlas value "${v}" is not a mitigation in ATLAS ${atlasLib.PINNED.version}`);
+          }
+          if (seen.has(v)) errors.push(`controls.atlas value "${v}" is a duplicate`);
+          seen.add(v);
+        }
+      }
+      // ATLAS is never jurisdiction-gated (docs/frontmatter-schema.md):
+      // a jurisdiction-gated area must not declare it.
+      if ('jurisdiction' in fm) {
+        errors.push('controls.atlas must not be declared on an area with jurisdiction: (ATLAS citations are never jurisdiction-gated)');
+      }
+    }
     // No other keys allowed under controls
     for (const k of Object.keys(fm.controls)) {
-      if (!['owasp', 'nist', 'iso42001', 'eu_ai_act'].includes(k)) {
+      if (!CONTROL_KEYS.includes(k)) {
         errors.push(`controls.${k} is not a recognized framework key`);
       }
     }
     // ── v2.1 no-deletion check: existing areas must preserve their
     // owasp/nist/iso42001 arrays from the v2.0.2 baseline. Adding
     // eu_ai_act is fine; modifying the original three is a regression.
+    // v3.0: atlas joins the protected set for baseline areas that record it.
     const baseline = loadBaseline();
     if (baseline[expectedId]) {
-      for (const fw of ['owasp', 'nist', 'iso42001']) {
+      const protectedKeys = ['owasp', 'nist', 'iso42001'];
+      if ('atlas' in baseline[expectedId]) protectedKeys.push('atlas');
+      for (const fw of protectedKeys) {
         if (!arraysEqualSet(fm.controls[fw], baseline[expectedId][fw])) {
           const before = JSON.stringify(baseline[expectedId][fw]);
           const after = JSON.stringify(fm.controls[fw] || []);
@@ -199,6 +247,14 @@ function main() {
   const files = listAreaFiles();
   if (files.length === 0) {
     console.error(`No area files found in ${AREAS_DIR}`);
+    process.exit(1);
+  }
+
+  try {
+    loadAtlasMitigations();
+  } catch (e) {
+    console.error(`ATLAS catalog unavailable: ${e.message}`);
+    console.error('controls.atlas cannot be validated without content/index/atlas.json (see content/index/atlas-NOTICE.md).');
     process.exit(1);
   }
 

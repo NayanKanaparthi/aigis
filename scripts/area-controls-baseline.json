@@ -9,6 +9,9 @@
     "iso42001": [
       "Clause-9.1",
       "Annex-A.6"
+    ],
+    "atlas": [
+      "AML.M0024"
     ]
   },
   "bias-monitoring": {
@@ -21,7 +24,8 @@
     "iso42001": [
       "Clause-6.1",
       "Annex-C"
-    ]
+    ],
+    "atlas": []
   },
   "confidence-scoring": {
     "owasp": [
@@ -34,6 +38,9 @@
     ],
     "iso42001": [
       "Annex-A.8"
+    ],
+    "atlas": [
+      "AML.M0020"
     ]
   },
   "data-integrity": {
@@ -46,6 +53,11 @@
     ],
     "iso42001": [
       "Annex-A.7"
+    ],
+    "atlas": [
+      "AML.M0007",
+      "AML.M0014",
+      "AML.M0025"
     ]
   },
   "explainability": {
@@ -57,7 +69,8 @@
     "iso42001": [
       "Annex-A.8",
       "Clause-7.4"
-    ]
+    ],
+    "atlas": []
   },
   "fallback-patterns": {
     "owasp": [],
@@ -68,7 +81,8 @@
     ],
     "iso42001": [
       "Clause-8.2"
-    ]
+    ],
+    "atlas": []
   },
   "human-oversight": {
     "owasp": [
@@ -82,6 +96,11 @@
     "iso42001": [
       "Annex-A.9",
       "Clause-8.4"
+    ],
+    "atlas": [
+      "AML.M0020",
+      "AML.M0029",
+      "AML.M0036"
     ]
   },
   "input-validation": {
@@ -95,6 +114,10 @@
     "iso42001": [
       "Clause-8.2",
       "Annex-A.6"
+    ],
+    "atlas": [
+      "AML.M0020",
+      "AML.M0036"
     ]
   },
   "monitoring": {
@@ -108,6 +131,9 @@
     "iso42001": [
       "Clause-9.1",
       "Clause-10"
+    ],
+    "atlas": [
+      "AML.M0024"
     ]
   },
   "output-sanitization": {
@@ -120,6 +146,10 @@
     ],
     "iso42001": [
       "Clause-8.2"
+    ],
+    "atlas": [
+      "AML.M0020",
+      "AML.M0032"
     ]
   },
   "pii-handling": {
@@ -133,6 +163,10 @@
     "iso42001": [
       "Annex-A.7",
       "Annex-A.4"
+    ],
+    "atlas": [
+      "AML.M0020",
+      "AML.M0024"
     ]
   },
   "prompt-security": {
@@ -145,6 +179,10 @@
     ],
     "iso42001": [
       "Clause-8.2"
+    ],
+    "atlas": [
+      "AML.M0020",
+      "AML.M0021"
     ]
   },
   "rag-security": {
@@ -157,6 +195,11 @@
     "iso42001": [
       "Clause-8.2",
       "Annex-A.7"
+    ],
+    "atlas": [
+      "AML.M0019",
+      "AML.M0020",
+      "AML.M0024"
     ]
   },
   "rate-limiting": {
@@ -169,6 +212,10 @@
     ],
     "iso42001": [
       "Clause-8.2"
+    ],
+    "atlas": [
+      "AML.M0004",
+      "AML.M0036"
     ]
   },
   "supply-chain": {
@@ -183,6 +230,9 @@
     ],
     "iso42001": [
       "Annex-A.10"
+    ],
+    "atlas": [
+      "AML.M0008"
     ]
   }
 }

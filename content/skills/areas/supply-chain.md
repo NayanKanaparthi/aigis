@@ -5,6 +5,7 @@ controls:
   owasp: [LLM03]
   nist: [GOVERN-6.1, GOVERN-6.2, MANAGE-3.1, MANAGE-3.2]
   iso42001: [Annex-A.10]
+  atlas: [AML.M0008]
 min_risk_tier: all
 system_traits: [uses-thirdparty-api, uses-finetuned]
 ---

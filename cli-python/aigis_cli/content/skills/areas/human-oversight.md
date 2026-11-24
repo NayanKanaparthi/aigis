@@ -6,6 +6,7 @@ controls:
   nist: [MAP-3.5, MANAGE-1.3, MANAGE-4.1]
   iso42001: [Annex-A.9, Clause-8.4]
   eu_ai_act: [Art-14, Art-14(4)]
+  atlas: [AML.M0020, AML.M0029, AML.M0036]
 min_risk_tier: all
 system_traits: [is-agentic, influences-decisions, handles-minors, generates-code]
 ---

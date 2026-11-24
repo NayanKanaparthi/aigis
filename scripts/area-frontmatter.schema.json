@@ -39,6 +39,12 @@
             "pattern": "^(Art-\\d+(\\([0-9a-z]+\\))*|Annex-[IVX]+(\\([0-9a-z]+\\))*)$"
           },
           "description": "EU AI Act article references. v2.1 addition. Optional."
+        },
+        "atlas": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^AML\\.M\\d{4}$" },
+          "description": "MITRE ATLAS mitigation ids (must exist in content/index/atlas.json, ATLAS 2026.10) that this area implements in part. v3.0 addition. Optional, may be empty. Not allowed on areas that declare jurisdiction."
         }
       }
     },

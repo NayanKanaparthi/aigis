@@ -1,0 +1,101 @@
+{
+  "_doc": "Held-out set (EVALS §3): 8 descriptions for agentic, RAG and multimodal surfaces. Text and ground-truth traits copied verbatim from build/atlas/EVALS.md §3 (planner draft, checked by the plan reviewer). needs_agent_security from EVALS §9.1 (planner draft: yes for H1, H3, H6, H8). Not shown to makers, not used in tests or fixtures; run once at INT.",
+  "source": "build/atlas/EVALS.md §3 and §9.1",
+  "descriptions": [
+    {
+      "id": "H1",
+      "text": "Build an email triage agent that reads incoming support emails, looks up the customer in our CRM, and drafts and sends replies using Claude.",
+      "ground_truth_traits": [
+        "uses-llm",
+        "uses-thirdparty-api",
+        "is-agentic",
+        "accepts-user-input",
+        "processes-pii",
+        "is-external"
+      ],
+      "needs_agent_security": true
+    },
+    {
+      "id": "H2",
+      "text": "Add an internal knowledge assistant that answers employee questions from our Confluence and Google Drive documents using retrieval augmented generation.",
+      "ground_truth_traits": [
+        "uses-llm",
+        "uses-rag",
+        "accepts-user-input",
+        "is-internal",
+        "handles-proprietary"
+      ],
+      "needs_agent_security": false
+    },
+    {
+      "id": "H3",
+      "text": "Create a coding agent that opens pull requests, runs shell commands in CI and can merge its own changes.",
+      "ground_truth_traits": [
+        "uses-llm",
+        "is-agentic",
+        "generates-code"
+      ],
+      "needs_agent_security": true
+    },
+    {
+      "id": "H4",
+      "text": "We want a public API that summarizes uploaded contracts with GPT-4o and stores the summaries for our legal team.",
+      "ground_truth_traits": [
+        "uses-llm",
+        "uses-thirdparty-api",
+        "accepts-user-input",
+        "is-external",
+        "handles-proprietary"
+      ],
+      "needs_agent_security": false
+    },
+    {
+      "id": "H5",
+      "text": "Fine-tune an open-source model downloaded from Hugging Face on our support tickets and deploy it behind our helpdesk widget.",
+      "ground_truth_traits": [
+        "uses-llm",
+        "uses-finetuned",
+        "processes-pii",
+        "accepts-user-input",
+        "is-external"
+      ],
+      "needs_agent_security": false
+    },
+    {
+      "id": "H6",
+      "text": "Build a research assistant with long-term memory that browses the web, saves notes, and calls tools through MCP servers.",
+      "ground_truth_traits": [
+        "uses-llm",
+        "is-agentic",
+        "accepts-user-input"
+      ],
+      "needs_agent_security": true
+    },
+    {
+      "id": "H7",
+      "text": "A pipeline where one LLM extracts invoice fields from scanned images and a second LLM decides whether to approve payment.",
+      "ground_truth_traits": [
+        "uses-llm",
+        "is-multimodal",
+        "multi-model-pipeline",
+        "handles-financial",
+        "influences-decisions"
+      ],
+      "needs_agent_security": false
+    },
+    {
+      "id": "H8",
+      "text": "Add a voice-enabled shopping assistant for our mobile app that recommends products and places orders for the user.",
+      "ground_truth_traits": [
+        "uses-llm",
+        "is-multimodal",
+        "is-agentic",
+        "accepts-user-input",
+        "is-external",
+        "handles-financial",
+        "processes-pii"
+      ],
+      "needs_agent_security": true
+    }
+  ]
+}

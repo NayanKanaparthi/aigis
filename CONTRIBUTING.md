@@ -31,6 +31,16 @@ The PR template enforces structure; CI runs four validations on the JSON via `.g
 - Backward compatibility: not promised across alpha releases. After v2.0 final ships, breaking changes go through a deprecation notice and a major version bump.
 - Python CLI mirrors the JS CLI structurally (see `cli-python/aigis_cli/`). Functional parity is best-effort; JS is the primary runtime for the v2.0 benchmark.
 
+## Updating MITRE ATLAS
+
+The ATLAS catalog in `content/index/atlas.json` is generated from one pinned release file. To move to a new ATLAS release:
+
+1. Download the release file by hand from the `mitre-atlas/atlas-data` releases (for 2026.10 this was `dist/v6/ATLAS-2026.10.yaml`). The generator makes no network calls.
+2. Compute its sha256. Update `ATLAS_VERSION`, `ATLAS_SHA256`, `MODIFIED_DATE` and `FORMAT_VERSION` in `scripts/build-atlas-index.js`, and the pinned version and hash in `lib/atlas.js` and the tests. The generator refuses any file whose hash does not match.
+3. Run `node scripts/build-atlas-index.js --source <path-to-yaml>`, then `--check` to confirm the output is reproducible. Update the source line and hash in `content/index/atlas-NOTICE.md`.
+4. Re-approve the mappings. The `controls.atlas` lists in area frontmatter and `content/index/atlas-entry-points.json` are Aigis's own judgments; review every row against the new release and get approval before they ship. Do not infer links MITRE did not publish.
+5. Copy the changed files to `cli-python/aigis_cli/content/` (`node scripts/check-content-sync.js` must pass) and run `npm test`.
+
 ## Running aigis from this checkout
 
 ```

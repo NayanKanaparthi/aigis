@@ -6,6 +6,7 @@ controls:
   nist: [MEASURE-2.4, MEASURE-3.1, MANAGE-4.1, MANAGE-4.2]
   iso42001: [Clause-9.1, Clause-10]
   eu_ai_act: [Art-72, Art-72(1), Art-72(2), Art-72(3), Art-72(4)]
+  atlas: [AML.M0024]
 min_risk_tier: medium
 system_traits: [uses-llm, is-high-volume, multi-model-pipeline]
 ---

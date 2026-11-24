@@ -35,7 +35,15 @@ const NEW_AREAS = ['agent-permissions', 'agent-tool-safety'];
 const IDES = ['cursor', 'windsurf', 'copilot', 'claude-code'];
 const N_RUNS = 2;
 const FORBIDDEN = /ATLAS[ -]?(compliant|compliance|certified|certification)|complies with ATLAS|risk[ -]?scor(e|es|ed|ing)/i;
-const DISCLAIMER = 'MITRE ATLAS is a threat catalog, not a standard. Nobody is "ATLAS compliant". It does not score risk, and it does not cover bias or fairness.';
+const DISCLAIMER_SPEC = 'MITRE ATLAS is a threat catalog, not a standard. Nobody is "ATLAS compliant". It does not score risk, and it does not cover bias or fairness.';
+// The sentence removed before the FORBIDDEN scan is the one the product ships: read (as text, not executed) from
+// lib/atlas.js. Falls back to the SPEC S0 sentence on pre-feature code. A mismatch with SPEC is reported.
+function shippedDisclaimer(root) {
+  const f = path.join(root, 'lib', 'atlas.js');
+  if (!fs.existsSync(f)) return null;
+  const m = fs.readFileSync(f, 'utf8').match(/const DISCLAIMER = '((?:[^'\\]|\\.)*)';/);
+  return m ? m[1].replace(/\\(.)/g, '$1') : null;
+}
 const ID_RE = /AML\.(?:TA|CS|M|T)\d{4}(?:\.\d{3})?/g;
 const CAPS = { brief_growth: 1500, core_md: 5650, threats_text_default: 7000, threats_text_top25: 16000,
   threats_json_default: 20000, threats_json_top25: 45000, catalog_bytes: 64000, new_area_chars: 12000,
@@ -71,6 +79,38 @@ function mask(s) {
     .replace(/"generated_at":\s*"[^"]*"/g, '"generated_at": "<ts>"')
     .replace(/^> Generated: .*$/gm, '> Generated: <ts>')
     .split(PKG_VERSION).join('<version>');
+}
+const DISCLAIMER = shippedDisclaimer(ROOT) || DISCLAIMER_SPEC;
+// FORBIDDEN scan (SPEC S0, T-HON-01). JSON output is parsed first and every key and string value is scanned as
+// decoded text, so the disclaimer's quoted "ATLAS compliant" (escaped as \"ATLAS compliant\" in raw JSON) is
+// removed exactly; text output is scanned as is. Returns the matched phrases (empty = clean).
+function stringsOf(v, acc = []) {
+  if (typeof v === 'string') acc.push(v);
+  else if (Array.isArray(v)) v.forEach((x) => stringsOf(x, acc));
+  else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) { acc.push(k); stringsOf(x, acc); }
+  return acc;
+}
+function forbiddenHits(stdout) {
+  let texts;
+  try { texts = stringsOf(JSON.parse(stdout)); } catch (_) { texts = [stdout]; }
+  const hits = [];
+  for (const t of texts) {
+    const re = new RegExp(FORBIDDEN.source, 'gi');
+    const clean = t.split(DISCLAIMER).join('');
+    let m;
+    while ((m = re.exec(clean))) hits.push(m[0]);
+  }
+  return hits;
+}
+function forbiddenSelfTest() {
+  // The disclaimer alone, raw or inside JSON, is clean; one planted phrase is caught in both forms.
+  const planted = 'This system is ATLAS compliant.';
+  const cases = [
+    [DISCLAIMER, 0], [JSON.stringify({ atlas: { disclaimer: DISCLAIMER } }, null, 2), 0],
+    [DISCLAIMER + '\n' + planted, 1], [JSON.stringify({ atlas: { disclaimer: DISCLAIMER }, note: planted }, null, 2), 1],
+    [JSON.stringify({ text: 'We compute a risk score.' }), 1],
+  ];
+  return cases.every(([s, n]) => forbiddenHits(s).length === n);
 }
 const OUTPUTS = []; // { cmd, kind, stdout } for id scans and the FORBIDDEN scan
 const DETERMINISM = { commands: 0, identical: 0, differing: [] };
@@ -244,6 +284,12 @@ function runDescription(d, hasThreats) {
   rec.classify_desc = { exit: cd.exit, chars: cd.chars, ...classifyFields(cd.json) };
   rec.classify_gt = { exit: cg.exit, chars: cg.chars, ...classifyFields(cg.json) };
   rec.build = buildFields(b);
+  if (b.json && b.json.meta && b.json.meta.auto_fallback) {
+    // The auto brief fell back to compact (full brief over the 120,000 cap). Measure the full-mode brief too,
+    // so growth is judged on like-for-like content and the fallback is reported, not hidden (EVALS §9.3).
+    const bf = cli(['build', d.text, '--full', '--json']);
+    rec.build.full_mode = bf.json ? { exit: bf.exit, char_count: bf.json.meta.char_count, mode: bf.json.meta.mode } : { exit: bf.exit };
+  }
   const areas = (cg.json && cg.json.implement_files) || [];
   if (areas.length) {
     const rj = cli(['report', '--areas', areas.join(','), '--project', FIXTURE_PROJECT, '--format', 'json']);
@@ -556,13 +602,26 @@ function computeMetrics(recs, stat, init, o, base, hasThreats) {
       if (!b || b.build.char_count == null || r.build.char_count == null) return { id: r.id, set: r.set, note: 'no brief', baseline: b && b.build.char_count, now: r.build.char_count };
       const agentic = ((r.build.meta && r.build.meta.all_traits) || []).includes('is-agentic');
       const cap = CAPS.brief_growth + (agentic ? allowanceExtra : 0);
-      const delta = r.build.char_count - b.build.char_count;
-      return { id: r.id, set: r.set, baseline: b.build.char_count, now: r.build.char_count, delta, cap, agentic, ok: delta <= cap,
-        mode_before: b.build.mode, mode_after: r.build.mode, moved_to_compact: b.build.mode !== r.build.mode };
+      const moved = b.build.mode === 'full' && r.build.mode !== 'full';
+      if (!moved) {
+        const delta = r.build.char_count - b.build.char_count;
+        return { id: r.id, set: r.set, baseline: b.build.char_count, now: r.build.char_count, delta, cap, agentic, ok: delta <= cap,
+          mode_before: b.build.mode, mode_after: r.build.mode, moved_to_compact: false };
+      }
+      // Separate case: auto brief crossed the cap and fell back to compact. The auto-mode delta is negative and
+      // meaningless as growth; growth is measured on the --full brief, and the move itself is judged by the
+      // GOALS rule: allowed only for an agentic description whose baseline was within 26,000 of the cap.
+      const full = r.build.full_mode && r.build.full_mode.char_count;
+      const fullDelta = full != null ? full - b.build.char_count : null;
+      const nearCap = b.build.char_count >= CAPS.compact_fallback_cap - 26000;
+      return { id: r.id, set: r.set, baseline: b.build.char_count, now: r.build.char_count, auto_mode_delta: r.build.char_count - b.build.char_count,
+        full_mode_chars: full, delta: fullDelta, cap, agentic, mode_before: b.build.mode, mode_after: r.build.mode, moved_to_compact: true,
+        baseline_within_26000_of_cap: nearCap, fallback_allowed: agentic && nearCap, ok: fullDelta != null && fullDelta <= cap && agentic && nearCap };
     });
     M['EV-M5i'] = { per_description: rows, all_ok: rows.every((x) => x.ok !== false),
       non_agentic_moved_to_compact: rows.filter((x) => x.moved_to_compact && !x.agentic).map((x) => x.id),
-      agentic_moved_to_compact: rows.filter((x) => x.moved_to_compact && x.agentic).map((x) => x.id) };
+      agentic_moved_to_compact: rows.filter((x) => x.moved_to_compact && x.agentic).map((x) => x.id),
+      note: 'delta is the auto-mode growth, or for a description that moved to compact, the --full brief growth (auto_mode_delta kept for the record).' };
   }
 
   // ---- §6 / §9.2 guards vs baseline
@@ -615,8 +674,10 @@ function computeMetrics(recs, stat, init, o, base, hasThreats) {
     M.guards = { violations: v.length, details: v.slice(0, 80), core_md_growth: coreGrowth };
   }
   // FORBIDDEN phrase scan on every captured output (after removing each DISCLAIMER occurrence)
-  const forb = OUTPUTS.filter((x) => FORBIDDEN.test(x.stdout.split(DISCLAIMER).join(''))).map((x) => x.cmd);
-  M.forbidden_phrase = { outputs_scanned: OUTPUTS.length, hits: forb.length, commands: forb.slice(0, 20) };
+  const forb = OUTPUTS.map((x) => ({ cmd: x.cmd, hits: forbiddenHits(x.stdout) })).filter((x) => x.hits.length);
+  M.forbidden_phrase = { outputs_scanned: OUTPUTS.length, method: 'JSON parsed, keys and string values scanned; exact DISCLAIMER removed first',
+    disclaimer_source: shippedDisclaimer(ROOT) ? 'lib/atlas.js' : 'SPEC S0 (lib/atlas.js has none)', disclaimer_equals_spec: DISCLAIMER === DISCLAIMER_SPEC,
+    scanner_selftest: forbiddenSelfTest(), hits: forb.length, details: forb.slice(0, 20).map((x) => `${x.cmd.slice(0, 120)}: ${uniq(x.hits).join(', ')}`) };
 
   // ---- EV-M6 determinism
   M['EV-M6'] = { commands: DETERMINISM.commands, identical: DETERMINISM.identical, differing: DETERMINISM.differing, runs_per_command: N_RUNS };
@@ -639,7 +700,7 @@ function gates(M, hasThreats, base) {
   if (M['EV-M5i']) add('EV-M5i', M['EV-M5i'].all_ok && !M['EV-M5i'].non_agentic_moved_to_compact.length, M['EV-M5i'].per_description.map((x) => x.delta), '<= cap');
   if (base) add('EV-RT(i)', M['EV-RT'].i_gt_traits_path.recall === 1 && M['EV-RT'].i_gt_traits_path.precision === 1, [M['EV-RT'].i_gt_traits_path.recall, M['EV-RT'].i_gt_traits_path.precision], 'R 1, P 1');
   if (M.guards) add('guards §6/§9.2', M.guards.violations === 0, M.guards.violations, 0);
-  add('FORBIDDEN', M.forbidden_phrase.hits === 0, M.forbidden_phrase.hits, 0);
+  add('FORBIDDEN', M.forbidden_phrase.hits === 0 && M.forbidden_phrase.scanner_selftest, M.forbidden_phrase.hits, 0);
   add('EV-M6 determinism', M['EV-M6'].differing.length === 0, `${M['EV-M6'].identical}/${M['EV-M6'].commands}`, 'all identical');
   if (M.npm_test) add('EV-M6 npm test', M.npm_test.exit === 0, M.npm_test.exit, 0);
   return g;

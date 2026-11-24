@@ -323,8 +323,35 @@ def format_threats_text(model: dict) -> str:
     return "\n".join(L) + "\n"
 
 
-def format_threats_json(model: dict) -> str:
-    return json.dumps(model, indent=2, ensure_ascii=False) + "\n"
+# JSON layout mirrors lib/threats.js (2189207): containers whose items are all
+# scalars are written on one line when they fit in JSON_INLINE_WIDTH columns.
+JSON_INLINE_WIDTH = 100
+def _is_container(v):
+    return isinstance(v, (dict, list))
+def _dump(v):
+    return json.dumps(v, ensure_ascii=False)
+def _inline_leaf(v):
+    if isinstance(v, list):
+        return "[" + ", ".join(_dump(x) for x in v) + "]" if v else "[]"
+    return "{ " + ", ".join(f"{_dump(k)}: {_dump(x)}" for k, x in v.items()) + " }" if v else "{}"
+def _layout(v, indent, prefix_len):
+    if not _is_container(v):
+        return _dump(v)
+    items = v if isinstance(v, list) else list(v.values())
+    if not any(_is_container(x) for x in items):
+        inline = _inline_leaf(v)
+        if len(indent) + prefix_len + len(inline) <= JSON_INLINE_WIDTH or not items:
+            return inline
+    inner = indent + "  "
+    if isinstance(v, list):
+        return "[\n" + ",\n".join(inner + _layout(x, inner, 0) for x in v) + "\n" + indent + "]"
+    lines = []
+    for k, x in v.items():
+        key = _dump(k) + ": "
+        lines.append(inner + key + _layout(x, inner, len(key)))
+    return "{\n" + ",\n".join(lines) + "\n" + indent + "}"
+def format_threats_json(model):
+    return _layout(model, "", 0) + "\n"
 
 
 def catalog_error_line(err: AtlasCatalogError) -> str:

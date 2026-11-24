@@ -425,8 +425,9 @@ def _wildcard_tool_scope(files: list[dict[str, Any]], ctx: dict[str, Any]) -> di
 
 
 # v3.0 (SPEC S7.3, AC30): agent-tool-safety V2 overclaim, modeled on
-# injection_log_only. The trust gate tests the label but only logs.
-_TRUST_TEST_RE = re.compile(r"^\s*(?:if|elif|else\s+if|when|unless)\b.*(?:trust_level|trustLevel|untrusted)|(?:trust_level|trustLevel|untrusted)[^\n]*\?\s")
+# injection_log_only. The trust gate tests the label or the taint state
+# (trust_level, trustLevel, untrusted, tainted) but only logs.
+_TRUST_TEST_RE = re.compile(r"^\s*(?:if|elif|else\s+if|when|unless)\b.*(?:trust_level|trustLevel|untrusted|\btaint\w*)|(?:trust_level|trustLevel|untrusted|\btaint\w*)[^\n]*\?\s")
 _TRUST_LOG_RE = re.compile(r"\b(?:log|logger|logging|console|LOG|LOGGER)\.(?:debug|info|warn|warning|error|exception|critical|log)\s*\(")
 _TRUST_BLOCK_RE = re.compile(
     r"\braise\b|\bthrow\b|\brequire_approval\b|\brequireApproval\b"

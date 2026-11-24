@@ -2,10 +2,10 @@
 id: agent-tool-safety
 title: Tool invocation safety, tool input and output validation, scope drift
 controls:
-  owasp: []
-  nist: []
+  owasp: [LLM01, LLM02, LLM05, LLM06]
+  nist: [MEASURE-2.7, MANAGE-2.4]
   iso42001: []
-  atlas: []
+  atlas: [AML.M0020, AML.M0029, AML.M0030, AML.M0031, AML.M0033, AML.M0037, AML.M0038]
 min_risk_tier: all
 system_traits: [is-agentic]
 ---

@@ -194,3 +194,13 @@ Started from GPT-5.6 Sol's unverified WIP (`be9afad`) after merging `atlas` (HEA
 - T-NA-04 / T-NB-04 required every spelling of every contract identifier (snake, camel, UPPER). SPEC S7.3 lists alternates ("matched in snake_case and camelCase"). Now: each identifier group must have at least one spelling in the Python module and in the JavaScript module of the complete example. Not weaker for the contract: a missing identifier still fails.
 - T-DOC-04: `aigis template threat-model` prints the file plus one newline, exactly like every existing template. The test now derives the expected trailing newline from `ai-impact-assessment` instead of demanding byte equality.
 - `build/atlas/TESTLOCK` written: sha256 of every `test/atlas-*.js`, every file under `test/fixtures/atlas/`, and `build/atlas/evals/e2e.sh` (92 files, `shasum -a 256` format).
+
+### Round 2 addendum: rerun against `atlas` at 5d53483 and later (merged again before locking)
+
+Result: **115 PASS, 3 FAIL** of 118 ids (`scripts/test-all.js`: 24/27 checks pass; non-atlas checks all pass). Per file: area-permissions 6/1, area-tool-safety 6/1, docs 10/1, every other atlas file all PASS (catalog 11, lib 14, frontmatter 7, routing 3, surfaces 12, failsoft 5, regression 5, threats 20, version 1, honesty 1, python-parity 3, release 3, verify-new 8).
+
+The 3 FAILs are all (a) expected, G1 (`build/atlas/gold/new-areas.json` not approved yet): T-NA-06, T-NB-06, T-DOC-02. No (b), no (c) ATLAS bugs. T-NV-01..08 and T-PY-01..03 now pass (T-PY-03 prints `RAN`). The two pre-existing bugs above (`search --list`, `audit` EU checklist crash) are still present.
+
+- TEST-WRONG 11 (T-PY-02 timestamps): **accepted.** The test compared whole report and build JSON across Node and Python runs, so `generated_at`, `meta.generated_at` and the brief "generated" line could never match. It now compares only what TESTPLAN says: classify `controls.atlas` and `atlas`; verify `cited_controls.atlas` and `atlas`; report top-level `atlas`, both summary keys and per-area `cited_controls.atlas`; build `meta.atlas` and the Threat model section text; the whole `threats` document (TS1, TS2, seeded TS4); plus `atlas.disclaimer` in every Python document. The `threats` text bytes and the error cases are unchanged.
+- New test bug found: T-RT-05 ran `report --from-classify <DS3>`, the same DS3 assumption as TEST-WRONG 6 (DS3 resolves no confirmed trait, so the command exits with "No traits resolved"; `bin/aigis.js` is unchanged from 2.1.1 there). It now uses the agentic description from `baseline/rt04-agentic-build.json`.
+- TESTLOCK regenerated after these edits (92 files).

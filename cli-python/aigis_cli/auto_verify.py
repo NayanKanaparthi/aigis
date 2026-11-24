@@ -396,11 +396,82 @@ def _rate_limit_no_retry_after(files: list[dict[str, Any]], ctx: dict[str, Any])
     return {"flagged": flagged or partial, "evidence": evidence, "notes": notes}
 
 
+# v3.0 (SPEC S7.3): agent-permissions V4 overclaim. A tool-authorization
+# function exists (V4 PASS) but a scope literally grants everything.
+_WILDCARD_LITERAL_RE = re.compile(r"""(["'])\*\1""")
+_WILDCARD_CONTEXT_RE = re.compile(r"scope|tool|allow|permission", re.IGNORECASE)
+_ALLOW_ALL_RE = re.compile(r"\b(?:allow_all|allowAll|ALLOW_ALL)\b\s*(?:[:=]|==)?\s*(?:True|true|1)\b")
+
+
+def _wildcard_tool_scope(files: list[dict[str, Any]], ctx: dict[str, Any]) -> dict[str, Any]:
+    hits: list[dict[str, Any]] = []
+    for f in files:
+        for i, line in enumerate(f["content"].split("\n")):
+            literal = bool(_WILDCARD_LITERAL_RE.search(line)) and bool(_WILDCARD_CONTEXT_RE.search(line))
+            if literal or _ALLOW_ALL_RE.search(line):
+                hits.append({"file": f["path"], "line": i + 1, "snippet": line.strip()[:120]})
+    flagged = bool(hits)
+    if flagged:
+        notes = (
+            f"{len(hits)} wildcard grant(s) found: a tool, scope or permission is set to \"*\" or allow-all. "
+            "An authorization check that allows everything does not limit the agent. "
+            "Replace the wildcard with an explicit allowlist per agent identity."
+        )
+    else:
+        notes = "No wildcard tool scope or allow-all grant found."
+    return {"flagged": flagged, "evidence": hits[:3], "notes": notes}
+
+
+# v3.0 (SPEC S7.3, AC30): agent-tool-safety V2 overclaim, modeled on
+# injection_log_only. The trust gate tests the label but only logs.
+_TRUST_TEST_RE = re.compile(r"^\s*(?:if|elif|else\s+if|when|unless)\b.*(?:trust_level|trustLevel|untrusted)|(?:trust_level|trustLevel|untrusted)[^\n]*\?\s")
+_TRUST_LOG_RE = re.compile(r"\b(?:log|logger|logging|console|LOG|LOGGER)\.(?:debug|info|warn|warning|error|exception|critical|log)\s*\(")
+_TRUST_BLOCK_RE = re.compile(
+    r"\braise\b|\bthrow\b|\brequire_approval\b|\brequireApproval\b"
+    r"|\breturn\s+(?:False|false|None|null|deny\w*|Deny\w*|DENY\w*|Decision\.DENY|\{[^}\n]*(?:allowed|ok)\s*[:=]\s*(?:False|false))"
+)
+
+
+def _untrusted_gate_log_only(files: list[dict[str, Any]], ctx: dict[str, Any]) -> dict[str, Any]:
+    sites: list[dict[str, Any]] = []
+    evidence: list[dict[str, Any]] = []
+    for f in files:
+        lines = f["content"].split("\n")
+        for i, line in enumerate(lines):
+            if not _TRUST_TEST_RE.search(line):
+                continue
+            window = lines[i : min(i + 9, len(lines))]
+            logs = any(_TRUST_LOG_RE.search(w) for w in window)
+            if not logs:
+                continue
+            blocks = any(_TRUST_BLOCK_RE.search(w) for w in window)
+            sites.append({"file": f["path"], "line": i + 1, "blocks": blocks})
+            if not blocks:
+                evidence.append({
+                    "file": f["path"],
+                    "line": i + 1,
+                    "snippet": line.strip() + "  // logs, but the next 8 lines neither raise nor deny",
+                })
+    flagged = any(not s["blocks"] for s in sites)
+    if not sites:
+        notes = "No trust-label gate with a logging call found."
+    elif flagged:
+        notes = (
+            f"{len(evidence)} trust gate(s) log untrusted context but do not block, deny or require approval. "
+            "The tool call still runs on untrusted data. Block it or route it to human approval."
+        )
+    else:
+        notes = "Every trust gate that logs also blocks, denies or requires approval."
+    return {"flagged": flagged, "evidence": evidence[:3], "notes": notes}
+
+
 _SPECIAL_REGISTRY = {
     "kill_switch_restart_latched": _kill_switch_restart_latched,
     "injection_log_only": _injection_log_only,
     "pii_incomplete_classes": _pii_incomplete_classes,
     "rate_limit_no_retry_after": _rate_limit_no_retry_after,
+    "wildcard_tool_scope": _wildcard_tool_scope,
+    "untrusted_gate_log_only": _untrusted_gate_log_only,
 }
 
 

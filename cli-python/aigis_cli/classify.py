@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+_AREAS_DIR = Path(__file__).resolve().parent / "content" / "skills" / "areas"
+
 ALL_TRAITS = [
     "uses-llm", "uses-rag", "uses-finetuned", "uses-thirdparty-api", "is-agentic", "is-multimodal",
     "processes-pii", "handles-financial", "handles-health", "handles-proprietary", "handles-minors",
@@ -14,7 +18,7 @@ TRAIT_FILES: dict[str, list[str]] = {
     "uses-rag": ["rag-security", "data-integrity"],
     "uses-finetuned": ["data-integrity", "supply-chain"],
     "uses-thirdparty-api": ["supply-chain"],
-    "is-agentic": ["human-oversight", "rate-limiting", "fallback-patterns", "audit-logging"],
+    "is-agentic": ["human-oversight", "rate-limiting", "fallback-patterns", "audit-logging", "agent-permissions", "agent-tool-safety"],
     "is-multimodal": ["input-validation", "output-sanitization", "pii-handling"],
     "processes-pii": ["pii-handling", "audit-logging"],
     "handles-financial": ["pii-handling", "audit-logging", "bias-monitoring"],
@@ -56,6 +60,27 @@ FILE_CONTROLS: dict[str, dict[str, list[str]]] = {
     "monitoring": {"owasp": [], "nist": ["MEASURE-2.4", "MEASURE-3.1", "MANAGE-4.1", "MANAGE-4.2"], "iso": ["Clause-9.1", "Clause-10"]},
     "explainability": {"owasp": [], "nist": ["MEASURE-2.8", "MEASURE-2.9"], "iso": ["Annex-A.8", "Clause-7.4"]},
 }
+
+# v3.0 (SPEC S4.6): the two agent areas have no FILE_CONTROLS entry; their
+# owasp / nist / iso42001 ids are read from frontmatter. Limited to this fixed
+# list so the EU areas (no FILE_CONTROLS entry either) keep contributing nothing.
+FRONTMATTER_CONTROL_AREAS = ["agent-permissions", "agent-tool-safety"]
+
+
+def _read_frontmatter_controls(area_id: str) -> dict | None:
+    try:
+        import frontmatter
+        filepath = _AREAS_DIR / f"{area_id}.md"
+        if not filepath.exists():
+            return None
+        c = (frontmatter.loads(filepath.read_text(encoding="utf-8")).metadata or {}).get("controls") or {}
+
+        def _list(v):
+            return [x for x in v if isinstance(x, str)] if isinstance(v, list) else []
+
+        return {"owasp": _list(c.get("owasp")), "nist": _list(c.get("nist")), "iso": _list(c.get("iso42001"))}
+    except Exception:
+        return None
 
 
 def classify(trait_list: list[str]) -> dict:
@@ -176,7 +201,7 @@ def classify(trait_list: list[str]) -> dict:
     all_nist: set[str] = set()
     all_iso: set[str] = set()
     for f in files:
-        c = FILE_CONTROLS.get(f)
+        c = FILE_CONTROLS.get(f) or (_read_frontmatter_controls(f) if f in FRONTMATTER_CONTROL_AREAS else None)
         if c:
             all_owasp.update(c["owasp"])
             all_nist.update(c["nist"])

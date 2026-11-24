@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 
 import click
@@ -18,6 +19,106 @@ from .annotate import annotate as add_annotation, clear_annotation, list_annotat
 from .init_ide import init as run_init
 
 console = Console(highlight=False)
+
+
+# ── chalk-compatible styling (classify text output) ─────────────────
+# `aigis classify` text output must be byte-identical to the Node CLI, which
+# styles with chalk 4.1.2 and decides on color with supports-color 7.2.0.
+# These helpers reproduce both: the same color decision for stdout and the
+# same escape codes, including chalk's close/reopen around line breaks.
+_CHALK_CODES = {"bold": ("\x1b[1m", "\x1b[22m"), "dim": ("\x1b[2m", "\x1b[22m"),
+                "red": ("\x1b[31m", "\x1b[39m"), "green": ("\x1b[32m", "\x1b[39m"),
+                "yellow": ("\x1b[33m", "\x1b[39m")}
+_chalk_level_cache: list[int] = []
+
+
+def _chalk_level() -> int:
+    """supports-color 7.2.0 `stdout` level (0 = no color). Mirrors its env checks."""
+    if _chalk_level_cache:
+        return _chalk_level_cache[0]
+    env = os.environ
+    force: float | None = None
+    if "FORCE_COLOR" in env:
+        fc = env["FORCE_COLOR"]
+        if fc == "true":
+            force = 1
+        elif fc == "false":
+            force = 0
+        elif fc == "":
+            force = 1
+        else:
+            m = re.match(r"\s*([+-]?\d+)", fc)  # JS parseInt
+            force = min(int(m.group(1)), 3) if m else float("nan")
+
+    def level() -> int:
+        if force == 0:
+            return 0
+        if not sys.stdout.isatty() and force is None:
+            return 0
+        minimum = int(force) if (force and force == force) else 0
+        term = env.get("TERM")
+        if term == "dumb":
+            return minimum
+        if sys.platform == "win32":
+            return 1
+        if "CI" in env:
+            if any(k in env for k in ("TRAVIS", "CIRCLECI", "APPVEYOR", "GITLAB_CI", "GITHUB_ACTIONS", "BUILDKITE")) or env.get("CI_NAME") == "codeship":
+                return 1
+            return minimum
+        if "TEAMCITY_VERSION" in env:
+            return 1 if re.match(r"^(9\.(0*[1-9]\d*)\.|\d{2,}\.)", env["TEAMCITY_VERSION"]) else 0
+        if env.get("COLORTERM") == "truecolor":
+            return 3
+        if "TERM_PROGRAM" in env:
+            vm = re.match(r"\s*([+-]?\d+)", (env.get("TERM_PROGRAM_VERSION") or "").split(".")[0])
+            version = int(vm.group(1)) if vm else -1
+            if env["TERM_PROGRAM"] == "iTerm.app":
+                return 3 if version >= 3 else 2
+            if env["TERM_PROGRAM"] == "Apple_Terminal":
+                return 2
+        if term is not None and re.search(r"-256(color)?$", term, re.IGNORECASE):
+            return 2
+        if term is not None and re.search(r"^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux", term, re.IGNORECASE):
+            return 1
+        if "COLORTERM" in env:
+            return 1
+        return minimum
+
+    _chalk_level_cache.append(level())
+    return _chalk_level_cache[0]
+
+
+def _chalk(text: str, *styles: str) -> str:
+    """chalk.<styles[0]>.<styles[1]>...(text) with chalk 4.1.2 semantics."""
+    if _chalk_level() <= 0 or not text:
+        return text
+    open_all = "".join(_CHALK_CODES[s][0] for s in styles)
+    close_all = "".join(_CHALK_CODES[s][1] for s in reversed(styles))
+    if "\x1b" in text:
+        for s_ in reversed(styles):
+            o, c = _CHALK_CODES[s_]
+            text = text.replace(c, c + o)
+    if "\n" in text:
+        out, end = "", 0
+        idx = text.find("\n")
+        while idx != -1:
+            got_cr = idx > 0 and text[idx - 1] == "\r"
+            out += text[end:(idx - 1 if got_cr else idx)] + close_all + ("\r\n" if got_cr else "\n") + open_all
+            end = idx + 1
+            idx = text.find("\n", end)
+        text = out + text[end:]
+    return open_all + text + close_all
+
+
+def _out(line: str = "") -> None:
+    """console.log"""
+    sys.stdout.write(line + "\n")
+
+
+def _err(line: str = "") -> None:
+    """console.error"""
+    sys.stdout.flush()
+    sys.stderr.write(line + "\n")
 
 
 def _prompt_low_confidence(detection: dict) -> dict[str, str]:
@@ -68,10 +169,10 @@ def classify(description: str | None, traits_str: str | None, as_json: bool,
     """Classify an AI system and get recommended governance files."""
     from .keywords import apply_confirmations
     if not traits_str and not description:
-        console.print("[red]Provide --traits, a quoted description, or both.[/red]")
-        console.print("[dim]Example: aigis classify --traits uses-llm,processes-pii[/dim]")
-        console.print('[dim]Example: aigis classify "customer chatbot with RAG"[/dim]')
-        console.print('[dim]Example: aigis classify "chatbot" --traits handles-financial   (additive)\n[/dim]')
+        _err(_chalk("Provide --traits, a quoted description, or both.", "red"))
+        _out(_chalk("Example: aigis classify --traits uses-llm,processes-pii", "dim"))
+        _out(_chalk('Example: aigis classify "customer chatbot with RAG"', "dim"))
+        _out(_chalk('Example: aigis classify "chatbot" --traits handles-financial   (additive)\n', "dim"))
         sys.exit(1)
 
     json_mode = bool(as_json) or not sys.stdout.isatty()
@@ -125,14 +226,14 @@ def classify(description: str | None, traits_str: str | None, as_json: bool,
         if json_mode:
             click.echo(json.dumps({"error": msg, "resolver": resolver_report}, indent=2))
         else:
-            console.print(f"[red]{msg}[/red]")
-            console.print('[dim]Run "aigis traits" to see available traits.\n[/dim]')
+            _err(_chalk(msg, "red"))
+            _out(_chalk('Run "aigis traits" to see available traits.\n', "dim"))
         sys.exit(1)
 
     try:
         result = run_classify(final_traits)
     except ValueError as exc:
-        console.print(f"[red]{exc}[/red]")
+        _err(_chalk(str(exc), "red"))
         sys.exit(1)
 
     # v2.1: jurisdiction filter on the area list (parity with bin/aigis.js).
@@ -151,52 +252,70 @@ def classify(description: str | None, traits_str: str | None, as_json: bool,
         click.echo(json.dumps(result, indent=2))
         return
 
+    # Formatted output: line for line, byte for byte the same as bin/aigis.js.
     if resolver_report:
-        console.print("[bold]═══ AIGIS RESOLVER ═══[/bold]")
+        _out(_chalk("═══ AIGIS RESOLVER ═══", "bold"))
         if detection["high_confidence_matches"]:
-            console.print("\n[bold]High-confidence triggers (auto-applied):[/bold]")
+            _out(_chalk("\nHigh-confidence triggers (auto-applied):", "bold"))
             for m in detection["high_confidence_matches"]:
-                console.print(f"  [green]✓[/green] \"{m['phrase']}\" → {', '.join(m['traits'])}")
+                _out(f"  {_chalk('✓', 'green')} \"{m['phrase']}\" → {', '.join(m['traits'])}")
         if resolved["low_confidence_decisions"]:
-            console.print("\n[bold]Low-confidence decisions:[/bold]")
+            _out(_chalk("\nLow-confidence decisions:", "bold"))
             for d in resolved["low_confidence_decisions"]:
-                icon = "[green]✓[/green]" if d["user_decision"] == "yes" else ("[yellow]?[/yellow]" if d["user_decision"] == "unsure" else "[dim]✗[/dim]")
-                console.print(f"  {icon} [{d['id']}] \"{d['phrase']}\" → {', '.join(d['traits'])}  (decision: {d['user_decision']})")
+                if d["user_decision"] == "yes":
+                    icon = _chalk("✓", "green")
+                elif d["user_decision"] == "unsure":
+                    icon = _chalk("?", "yellow")
+                else:
+                    icon = _chalk("✗", "dim")
+                _out(f"  {icon} [{d['id']}] \"{d['phrase']}\" → {', '.join(d['traits'])}  (decision: {d['user_decision']})")
         if traits_from_flag:
-            console.print(f"\n[bold]Added via --traits flag:[/bold] {', '.join(traits_from_flag)}")
-        console.print(f"\n[bold]Final trait set ({len(final_traits)}):[/bold] {', '.join(final_traits)}\n")
-        console.print("[dim]═══════════════════════[/dim]\n")
+            _out(_chalk(f"\nAdded via --traits flag: {', '.join(traits_from_flag)}", "bold"))
+        _out(_chalk(f"\nFinal trait set ({len(final_traits)}): {', '.join(final_traits)}\n", "bold"))
+        _out(_chalk("═══════════════════════\n", "dim"))
 
     tier = result["risk_tier"]
     tier_color = "red" if tier == "HIGH" else "yellow" if tier == "MEDIUM" else "green"
-    console.print(f"[bold]Risk tier:[/bold] [bold {tier_color}]{tier}[/bold {tier_color}]")
-    console.print(f"[bold]Reason:[/bold] {result['reason']}\n")
+    _out(f"{_chalk('Risk tier:', 'bold')} {_chalk(tier, tier_color, 'bold')}")
+    _out(f"{_chalk('Reason:', 'bold')} {result['reason']}\n")
 
-    for w in result["warnings"]:
-        console.print(f"[yellow]⚠ {w}[/yellow]")
     if result["warnings"]:
-        console.print()
+        for w in result["warnings"]:
+            _out(_chalk(f"⚠ {w}", "yellow"))
+        _out("")
 
-    console.print(f"[bold]Implement files ({len(result['implement_files'])}):[/bold]")
+    _out(_chalk(f"Recommended areas ({len(result['implement_files'])}):", "bold"))
     for f in result["implement_files"]:
-        console.print(f"[green]  aigis get {f}[/green]")
+        _out(_chalk(f"  aigis get {f}", "green"))
 
     if result["templates"]:
-        console.print(f"\n[bold]Templates ({len(result['templates'])}):[/bold]")
+        _out(_chalk(f"\nTemplates ({len(result['templates'])}):", "bold"))
         for t in result["templates"]:
-            console.print(f"[yellow]  aigis template {t}[/yellow]")
+            _out(_chalk(f"  aigis template {t}", "yellow"))
 
     if result["guardrails_fired"]:
-        console.print("\n[bold]Guardrails fired:[/bold]")
+        _out(_chalk("\nGuardrails fired:", "bold"))
         for g in result["guardrails_fired"]:
-            console.print(f"[yellow]  {g['id']}: {g['action']} — {g['rationale']}[/yellow]")
+            _out(_chalk(f"  {g['id']}: {g['action']} — {g['rationale']}", "yellow"))
 
-    console.print("\n[bold]Verify after implementation:[/bold]")
+    _out(_chalk("\nVerify after implementation:", "bold"))
     for f in result["implement_files"]:
-        console.print(f"[green]  aigis verify {f}[/green]")
+        _out(_chalk(f"  aigis verify {f}", "green"))
 
+    # v3.0 (SPEC S5.7, AC21): ATLAS count and threat-model pointer, only when
+    # classify attached an ATLAS block (absent when the catalog is unavailable).
     c = result["controls"]
-    console.print(f"\n[dim]Controls: {len(c['owasp'])} OWASP, {len(c['nist'])} NIST, {len(c['iso'])} ISO[/dim]")
+    atlas_count = f", {len(c['atlas'])} ATLAS mitigations" if result.get("atlas") and c.get("atlas") is not None else ""
+    _out(_chalk(f"\nControls: {len(c['owasp'])} OWASP, {len(c['nist'])} NIST, {len(c['iso'])} ISO{atlas_count}", "dim"))
+    if result.get("atlas"):
+        _out(_chalk("Threat model (MITRE ATLAS):", "bold"))
+        _out(_chalk(f"  {result['atlas']['threats_command']}", "green"))
+        _out(_chalk(f"  {result['atlas']['disclaimer']}", "dim"))
+
+    # Workflow suggestion (same as bin/aigis.js).
+    _out(_chalk("\nSuggested workflow:", "bold"))
+    _out(_chalk("  aigis workflow fastapi-llm", "green"))
+    _out(_chalk("  (canonical file layout + wiring contracts; see `aigis workflow --list` for others)", "dim"))
 
 
 # ── get ─────────────────────────────────────────────────────────────

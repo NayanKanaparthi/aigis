@@ -22,9 +22,9 @@ Agreement between two models is not validation. It only decides which rows Nayan
 | EV-M3c | Area label accuracy | `controls.atlas` of each area vs gold `area-mitigations.json`. | P 1.000, R 1.000 | Primary, hard gate |
 | EV-M3d | Entry-point accuracy | `atlas-entry-points.json` vs gold `entry-points.json`. | P 1.000, R 1.000 | Primary, hard gate |
 | EV-M3e | No citation lost | OWASP, NIST, ISO, EU sets per area and per classify output vs baseline. | identical | Hard gate |
-| EV-M1 | Coverage (recall) | (i) Area recall vs areas implied by ground-truth traits: must equal baseline exactly. (ii) Technique recall of `threats --traits <ground truth>` vs the gold in-scope set (union of gold entry points for the ground-truth traits). The in-scope set is read from the union of `entry_points[].techniques`, which is never truncated; `techniques` must be exactly its first `--top` items in the specified order. (The largest ground-truth in-scope set is 15 on dev and 17 on held-out; all seeded traits together give more than the `--top` limit of 25: 29 in the candidate gold.) The eval script computes every such count from the approved gold files; none is hard-coded. (iii) Technique recall of `threats "<description>"`: reported. | (i) delta 0; (ii) 1.000; (iii) equals the recall implied by the traits the resolver found (no extra loss) | Floor |
+| EV-M1 | Coverage (recall) | (i) Area recall vs areas implied by ground-truth traits: must equal baseline exactly, apart from the one intended routing delta, which is measured separately as EV-RT (§9). (ii) Technique recall of `threats --traits <ground truth>` vs the gold in-scope set (union of gold entry points for the ground-truth traits). The in-scope set is read from the union of `entry_points[].techniques`, which is never truncated; `techniques` must be exactly its first `--top` items in the specified order. (The largest ground-truth in-scope set is 15 on dev and 17 on held-out; all seeded traits together give more than the `--top` limit of 25: 29 in the candidate gold.) The eval script computes every such count from the approved gold files; none is hard-coded. (iii) Technique recall of `threats "<description>"`: reported. | (i) delta 0; (ii) 1.000; (iii) equals the recall implied by the traits the resolver found (no extra loss) | Floor |
 | EV-M2 | Precision | (i) Area precision: equal to baseline. (ii) Technique precision on the `--traits` path. (iii) On the description path: reported. | (i) delta 0; (ii) 1.000; (iii) at least 0.95 | Floor |
-| EV-M5 | Context efficiency | (i) Brief characters added per description (auto mode) vs baseline. (ii) `core.md` characters. (iii) `threats` default text size. (iv) Size-weighted precision of `threats`: characters of technique entries whose id is in the gold in-scope set / characters of all technique entries. (v) Catalog bytes. | (i) at most +1,000; (ii) at most 4,900; (iii) at most 7,000; (iv) 1.000 on the `--traits` path; (v) at most 64,000 and never printed whole | Guard |
+| EV-M5 | Context efficiency | (i) Brief characters added per description (auto mode) vs baseline. (ii) `core.md` characters. (iii) `threats` default text size. (iv) Size-weighted precision of `threats`: characters of technique entries whose id is in the gold in-scope set / characters of all technique entries. (v) Catalog bytes. | (i) at most +1,500 (plus the two new area bodies for agentic descriptions, §9.3); (ii) at most 5,650; (iii) at most 7,000; (iv) 1.000 on the `--traits` path; (v) at most 64,000 and never printed whole | Guard |
 | EV-M6 | Determinism and tests | Each eval command run twice gives identical bytes after masking the two listed volatile fields; `npm test` green. | identical; green | Hard gate |
 
 Baseline for the new capability is 0 by construction: on `07ef537` no command prints an ATLAS id and `aigis threats` does not exist. This is labeled "no prior capability", not "improvement over a tool baseline".
@@ -102,9 +102,9 @@ As built (this supersedes the sketch below where they differ): top level `atlas_
 
 ## 6. Guards
 
-- Trait detection, `implement_files` and existing `controls` identical to baseline on dev and held-out.
+- Trait detection identical to baseline on dev and held-out. `implement_files` and existing `controls` identical to baseline except for the exact routing delta of §9.2 (trait sets containing `is-agentic` gain the two new areas and their citations, nothing else).
 - Trait F1: the trigger file is byte-identical, so resolver output is identical by construction; verified, not re-benchmarked.
-- Brief growth at most 1,000 characters; `core.md` at most 4,900; init rules file grows only by the `core.md` growth; resolver block checksum unchanged.
+- Brief growth at most 1,500 characters; `core.md` at most 5,650; init rules file grows only by the `core.md` growth; resolver block checksum unchanged.
 - No output contains a FORBIDDEN phrase (SPEC S0).
 
 ## 7. Kill criteria
@@ -180,3 +180,104 @@ Do not show to the second labeler. Maturity and case-study counts are from the p
 Totals: 12 traits, 30 links, 29 distinct techniques (16 Realized, 10 Demonstrated, 3 Feasible). MITRE links 32 mitigations directly to these techniques; the draft area labels reach 12 of them, so `aigis threats` would list up to 20 gaps for a system with every trait. Two techniques (AML.T0110, AML.T0060) have no MITRE mitigation and will print as such.
 
 Note added after review round 1 (the rows above are unchanged; only the two totals in the previous sentence were recomputed for direct links, from 33 and 21). With direct links only, AML.T0051.000 and AML.T0051.001 carry AML.M0024, M0033 and M0035, while AML.M0020 Generative AI Guardrails is linked by MITRE to the parent AML.T0051 LLM Prompt Injection (Realized, 1 case study, 8 mitigations). Candidate row for the merge table, for Nayan to decide: add AML.T0051 to `accepts-user-input`.
+---
+
+## 9. Scope change 15:45: routing change and new-area citations
+
+### 9.1 EV-RT routing metric
+
+The routing rule (`is-agentic` to the two new areas) is Aigis's judgment, so it needs a label that does not come from the rule itself.
+
+- Label per description, `needs_agent_security`: "Does this system let the model take actions or call tools (send, write, buy, execute, control a device, call an API on someone's behalf)?" yes or no. Planner draft below; the plan reviewer checks it; E0 stores it in `dev.json` and `heldout.json`. A second labeler disagreement goes to Nayan with the mapping approvals.
+
+| Set | yes | no |
+|---|---|---|
+| Dev | D9 (controls IoT devices) | D1, D2, D3, D4, D5, D6, D7, D8, D10 |
+| Held-out | H1 (sends replies, reads CRM), H3 (runs shell, merges), H6 (browses, calls MCP tools, memory), H8 (places orders) | H2, H4, H5, H7 |
+
+H7 is the closest call (a model "decides whether to approve payment"): labeled no because the description gives it a decision, not an action; `influences-decisions` already routes it to `human-oversight`.
+
+| Id | Metric | Target |
+|---|---|---|
+| EV-RT(i) | On the ground-truth-traits path: recall and precision of {both new areas recommended} against `needs_agent_security`, over the 18 descriptions | 1.000 and 1.000 |
+| EV-RT(ii) | On the description path (build resolution): the same, reported per set | no loss beyond the resolver: the new areas appear exactly when the resolver finds `is-agentic` (certain or uncertain). Reported, not gated. |
+| EV-RT(iii) | Baseline | 0 of 5 positives get an agent-security procedure on `07ef537` (the areas do not exist). Labeled "no prior capability". |
+
+### 9.2 Exact-delta guard (AC15)
+
+For every dev and held-out description on both paths, and for the fixed matrix: new `implement_files` = baseline, plus the two new ids when the trait set contains `is-agentic`; `controls` = baseline plus those areas' frontmatter ids; risk tier, reason, templates, guardrails, warnings identical. Any other difference is a guard violation (kill criterion 2).
+
+### 9.3 Context guard (M5)
+
+- Each new area at most 12,000 characters (existing areas range from about 6,000 to 21,000).
+- Brief growth for a description whose resolved traits include `is-agentic`: at most 1,500 plus the two stripped area bodies. For all others: at most 1,500 (raised from 1,000 at 16:00 for the instruction list of AC32).
+- E0 records baseline brief sizes for the agentic descriptions; INT reports new sizes and names any description that moved from a full brief to the compact fallback (cap 120,000). A move is reported at GATE B, not hidden; it is a kill only if a non-agentic description moves.
+- Not measured tonight and said so in the CHANGELOG: whether the larger brief changes what coding agents implement (M4).
+
+### 9.4 Gold for the new areas' citations (gate G1, GATE A2)
+
+Same method as §5, with these specifics:
+
+1. Timing: after NA1 and NA2 are content-approved (about 18:25), because the evidence is a quoted step heading.
+2. Planner draft: appendix C (the design targets of SPEC S7 plus a first OWASP, NIST and ISO proposal). The second labeler (GPT-5.6 Sol, fresh session) gets only the two area files, the §5.2 Task A protocol extended to the other frameworks, the pinned YAML and the framework source files. It does not see SPEC S7 or appendix C.
+3. ATLAS rows: all 44 mitigations are candidates, not only the nine targets. A target the labeler does not confirm is adjudicated; if it stays unconfirmed it is excluded and the mitigation remains a printed gap.
+4. OWASP and NIST rows need a verbatim quote from the versioned public source: OWASP Top 10 for LLM Applications 2025 and NIST AI RMF 1.0 (NIST AI 100-1). The orchestrator places those texts under `/tmp/frameworks/` with their sha256 recorded in the gold file; `check-gold.py` verifies the quotes. No fetched source, no row.
+5. ISO/IEC 42001:2023 rows: the standard's text is not available to quote tonight. Allowed only "by precedent": an id already carried by `human-oversight` at `07ef537`, with `basis: "precedent, not re-verified against the standard"`, and only if Nayan approves that rule (GOALS question 10). Otherwise `iso42001: []`.
+6. EU AI Act: no rows tonight.
+7. File: `gold/new-areas.json`, rows `{ area, framework, id, name, quote, source, area_evidence, labelers, basis, decision }`; approved copy carries `approved_by`, `approved_at`. `APPROVAL-new-areas.md` is the one page Nayan reads.
+
+### 9.5 If GATE A2 is late
+
+- By 20:00 without approval and with Nayan's pre-agreed rule (GOALS question 9): rows both labelers proposed become `include`, all others `exclude`.
+- Without that pre-agreement: the areas ship with empty `controls` arrays. That is schema-valid and honest (no citation is claimed); `aigis threats` keeps printing those mitigations as gaps; README and CHANGELOG say the mapping is pending. Nayan decides at GATE B whether that is still the launch.
+- In no case does an unapproved citation ship.
+
+### 9.6 Kill criteria added
+
+6. A new area fails content rubric item C-3 or C-6 after the stuck diagnosis and one more fix: that area does not ship (fallback 7 in GOALS, needs Nayan).
+7. EV-RT(i) below 1.000, or any exact-delta violation, after one fix loop.
+8. An own-example or empty-agent self-consistency test (T-NV-03, T-NV-04) cannot be made to pass without weakening a rule into something a comment satisfies: the check becomes JUDGMENT; if more than half of an area's auto checks end up JUDGMENT, report it at GATE B as "verify is mostly manual for this area".
+
+## Appendix C. Planner draft for the new areas (do not show to the second labeler)
+
+ATLAS (design targets; the step titles are in SPEC S7):
+
+| Area | Mitigation | Step |
+|---|---|---|
+| agent-permissions | AML.M0026 Manage AI Agent Service Access | Steps 1, 2 |
+| agent-permissions | AML.M0027 Manage User-Delegated AI Agent Access | Steps 1, 3 |
+| agent-permissions | AML.M0028 Enforce Access Controls for AI Agent Tools | Step 4 |
+| agent-permissions | AML.M0037 AI Agent Authority Expansion Controls | Step 5 |
+| agent-permissions | AML.M0043 AI Agent External Resource Lifecycle Management | Step 6 |
+| agent-tool-safety | AML.M0030 Restrict AI Agent Tool Invocation on Untrusted Data | Steps 1, 2 |
+| agent-tool-safety | AML.M0033 Input and Output Validation for AI Agent Components | Steps 3, 4 |
+| agent-tool-safety | AML.M0038 AI Agent Scope Drift Detection | Step 5 |
+| agent-tool-safety | AML.M0031 Memory Hardening | Step 6 (conditional) |
+
+Candidates the planner does not propose but expects the labeler may: `agent-permissions` to AML.M0032 (segmentation), `agent-tool-safety` to AML.M0020 (guardrails on agent actions) and AML.M0029 (approval in step 2).
+
+If all nine targets are approved, the areas reach 21 of the 44 mitigations instead of 12, and for a system with every seeded trait the gap list drops from 21 to 15 (26, 27, 28, 30, 33 and 38 leave it; AML.M0031, M0037 and M0043 are not linked by MITRE to any technique in the current entry-point map, so they do not appear in that list either way). These two numbers are projections from the candidate gold, not results.
+
+Other frameworks (first proposal; every row still needs its source quote, see §9.4):
+
+| Area | OWASP LLM Top 10 2025 | NIST AI RMF 1.0 | ISO/IEC 42001 (precedent only) |
+|---|---|---|---|
+| agent-permissions | LLM06 Excessive Agency | MEASURE-2.7, MANAGE-1.3 | Annex-A.9, Clause-8.4 (as `human-oversight`) |
+| agent-tool-safety | LLM01 Prompt Injection, LLM06 Excessive Agency | MEASURE-2.7, MANAGE-1.3 | Annex-A.9 (as `human-oversight`) |
+
+Candidates not proposed: LLM05 Improper Output Handling for step 3 and 4 of `agent-tool-safety`; LLM04 Data and Model Poisoning for the memory step.
+---
+
+## 10. Agent-native use (owner requirement 16:00)
+
+Tonight (deterministic, in the fast suite and E2E): the instructions exist where the agent reads them (core skill through `aigis init`, `audit --scan`, every brief), they are complete (when, how, gaps, rerun), and the written loop is executable as written (T-DOC-01, T-DOC-10, T-DOC-11, T-SUR-12, E2E-04). Context cost is guarded: core skill at most 5,650 characters (EV-M5 ii now uses this value), brief growth at most 1,500 (EV-M5 i).
+
+Milestone eval, not tonight (L4, name EV-L4-THREATS). It answers the question the deterministic tests cannot: does an agent actually do it.
+
+- Setup: a fixture project with an LLM feature, `aigis init <ide>` already run. Conditions: rules file from 2.1.1 (baseline) and from 3.0.0.
+- Prompts: natural-language requests that hit a trigger without naming Aigis, threats or ATLAS (for example "add a tool that lets the assistant send emails for the user", "give it long-term memory", "we launch next week, what is missing?"), plus two controls that hit no trigger.
+- Runners: cursor-agent, `claude -p`, `codex exec`; N runs each, fixed in advance.
+- Scored from artifacts only (command log, files written, final message), with a rubric locked before the runs: (1) ran `aigis threats` unprompted; (2) used `--traits` with traits that match the project; (3) ran `aigis get` for at least the areas named for the top technique; (4) implemented and ran `aigis verify --auto`; (5) reported gaps to the user as not covered; (6) did not run it on the control prompts.
+- Primary metric: share of trigger runs that reach step 3. Guards: step 6 (no false triggers), M4 implemented coverage not lower than baseline, brief and rules-file sizes.
+- Baseline is 0 for steps 1 to 5 by construction (the command does not exist in 2.1.1); the informative numbers are the absolute rates and the difference between agents.
+- Until this runs, no document says agents "do" this. The planned wording is "the agent is instructed to".

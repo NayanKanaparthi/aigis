@@ -14,12 +14,12 @@ One section per graph node. A maker gets S0 plus its own section. Paths are rela
 | D6 | Mitigation links are MITRE's 494 direct `mitigates` links and nothing else. A sub-technique does **not** inherit its parent's mitigations. (Changed in review round 1, ATLAS-02.) | Inheritance would add 124 links that MITRE did not publish, a third judgment surface needing approval, and would make the phrase "MITRE links" untrue. Cost, stated openly: AML.T0051.000 and AML.T0051.001 carry only AML.M0024, M0033 and M0035 directly, so guardrails (AML.M0020, linked to the parent AML.T0051) do not appear next to them. The remedy is in the approved entry-point map (list the parent technique where the parent holds the links), not in inference. Inheritance display is logged in IMPROVEMENTS. |
 | D7 | Order: maturity (Realized, Demonstrated, Feasible), then MITRE case-study count descending, then id. | INTAKE step 3. ATLAS has no risk score, so Aigis does not invent one. |
 | D8 | ATLAS is universal: never jurisdiction-gated. EU-gated areas carry no `atlas` key. | ATLAS has no jurisdiction. Keeps `--jurisdiction` behavior untouched. |
-| D9 | No new area, trait or trigger tonight. | Each changes routing (M1/M2), brief size and the Python port. Routing staying byte-identical is the strongest guard available. Gaps are printed honestly instead. |
+| D9 | (Amended 15:45: two new areas and one routing change are now in scope, section S7 and S4.6.) No new trait or trigger tonight, and no change to the 19 existing area bodies. | Each changes routing (M1/M2), brief size and the Python port. Routing staying byte-identical is the strongest guard available. Gaps are printed honestly instead. |
 | D10 | `threats "<description>"` resolves traits the way `aigis build` does (uncertain traits included and marked). It never prompts. | Recall matters most; build is the path the v2 benchmark measured. A non-interactive command is deterministic and testable. |
 | D11 | `threats` text output uses no color and no timestamp. | Same bytes in a terminal and in a pipe; no volatile field to mask. |
-| D12 | Catalog load failure is fail-soft for existing commands (ATLAS output omitted, one stderr line, same exit code, stdout equal to the pre-2.2 output) and exit 2 for `threats`. A broken entry-point file affects only `threats`. Exact behavior: S4.5 and S5.6. | A broken install must not take down classify, verify, report or build. |
+| D12 | Catalog load failure is fail-soft for existing commands (ATLAS output omitted, one stderr line, same exit code, stdout equal to the pre-3.0 output) and exit 2 for `threats`. A broken entry-point file affects only `threats`. Exact behavior: S4.5 and S5.6. | A broken install must not take down classify, verify, report or build. |
 | D13 | Python: content parity is MUST; CLI-code parity is SHOULD with a JSON-equality test and an honest note if cut. | The Python package has no test suite, so a rushed port is the likeliest regression. The parity test bounds it. |
-| D14 | Version 2.2.0. | One new command and additive JSON keys: minor bump. |
+| D14 | Version 3.0.0 (owner decision 15:45). Everything stays additive: no command, flag or JSON key is removed or renamed. | A launch release that adds a framework, a command, two areas and a deliberate change in what classify recommends for agentic projects. The major number signals that change in recommendations; it does not license a breaking change. |
 
 ## S0. Shared constants (all nodes)
 
@@ -236,7 +236,7 @@ With no mapped mitigation the three detail lines are replaced by `  No ATLAS mit
 
 ### S4.4 build (`lib/build.js`)
 
-Full and compact briefs get this section immediately before `## Verification` (the Verification section itself is unchanged):
+(Section text, size and the Verification rule are superseded by S4.4a below, 16:00. The placement, `<csv>` rule, `meta.atlas` and the caps stay.) Full and compact briefs get this section immediately before `## Verification`:
 
 ```
 ## Threat model (MITRE ATLAS)
@@ -249,23 +249,55 @@ Run `aigis threats --traits <csv>` to see attacker techniques for this system's 
 
 ```
 - `<csv>` is the trait set passed to classify, ascending. When n is 0 the first sentence is `None of the areas above maps to an ATLAS mitigation.`
-- The section adds at most 1,000 characters. Removing it must give back the previous brief exactly (header line masked).
+- Size and removal rule: see S4.4a.
 - `meta.atlas = { version, disclaimer, mitigations: [ids], threats_command }`. Caps `AUTO_FULL_CAP` and `FULL_HARD_CAP` are unchanged.
 - SHOULD (AC22): `buildList` output ends with an empty line, `Threat model:` and `  aigis threats --traits <csv>`. These lines name a command and render no ATLAS information, so they carry no disclaimer.
+
+### S4.4a Brief text that makes the agent act (AC8, AC32; supersedes the section text of S4.4)
+
+The section, in full and compact briefs, immediately before `## Verification`:
+
+```
+## Threat model (MITRE ATLAS)
+
+The areas above help implement <n> ATLAS mitigations.
+
+Do this before you finish, without waiting to be asked:
+
+1. Run `aigis threats --traits <csv>`. It lists attacker techniques for this system's entry points (Realized first), the mitigations MITRE links to each, the Aigis area that implements them, and gaps.
+2. For every area it names that is not in this brief, run `aigis get <area>`, implement it and verify it.
+3. Tell the user about every gap (a mitigation no Aigis area implements). Never report a gap as handled.
+4. Rerun it when tools, write access, memory or data sources change.
+
+<DISCLAIMER>
+
+```
+- When n is 0 the first sentence is `None of the areas above maps to an ATLAS mitigation.` The mitigation ids are not listed in the brief (they are in `meta.atlas.mitigations` and in the `threats` output).
+- "Instructions for the agent" gains item 6: `6. Run the threat model in the "Threat model (MITRE ATLAS)" section before you finish, and act on what it lists.`
+- "Verification" gains one checkbox, placed after the per-area `aigis verify` lines: `- [ ] \`aigis threats\` was run; every area it named is implemented or skipped with a written reason; every gap was reported to the user.`
+- Total growth (section plus the two lines) is at most 1,500 characters. Removing the section and exactly those two lines must give back the previous brief (header line masked).
+- Fail-soft (S4.5): with the catalog unavailable none of the three additions is printed.
 
 ### S4.5 Fail-soft (D12, AC23)
 
 "Catalog failure" means `content/index/atlas.json` is missing, is not valid JSON or lacks a top-level key, or has a `source.sha256` or `source.version` different from PINNED. In that state, for classify, verify `--auto`, report and build:
 
 - exit code is what it would have been without ATLAS;
-- stdout contains no ATLAS output at all: no `controls.atlas`, no `cited_controls.atlas`, no `atlas` key, no `meta.atlas`, no `atlas_count`, no ATLAS block, row, bullet or brief section. It equals the pre-2.2 baseline output (version and timestamp masked). Keys are omitted, never set to empty, so that nobody reads an empty list as "no mitigations apply";
+- stdout contains no ATLAS output at all: no `controls.atlas`, no `cited_controls.atlas`, no `atlas` key, no `meta.atlas`, no `atlas_count`, no ATLAS block, row, bullet or brief section. It equals the pre-3.0 baseline output (version and timestamp masked). Keys are omitted, never set to empty, so that nobody reads an empty list as "no mitigations apply";
 - stderr has exactly one line per process: `aigis: ATLAS catalog unavailable (catalog <code>); ATLAS output omitted`.
 
 A missing, corrupt or mismatched `content/index/atlas-entry-points.json` does not affect these four commands: their output is identical to the healthy output and stderr is empty.
 
+### S4.6 Routing for the new areas (node N4, `lib/classify.js`, AC27)
+
+- `TRAIT_FILES['is-agentic']` becomes its current list plus `'agent-permissions', 'agent-tool-safety'`. No other trait entry changes. No new guardrail. No new trait.
+- `FILE_CONTROLS` is not extended. In the "collect control IDs" step, an area in the fixed list `FRONTMATTER_CONTROL_AREAS = ['agent-permissions', 'agent-tool-safety']` has its `owasp`, `nist` and `iso42001` arrays read from its frontmatter (missing file or key: nothing added). The fallback must not apply to any other area: the EU areas have no `FILE_CONTROLS` entry today and must keep contributing nothing, or existing output would change.
+- Result: for a trait set containing `is-agentic`, `implement_files` gains exactly the two ids (sorted into place) and `controls.owasp/nist/iso` gain exactly those areas' frontmatter ids. For every other trait set the result is byte-identical to before (apart from the ATLAS keys of S4.1). Build, audit, report and the classify text follow from this without code changes.
+- Known and documented, not changed: `--tight` keeps an area only when at least two of the user's traits are in its `system_traits`; the new areas have one, so `--tight` drops them, as it already drops `rag-security`. Logged in IMPROVEMENTS.
+
 ## S5. `aigis threats` (node N5)
 
-Files: `lib/threats.js`, `bin/aigis.js`, and the version strings (`package.json`, `package-lock.json` two places, `cli-python/pyproject.toml`, the `.version('...')` line of `bin/aigis.js`): N5 sets all five to `2.2.0` in one commit, because the frozen version-agreement check parses the literal in `bin/aigis.js`.
+Files: `lib/threats.js`, `bin/aigis.js`, and the version strings (`package.json`, `package-lock.json` two places, `cli-python/pyproject.toml`, the `.version('...')` line of `bin/aigis.js`): N5 sets all five to `3.0.0` in one commit, because the frozen version-agreement check parses the literal in `bin/aigis.js`.
 
 Command description shown in `--help`: `Threat model for your system's entry points (MITRE ATLAS: a catalog, not a standard)`.
 
@@ -392,14 +424,33 @@ In `bin/aigis.js`, the human-readable classify output changes its last controls 
 
 ## S6. Core skill, template, README, changelog (node N6)
 
-Files: `content/skills/core.md`, `content/templates/threat-model.md` (plus mirrors), `README.md`, `cli-python/README.md`, `CHANGELOG.md` (new), `CONTRIBUTING.md`, `IMPROVEMENTS.md` (new).
+Files: `content/skills/core.md`, `content/templates/threat-model.md`, `content/index/audit-scan.md` (plus mirrors), `README.md`, `cli-python/README.md`, `CHANGELOG.md` (new), `CONTRIBUTING.md`, `IMPROVEMENTS.md` (new).
 
-### S6.1 `content/skills/core.md` (at most 4,900 characters in total)
+### S6.1 `content/skills/core.md` (at most 5,650 characters in total; rev 16:00, AC12 and AC32)
+
+Five edits: item 1 is below, items 2 to 5 are here. Exact text, because the budget is measured on it.
+
+2. In "The workflow (build a new feature)", new step 5: `5. **Threat model.** Follow "Threat modeling (MITRE ATLAS)" below.`
+3. In "The workflow (audit an existing project)", new step 5: `5. Threat model the project: follow "Threat modeling (MITRE ATLAS)" below.`
+4. A new section placed after "How to read `aigis verify <area> --auto` output" and before "How to pick traits":
+
+```
+## Threat modeling (MITRE ATLAS)
+
+Run this yourself, without being asked, when you: build a new AI feature; add tools, write access, memory or a new data source; prepare a launch; audit an existing project; respond to an incident.
+
+1. Derive the traits from the codebase and the user's request (the same traits you give classify).
+2. `aigis threats --traits <traits>`. It lists attacker techniques for this system's entry points (Realized first), the mitigations MITRE links to each, the Aigis area that implements them, and gaps. If you cannot name traits, fall back to `aigis threats "<description>"`.
+3. For every area it names: `aigis get <area>`, implement it, then `aigis verify <area> --auto .`.
+4. For every gap (a mitigation no Aigis area implements): tell the user it is not covered and propose a control. Never report a gap as handled.
+5. Rerun when tools, permissions, memory or data sources change.
+```
+
+5. New line in "Available commands": ``- `aigis threats --traits <list>` (or `"<description>"`): ATLAS threat model: techniques, MITRE mitigations, gaps (`--json` for scripts)``
+
 
 1. After sentence 1 of the intro (unchanged), add: ` Areas also map to MITRE ATLAS mitigations. <DISCLAIMER>`
-2. New step 5 in "The workflow (build a new feature)": `5. **Threat model.** \`aigis threats --traits <same traits>\`: attacker techniques for this system's entry points (Realized first), the mitigations MITRE links to each, the area that implements them, and gaps. Run it when designing a feature, when adding tools, write access, memory or a data source, before launch, and after an incident.`
-3. New line in "Available commands": `- \`aigis threats "<description>" | --traits <list>\`: ATLAS threat model (techniques, MITRE mitigations, gaps; \`--json\` for scripts)`
-Nothing else changes. The resolver block is not part of this file. The file does not mention `--redteam` or Python, so it is independent of every cut decision and is never touched after the draft pass. Measured growth of these three edits: 654 characters (budget 720).
+Nothing else changes. The resolver block is not part of this file. The file does not mention `--redteam` or Python, so it is independent of every cut decision and is never touched after the draft pass. Measured growth of the five edits: 1,377 characters (185 + 67 + 75 + 913 + 137), giving 5,557; cap 5,650. `aigis init` writes this file into the rules or skill file of every supported IDE, so the section reaches the agent without any change to `lib/init.js`.
 
 ### S6.2 `content/templates/threat-model.md` (at most 4,500 characters)
 
@@ -408,7 +459,7 @@ A fill-in document, frontmatter in the same shape as the other templates. Sectio
 ### S6.3 README (same edits in `README.md` and `cli-python/README.md`; no em dash in any new line)
 
 - Intro sentence: append `, with threat modeling from MITRE ATLAS`.
-- New section `## What's new in v2.2` above v2.1: ATLAS mitigations cited by classify, verify, report and build; `aigis threats`; `aigis template threat-model`; pinned ATLAS v2026.10 data, offline.
+- New section `## What's new in v3.0` above v2.1: ATLAS mitigations cited by classify, verify, report and build; `aigis threats`; `aigis template threat-model`; pinned ATLAS v2026.10 data, offline.
 - New section `## Threat modeling with MITRE ATLAS` after "What's new":
   - `OWASP says what can go wrong. MITRE ATLAS says how an attacker does it. NIST AI RMF says how you govern it.`
   - A code block with `aigis threats --traits uses-llm,uses-rag,is-agentic` and `aigis threats "<description>"`, and one sentence saying `--traits` is the reliable path and the description path only finds traits the resolver recognizes.
@@ -423,17 +474,17 @@ A fill-in document, frontmatter in the same shape as the other templates. Sectio
 
 ### S6.4 Python note (only if AC20 is cut)
 
-Add to both READMEs, under the new section: `Python package note: in 2.2.0 \`aigis threats\` and the ATLAS fields in command output are in the npm package only.` If AC20 ships, this sentence must not be present.
+Add to both READMEs, under the new section: `Python package note: in 3.0.0 \`aigis threats\` and the ATLAS fields in command output are in the npm package only.` If AC20 ships, this sentence must not be present.
 
 ### S6.5 Other docs
 
-- `CHANGELOG.md`: `## 2.2.0` with Added (catalog, labels, surfaces, `threats`, template), Unchanged (routing, traits, triggers, existing citations), Notes (pinned source and sha256, Apache-2.0 notice, limits).
+- `CHANGELOG.md`: `## 3.0.0` with Added (catalog, labels, surfaces, `threats`, template), Unchanged (routing, traits, triggers, existing citations), Notes (pinned source and sha256, Apache-2.0 notice, limits).
 - `CONTRIBUTING.md`: a short "Updating MITRE ATLAS" section (download the release file, update the pinned sha256, run the generator, re-approve mappings).
 - `IMPROVEMENTS.md`: backlog with evidence: showing a parent technique's mitigations next to its sub-techniques, clearly labeled as inferred (124 such links; needs its own approval); new area for agent tool safety (AML.M0026, M0027, M0028, M0030, M0032, M0033, M0037, M0038); memory hardening (AML.M0031); supply-chain depth (AML.M0011, M0013, M0014, M0016, M0023); surface traits, including the three entry points removed from the map in review round 2 because no current trait implies their precondition (agent memory AML.T0080.000, client-side rendering AML.T0077, conversation context AML.T0085.002) the area link removed for the same kind of reason (human-oversight to AML.M0028), and the entries removed in review round 3 (generates-code to AML.T0060, a resource-development technique the labeling protocol skips; all three is-multimodal entries, because the trait also covers generation-only systems while the techniques need multimodal input); resolver recall on prose (0.48 on the v2 set through the CLI); `threats --confirm/--reject`; Python parity if cut; `aigis traits` prints 22 but there are 23; README benchmark label.
 
-### S6.6 Reconcile pass (20:00 to 20:15, after every cut decision is final)
+### S6.6 Reconcile pass (20:30 to 20:45, after every cut decision is final)
 
-N6 writes the draft for the state "every SHOULD shipped". At 20:00 the orchestrator gives N6 the final state of AC19, AC20, AC21, AC22, and N6 applies only these fixed edits, in `README.md`, `cli-python/README.md`, `CHANGELOG.md` and `IMPROVEMENTS.md`:
+N6 writes the draft for the state "every SHOULD shipped". At 20:30 the orchestrator gives N6 the final state of AC19, AC20, AC21, AC22, AC30, the fallbacks of GOALS (memory step, one area only) and the approved `gold/new-areas.json`, and N6 applies only these fixed edits, in `README.md`, `cli-python/README.md`, `CHANGELOG.md` and `IMPROVEMENTS.md`:
 
 | If cut | Edit |
 |---|---|
@@ -445,7 +496,7 @@ Then rerun T-DOC-01 to T-DOC-08. If nothing was cut the pass is a no-op and only
 
 ## SPY. Python port (node PY, optional, AC20)
 
-End states (GRAPH.yaml): `shipped` or `cut_complete`. A partial port is never merged. In `cut_complete` the tree has no `cli-python/aigis_cli/atlas.py` or `threats.py` and no Python CLI file differs from the base commit.
+This section is pass 2 of node PY (optional). Pass 1 (routing parity, S7.6) is required and is tagged when approved. End states (GRAPH.yaml): `shipped` or `cut_complete`. A partial port is never merged. In `cut_complete` the tree has no `cli-python/aigis_cli/atlas.py` or `threats.py`, `report.py`, `build.py` and `cli.py` equal the base commit, and `classify.py` and `auto_verify.py` equal the pass-1 tag.
 
 
 Files: `cli-python/aigis_cli/atlas.py`, `threats.py` (new), `classify.py`, `auto_verify.py`, `report.py`, `build.py`, `cli.py`. Same behavior, strings, key order and exit codes as S2, S4, S5. Run from source as `python3 -c "from aigis_cli.cli import cli; cli()" <args>` with cwd `cli-python`. JSON output must be equal to Node's on the parity inputs in TESTPLAN (compared as parsed JSON, plus byte comparison for `threats` text). MUST regardless of the port (AC17): existing Python commands keep working with the new content.
@@ -458,3 +509,145 @@ Files: `cli-python/aigis_cli/atlas.py`, `threats.py` (new), `classify.py`, `auto
 4. `node scripts/build-atlas-index.js --source /tmp/atlas-src/ATLAS-2026.10.yaml --check` must print `OK`.
 5. End-to-end journeys (TESTPLAN E2E), evals on dev and held-out (EVALS), GPT-5.6 Sol review of the full diff, release checklist items 1 to 4 of BUILD-SYSTEM §12.
 INT owns no product file and writes no product code. Any fix goes back to the owning node.
+---
+
+## S6.7 Launch docs (node N6; AC31; added 15:45)
+
+Additions to S6.3, same rules (both READMEs identical, no em dash in new lines, numbers computed):
+- Directly under the title tagline, the launch line: `Aigis now understands how attackers attack AI systems and helps your agent build defenses against them.`
+- The section is `## What's new in v3.0` and adds, first in its list: the two new areas by id and one phrase each; `aigis classify` now recommends them when a system is agentic (`is-agentic`); `3.0 is additive: no command, flag or JSON key was removed or renamed.`
+- One sentence with counts, both computed from the repo by T-DOC-09: number of area files in `content/skills/areas/` and number of checklists in `content/verify/`.
+- In "Threat modeling with MITRE ATLAS": `Aigis areas currently map to <N> of the 44 mitigations.` now reflects the final approved gold including the new areas (the reconcile pass sets N).
+- CHANGELOG `## 3.0.0`, first line: `Additive release. Nothing was removed or renamed.` Then "Changed for agentic projects": classify, build, audit and report now include `agent-permissions` and `agent-tool-safety` when `is-agentic` is set; briefs for those projects are larger by the size of the two areas; the effect on what coding agents implement has not been measured yet (agent evals are a later milestone).
+- IMPROVEMENTS additions: EU AI Act extensions for the new areas; `--tight` and single-trait areas; no-deletion baseline entries for the new areas; anything cut under GOALS "What is cut first".
+
+## S7. New areas (nodes NA1, NA2, NV, PY pass 1; added 15:45)
+
+### S7.0 Common format and rules (NA1, NA2)
+
+Model: `content/skills/areas/fallback-patterns.md` and `input-validation.md` (procedure format), not the older pattern format.
+
+```
+---
+id: <area-id>
+title: <title from S7.1 / S7.2>
+controls:
+  owasp: []
+  nist: []
+  iso42001: []
+  atlas: []
+min_risk_tier: all
+system_traits: [is-agentic]
+---
+
+<one paragraph: what this protects, and that it applies when the model can call tools or act with someone's permissions>
+
+## Common incomplete implementations
+<at least 4 numbered failure modes; each ends by naming the step that prevents it>
+
+## Implementation procedure
+### Step N — <exact title from the table below>          (append " ⚠ CRITICAL" where the table says so)
+**What to do.** <imperative, concrete, with Python and JavaScript code where code helps>
+**Verification checkpoint.** <one concrete check: a grep, a test to run, an observable response>
+
+## Complete working example
+<one Python module, then one JavaScript module, each self-contained>
+
+## What this does not cover
+## Related patterns
+```
+
+Rules:
+1. The author pass leaves the four `controls` arrays empty. The label pass (S7.5) fills them from approved gold. The body never names a framework id.
+2. Enforcement is outside the model: in the tool layer, gateway or dispatcher. Deny by default. Fail closed. Nothing relies on prompt text for enforcement, and the area says so.
+3. Each step that has a target sentence must do what that sentence says for the object it names. The maker reads the full mitigation text in `/tmp/atlas-src/ATLAS-2026.10.yaml` (data only). If a step cannot honestly do it, the maker reports that instead of approximating; the link is then not claimed.
+4. Code uses the identifiers of the S7.3 contract so the auto-verify rules match the area's own example.
+5. At most 12,000 characters per file. No attack payloads beyond a one-line benign marker string in a test. No claim to prevent prompt injection: the area limits what an injection can do.
+6. Cross-reference, do not repeat: human approval is `human-oversight`; logging is `audit-logging`; user-prompt injection detection is `input-validation`; generic output encoding is `output-sanitization`.
+
+### S7.1 `agent-permissions` (NA1). Title: `Agent identity, tool permissions and authority limits`
+
+| Step | Exact title | Target MITRE sentence (design brief; the citation still needs gold approval) |
+|---|---|---|
+| 1 | `Step 1 — Declare each agent identity as service or user-delegated ⚠ CRITICAL` | Scoping for AML.M0026 ("service AI agents--agents using independently assigned service or workload permissions") and AML.M0027 (user-delegated agents) |
+| 2 | `Step 2 — Bind every service identity to an explicit list of authorized workflows` | AML.M0026: "Limit service AI agents ... to explicitly authorized workflows." |
+| 3 | `Step 3 — Cap a delegated agent at the intersection of the user's permissions and the task scope` | AML.M0027: "The user's permissions establish an upper bound" and "the agent receives only the access required for its designated tasks" |
+| 4 | `Step 4 — Authorize every tool call per caller inside the tool layer ⚠ CRITICAL` | AML.M0028: "Limit AI agent tool access to each caller's authorized, task-required operations and resources, including when tools are shared across agents, users, or tenants." and "Enforce controls outside the model" |
+| 5 | `Step 5 — Fix the maximum authority before the run and block self-granting` | AML.M0037: "The maximum authority available to the agent should be explicitly granted prior to runtime." |
+| 6 | `Step 6 — Register, attribute and expire every external resource the agent creates` | AML.M0043: "treating those resources as attributable, lifecycle-managed assets" |
+| 7 | `Step 7 — Prove the denials with negative tests` | (no target; makes steps 2 to 6 checkable) |
+
+Content notes: step 4 must be caller-specific (user, tenant, agent identity in the decision), not a static tool allowlist; review round 2 rejected the allowlist reading of AML.M0028. Step 5 lists what counts as self-granting: creating credentials, API keys, roles or service accounts, editing the agent's own allowlist or scopes, without an out-of-band human grant. Step 6 covers cloud resources, accounts, tokens, webhooks, scheduled jobs, with owner, task id and TTL, and a sweep that revokes on task end or expiry. Common incomplete implementations must include: the agent runs with the developer's or a shared admin credential; authorization written into the system prompt; a shared tool that checks the tool's own privilege instead of the caller's; resources that outlive the task.
+
+### S7.2 `agent-tool-safety` (NA2). Title: `Tool invocation safety, tool input and output validation, scope drift`
+
+| Step | Exact title | Target MITRE sentence |
+|---|---|---|
+| 1 | `Step 1 — Label every item entering the model context as trusted or untrusted ⚠ CRITICAL` | Precondition for AML.M0030 ("when untrusted data enters the LLM's context") |
+| 2 | `Step 2 — Restrict tool invocation while untrusted data is in context ⚠ CRITICAL` | AML.M0030: "It is recommended that tool invocation be restricted or limited when untrusted data enters the LLM's context" |
+| 3 | `Step 3 — Validate tool arguments against a schema before execution` | AML.M0033: "Validation includes enforcing a common data format, schema validation" (inputs of tools) |
+| 4 | `Step 4 — Validate and sanitize tool outputs and retrieved data before they re-enter the context` | AML.M0033: "checks for sensitive or prohibited information leakage, and data sanitization" (outputs of tools and data sources) |
+| 5 | `Step 5 — Check each planned action against the authorized objective` | AML.M0038: "Continuously evaluate whether an AI Agent's planned actions remain consistent with its current authorized objective throughout execution." |
+| 6 | `Step 6 — If the agent has persistent memory: harden what gets written and recalled` | AML.M0031 Memory Hardening ("protects persistent state used by AI agents") |
+| 7 | `Step 7 — Prove it with injection and drift tests` | (no target) |
+
+Content notes: untrusted means tool results, retrieved documents, emails, web pages, file contents and anything another agent wrote; the label travels with the item for the whole turn. Step 2 gives two allowed restrictions: drop to tools without side effects, or require human approval for side-effect tools (pointing to `human-oversight`); logging alone is not a restriction. Step 5 records the objective and allowed action classes at task start and stops and escalates on mismatch. Step 6 opens with "Skip this step if the agent keeps no state between sessions." and covers: attribute each write (source and trust label), never store untrusted content as instructions, isolate per user or tenant, expiry and rollback. Common incomplete implementations must include: the trust label is computed but only logged; validation of tool arguments but not of tool results; the same tool set regardless of what is in context; memory writes copied straight from tool output.
+
+### S7.3 Verify assets (node NV; AC26, AC30)
+
+Checklists `content/verify/checklist-<area>.md`: same frontmatter and table as `checklist-human-oversight.md`; one row per step (V1 to V7, in step order) plus V8 for `agent-permissions`; the Control column is the step reference (`S1` to `S7`), never a framework id (ids arrive only through approved gold).
+
+Contract between the area examples (NA1, NA2) and the rules (NV). Identifiers are matched in snake_case and camelCase. NV may add alternates but may not drop these.
+
+| Area | Check | Step | Kind | Signal |
+|---|---|---|---|---|
+| agent-permissions | V1 | S1 | auto | `agent_identity` / `agentIdentity` / `AGENT_IDENTITY` |
+| | V2 | S2 | auto | `authorized_workflows` / `authorizedWorkflows` / `AUTHORIZED_WORKFLOWS` |
+| | V3 | S3 | auto | `effective_permissions` / `effectivePermissions` |
+| | V4 | S4 | auto, plus overclaim `wildcard_tool_scope` (`also_auto: V4`) | `authorize_tool_call` / `authorizeToolCall` |
+| | V5 | S5 | auto | `max_authority` / `maxAuthority` / `MAX_AUTHORITY` |
+| | V6 | S6 | auto | `register_agent_resource` / `registerAgentResource` |
+| | V7 | S7 | judgment | whether the negative tests exist and exercise real denials |
+| | V8 | S4 | judgment | whether authorization runs in the tool layer or gateway rather than in prompt text |
+| agent-tool-safety | V1 | S1 | auto | `trust_level` / `trustLevel` / `TrustLevel` |
+| | V2 | S2 | auto, plus overclaim `untrusted_gate_log_only` (`also_auto: V2`) if AC30 ships, else also a judgment line | `gate_tool_call` / `gateToolCall` |
+| | V3 | S3 | auto | `validate_tool_args` / `validateToolArgs` |
+| | V4 | S4 | auto | `sanitize_tool_output` / `sanitizeToolOutput` / `validate_tool_output` / `validateToolOutput` |
+| | V5 | S5 | auto | `check_scope_drift` / `checkScopeDrift` |
+| | V6 | S6 | judgment | applies only with persistent memory; whether writes are attributed and validated |
+| | V7 | S7 | judgment | whether the injection and drift tests exist and fail when the control is removed |
+
+Recognizers in `lib/special-recognizers.js`, same signature and return shape as the existing four, registered in `REGISTRY`:
+- `wildcard_tool_scope` (MUST): flagged when a scanned source file grants everything: a string literal `"*"` or `'*'` on a line that also mentions `scope`, `tool`, `allow` or `permission` (any case), or `allow_all` / `allowAll` / `ALLOW_ALL` set to a true value. Evidence: file, line, snippet (at most 3). Raised only when V4 passes (existing `also_auto` behavior).
+- `untrusted_gate_log_only` (SHOULD, AC30): modeled on `injection_log_only`. Flagged when a block that tests the trust label (`trust_level`, `trustLevel`, `untrusted`) contains a logging call and, within the next 8 lines, no blocking construct (`raise`, `throw`, `return` of a denial, `require_approval` / `requireApproval`).
+
+A regex that a comment or an unused constant would satisfy is not acceptable for a check the checklist words as behavior; such a check is JUDGMENT instead (rubric C-11).
+
+### S7.4 Index files (node NV)
+
+- `content/index/taxonomy.md`: the `is-agentic` row lists the two new areas after the existing ones.
+- `content/index/context-rules.json`: no entry is needed (a file without rules is returned whole for every `--context`). Edit only if T-NA-07 fails.
+- If `content/index/frameworks.md` or `guardrails.json` turn out to enumerate areas per control, NV reports it; they are not edited tonight.
+
+### S7.5 Label pass (NA1, NA2; after GATE A2)
+
+Replace the four empty arrays with the `include` rows of `build/atlas/gold/new-areas.json` for that area: `owasp`, `nist`, `iso42001` in the id formats of `docs/frontmatter-schema.md`, `atlas` ascending. No `eu_ai_act` key. No other byte changes. If a framework has no approved row its array stays empty. Then sync the mirror and rerun the area tests.
+
+### S7.6 Python routing parity (node PY, pass 1; AC29)
+
+In `cli-python/aigis_cli/classify.py`: the same `TRAIT_FILES['is-agentic']` addition and the same two-area frontmatter fallback for owasp, nist, iso as S4.6. In `auto_verify.py`: `wildcard_tool_scope` (and `untrusted_gate_log_only` if AC30 shipped in Node) in `_SPECIAL_REGISTRY`, same flags and evidence as Node. Nothing else in the Python package changes in this pass. Tag the commit.
+---
+
+## S6.8 Audit flow (node N6; AC32c; added 16:00)
+
+File: `content/index/audit-scan.md` (what `aigis audit --scan` prints) plus its mirror. One insertion, nothing else changes: a new H2 placed after the `## PHASE 3: TRAIT SUMMARY` section and before `## PHASE 4: SCOPED CONTROL EVALUATION (handoff)`.
+
+```
+## PHASE 3B: THREAT MODEL (MITRE ATLAS)
+
+With the traits you just detected, run `aigis threats --traits <detected-traits>`. It lists attacker techniques for this system's entry points (Realized first), the mitigations MITRE links to each, the Aigis area that implements them, and gaps. Add every area it names to the audit scope. Report every gap (a mitigation no Aigis area implements) to the user as not covered. If you could not detect traits, fall back to `aigis threats "<description>"`.
+
+<DISCLAIMER>
+
+```
+At most 800 characters added. The sentence in the file's introduction that counts the phases is not edited.

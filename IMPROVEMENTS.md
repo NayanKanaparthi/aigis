@@ -2,29 +2,35 @@
 
 Known gaps and next steps, each with the evidence behind it. Nothing here has shipped. Items move to `CHANGELOG.md` when they do.
 
+## Trait detection and routing
+
+- **Description-path trait recall is low. Fix the resolver.** Through the CLI resolver, `aigis threats "<description>"` and `aigis build "<description>"` find 0.514 of the expected traits on the dev set and 0.222 on the held-out set (3.0 integration evals). `--traits` is the documented path for now. The README's v2 numbers were measured with an agent in the IDE, which is a different path.
+- **A `has-memory` trait.** Persistent agent memory has no trait, so the memory entry point (AML.T0080.000) was removed from the entry-point map in review round 2, and `agent-tool-safety` has to ask whether memory exists (its memory check is a judgment item). A trait would let the entry point come back and make the check routable.
+- **Other surface traits.** Entry points removed because no current trait implies their precondition: client-side rendering (AML.T0077) and conversation context (AML.T0085.002) in review round 2; `generates-code` to AML.T0060 (a resource-development technique the labeling protocol skips) and all three `is-multimodal` entries (the trait also covers generation-only systems, while those techniques need multimodal input) in review round 3. Each needs a trait and a new approval.
+- **`aigis threats --confirm/--reject`** to accept or drop uncertain traits without rerunning with `--traits`.
+- **`aigis traits` prints 22 traits but there are 23.**
+
 ## MITRE ATLAS
 
-- **Show a parent technique's mitigations next to its sub-techniques, labeled as inferred.** Aigis shows only MITRE's 494 direct `mitigates` links. Inheriting from the parent would add 124 links MITRE did not publish, so it needs its own label in the output and its own approval. Example of the cost today: AML.T0051.000 and AML.T0051.001 (prompt injection, direct and indirect) carry only AML.M0024, M0033 and M0035 directly, so guardrails (AML.M0020, linked to the parent AML.T0051) do not appear next to them.
-- **Agent tool safety beyond 3.0.** 3.0 adds `agent-permissions` and `agent-tool-safety`. The mitigations proposed for agent tool safety were AML.M0026, M0027, M0028, M0030, M0032, M0033, M0037 and M0038; any of them not in the approved new-area labels stays a printed gap until an area implements it.
-- **Memory hardening** (AML.M0031). Not implemented by any area; `agent-tool-safety` has a judgment check for memory writes only when the system has persistent memory.
-- **Supply-chain depth** (AML.M0011, M0013, M0014, M0016, M0023). Mitigations a deeper supply-chain area could implement; any not in the approved labels stays a printed gap.
-- **Surface traits.** Some entry points have no trait that implies their precondition, so they were removed from the entry-point map:
-  - review round 2: agent memory (AML.T0080.000), client-side rendering (AML.T0077), conversation context (AML.T0085.002), and the area link from `human-oversight` to AML.M0028 for the same kind of reason;
-  - review round 3: `generates-code` to AML.T0060 (a resource-development technique the labeling protocol skips), and all three `is-multimodal` entries, because the trait also covers generation-only systems while those techniques need multimodal input.
-  New traits (for example agent memory, rendered output, multimodal input) would let these come back with approval.
-- **Resolver recall on prose.** Through the CLI resolver, trait recall on the v2 benchmark descriptions is 0.48, so `aigis threats "<description>"` can look thin. `--traits` is the documented path. The README's v2 numbers were measured with an agent in the IDE, which is a different path.
-- **`aigis threats --confirm/--reject`** to accept or drop uncertain traits without rerunning with `--traits`.
-- **Python parity**, if the Python port of `aigis threats` and the ATLAS fields is cut from a release.
+- **Parent to sub-technique inheritance, as a labeled Aigis inference.** Aigis shows only MITRE's 494 direct `mitigates` links. Showing a parent technique's mitigations next to its sub-techniques would add 124 links MITRE did not publish, so the output must label them as Aigis's inference, and they need their own approval. Example of the cost today: AML.T0051.000 and AML.T0051.001 (prompt injection, direct and indirect) carry only AML.M0024, M0033 and M0035 directly, so guardrails (AML.M0020, linked to the parent AML.T0051) do not appear next to them.
+- **Supply-chain depth** (AML.M0011, M0013, M0016, M0023). No area implements these yet, so they stay printed gaps.
 
-## New areas (3.0)
+## Areas and checklists
 
-- **EU AI Act extensions** for `agent-permissions` and `agent-tool-safety`. Both ship without `eu_ai_act` citations.
+- **Verify checklists for the four EU AI Act areas.** There are 21 areas and 17 checklists; the four `eu-ai-act-*` areas have none, so `aigis audit` reports them as "no checklist yet" and leaves them out of the denominator.
+- **ISO/IEC 42001 citations for `agent-permissions` and `agent-tool-safety`** once the standard text is available to label against. Both ship with an empty `iso42001` list.
+- **EU AI Act extensions** for the two new areas. Both ship without `eu_ai_act` citations.
 - **`--tight` and single-trait areas.** `--tight` requires two trait matches per area. Check how it treats areas that a single trait such as `is-agentic` selects, and decide whether it should keep them.
 - **No-deletion baseline entries** for the two new areas, so a later edit that drops a step or check is caught like it is for the existing areas.
-- **Agent evals.** Whether coding agents implement the new areas, and whether they threat-model when the core skill instructs them to, has not been measured.
-- Anything cut under "What is cut first" in the release plan is added here at the reconcile pass.
 
-## Other
+## Briefs
 
-- **`aigis traits` prints 22 traits but there are 23.**
-- **README benchmark label.** Fixed in 3.0: the v2.0 benchmark baseline is labeled Aigis v1.0.3 instead of "no Aigis".
+- **Agentic briefs that cross the 120k auto cap.** With the two new areas, the full brief for held-out description H3 (a coding agent that runs shell commands and merges its own changes) is 120,411 characters, over the 120,000 cap, so `aigis build` fell back to the compact brief. Options: trim the area bodies, raise the cap, or drop the largest optional sections first.
+
+## Evals
+
+- **L4 agent eval for unprompted threat modeling.** The core skill instructs the agent to run `aigis threats` without being asked, and `aigis audit --scan` has a threat model phase. Whether agents actually do it, and whether they implement the new areas, has not been measured.
+
+## Python package
+
+- **`aigis classify` text output.** The npm package prints the ATLAS count on the Controls line and a threat model pointer; the Python package does not yet. JSON output and `aigis threats` match.

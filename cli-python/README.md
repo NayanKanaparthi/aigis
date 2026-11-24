@@ -93,7 +93,7 @@ What you get: the techniques for your entry points, Realized first (seen in real
 
 When: designing an AI feature; adding a capability (tools, write access, memory, a new data source); before launch; after an incident. Your agent is instructed to do this at those moments without being asked, and you can run it yourself at any time.
 
-What ships: a pinned subset of ATLAS v2026.10 (16 tactics, 221 techniques, 44 mitigations, counts from 77 case studies). No network calls. Aigis areas currently map to 12 of the 44 mitigations.
+What ships: a pinned subset of ATLAS v2026.10 (16 tactics, 221 techniques, 44 mitigations, counts from 77 case studies). No network calls. Aigis areas currently map to 21 of the 44 mitigations.
 
 The mapping from areas to mitigations is ours. The links from mitigations to techniques are MITRE's. The entry points come from a reviewed map of 9 traits to 29 techniques.
 

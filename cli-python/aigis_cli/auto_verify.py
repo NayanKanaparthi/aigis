@@ -15,6 +15,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from . import atlas
+
 _THIS_DIR = Path(__file__).resolve().parent
 _CONTENT_DIR = _THIS_DIR / "content"
 
@@ -229,8 +231,8 @@ def _kill_switch_restart_latched(files: list[dict[str, Any]], ctx: dict[str, Any
     flagged = bool(evidence) and not rereads
     if flagged:
         notes = (
-            f"Kill switch appears restart-latched. Reasons: {'; '.join(sorted(set(reasons)))}. "
-            "This meets Aigis V3 literal wording ('env variable') but cannot be toggled during a "
+            f"Kill switch appears restart-latched. Reasons: {'; '.join(dict.fromkeys(reasons))}. "
+            "This meets Aigis V3 literal wording (\"env variable\") but cannot be toggled during a "
             "live incident without a process restart. Verify manually; if confirmed, mark PARTIAL "
             "rather than PASS."
         )
@@ -240,7 +242,7 @@ def _kill_switch_restart_latched(files: list[dict[str, Any]], ctx: dict[str, Any
             "found. Manual review recommended."
         )
     else:
-        notes = "No restart-latched signals detected."
+        notes = "No restart-latched signals detected (no @lru_cache on Settings, no bare module-level env reads of kill-switch var)."
     return {"flagged": flagged, "evidence": evidence, "notes": notes}
 
 
@@ -283,17 +285,17 @@ def _injection_log_only(files: list[dict[str, Any]], ctx: dict[str, Any]) -> dic
     partial = any(not c["blocks"] for c in callsites) and any(c["blocks"] for c in callsites)
 
     if not callsites:
-        notes = "No injection detector callsites found."
+        notes = "No injection detector callsites found (the detector may not be invoked, or the scanner could not identify it)."
     elif flagged:
         notes = (
             f"{len(callsites)} callsite(s) of the injection detector found; none branch on the "
-            "result. Meets Aigis V5 literal wording ('even if just logging') but the LLM call still "
+            "result. Meets Aigis V5 literal wording (\"even if just logging\") but the LLM call still "
             "runs on flagged inputs. Verify manually; if confirmed, mark PARTIAL rather than PASS."
         )
     elif partial:
         notes = "Some callsites block on detection, others do not. Review the non-blocking ones."
     else:
-        notes = "All callsites of the injection detector branch on the result."
+        notes = "All callsites of the injection detector branch on the result (raise/return/reject). No log-only pattern detected."
 
     return {"flagged": flagged or partial, "evidence": evidence, "notes": notes}
 
@@ -343,7 +345,7 @@ def _pii_incomplete_classes(files: list[dict[str, Any]], ctx: dict[str, Any]) ->
     if flagged:
         notes = (
             f"PII redactor is missing pattern coverage for: {', '.join(missing)}. "
-            f"Aigis V1 literal wording ('redaction called') is met, but inputs containing "
+            f"Aigis V1 literal wording (\"redaction called\") is met, but inputs containing "
             f"{' or '.join(missing)} will reach the LLM (and logs) unredacted. "
             f"Add all 5 required classes: {', '.join(REQUIRED)}."
         )
@@ -386,7 +388,7 @@ def _rate_limit_no_retry_after(files: list[dict[str, Any]], ctx: dict[str, Any])
     elif flagged:
         notes = (
             f"{len(site_log)} site(s) returning 429 found; none set a Retry-After header. "
-            f"Aigis V1 literal wording ('per-user rate limit') is met, but clients have no "
+            f"Aigis V1 literal wording (\"per-user rate limit\") is met, but clients have no "
             f"retry-backoff signal. Add Retry-After computed from the actual bucket TTL."
         )
     elif partial:
@@ -396,11 +398,82 @@ def _rate_limit_no_retry_after(files: list[dict[str, Any]], ctx: dict[str, Any])
     return {"flagged": flagged or partial, "evidence": evidence, "notes": notes}
 
 
+# v3.0 (SPEC S7.3): agent-permissions V4 overclaim. A tool-authorization
+# function exists (V4 PASS) but a scope literally grants everything.
+_WILDCARD_LITERAL_RE = re.compile(r"""(["'])\*\1""")
+_WILDCARD_CONTEXT_RE = re.compile(r"scope|tool|allow|permission", re.IGNORECASE)
+_ALLOW_ALL_RE = re.compile(r"\b(?:allow_all|allowAll|ALLOW_ALL)\b\s*(?:[:=]|==)?\s*(?:True|true|1)\b")
+
+
+def _wildcard_tool_scope(files: list[dict[str, Any]], ctx: dict[str, Any]) -> dict[str, Any]:
+    hits: list[dict[str, Any]] = []
+    for f in files:
+        for i, line in enumerate(f["content"].split("\n")):
+            literal = bool(_WILDCARD_LITERAL_RE.search(line)) and bool(_WILDCARD_CONTEXT_RE.search(line))
+            if literal or _ALLOW_ALL_RE.search(line):
+                hits.append({"file": f["path"], "line": i + 1, "snippet": line.strip()[:120]})
+    flagged = bool(hits)
+    if flagged:
+        notes = (
+            f"{len(hits)} wildcard grant(s) found: a tool, scope or permission is set to \"*\" or allow-all. "
+            "An authorization check that allows everything does not limit the agent. "
+            "Replace the wildcard with an explicit allowlist per agent identity."
+        )
+    else:
+        notes = "No wildcard tool scope or allow-all grant found."
+    return {"flagged": flagged, "evidence": hits[:3], "notes": notes}
+
+
+# v3.0 (SPEC S7.3, AC30): agent-tool-safety V2 overclaim, modeled on
+# injection_log_only. The trust gate tests the label but only logs.
+_TRUST_TEST_RE = re.compile(r"^\s*(?:if|elif|else\s+if|when|unless)\b.*(?:trust_level|trustLevel|untrusted)|(?:trust_level|trustLevel|untrusted)[^\n]*\?\s")
+_TRUST_LOG_RE = re.compile(r"\b(?:log|logger|logging|console|LOG|LOGGER)\.(?:debug|info|warn|warning|error|exception|critical|log)\s*\(")
+_TRUST_BLOCK_RE = re.compile(
+    r"\braise\b|\bthrow\b|\brequire_approval\b|\brequireApproval\b"
+    r"|\breturn\s+(?:False|false|None|null|deny\w*|Deny\w*|DENY\w*|Decision\.DENY|\{[^}\n]*(?:allowed|ok)\s*[:=]\s*(?:False|false))"
+)
+
+
+def _untrusted_gate_log_only(files: list[dict[str, Any]], ctx: dict[str, Any]) -> dict[str, Any]:
+    sites: list[dict[str, Any]] = []
+    evidence: list[dict[str, Any]] = []
+    for f in files:
+        lines = f["content"].split("\n")
+        for i, line in enumerate(lines):
+            if not _TRUST_TEST_RE.search(line):
+                continue
+            window = lines[i : min(i + 9, len(lines))]
+            logs = any(_TRUST_LOG_RE.search(w) for w in window)
+            if not logs:
+                continue
+            blocks = any(_TRUST_BLOCK_RE.search(w) for w in window)
+            sites.append({"file": f["path"], "line": i + 1, "blocks": blocks})
+            if not blocks:
+                evidence.append({
+                    "file": f["path"],
+                    "line": i + 1,
+                    "snippet": line.strip() + "  // logs, but the next 8 lines neither raise nor deny",
+                })
+    flagged = any(not s["blocks"] for s in sites)
+    if not sites:
+        notes = "No trust-label gate with a logging call found."
+    elif flagged:
+        notes = (
+            f"{len(evidence)} trust gate(s) log untrusted context but do not block, deny or require approval. "
+            "The tool call still runs on untrusted data. Block it or route it to human approval."
+        )
+    else:
+        notes = "Every trust gate that logs also blocks, denies or requires approval."
+    return {"flagged": flagged, "evidence": evidence[:3], "notes": notes}
+
+
 _SPECIAL_REGISTRY = {
     "kill_switch_restart_latched": _kill_switch_restart_latched,
     "injection_log_only": _injection_log_only,
     "pii_incomplete_classes": _pii_incomplete_classes,
     "rate_limit_no_retry_after": _rate_limit_no_retry_after,
+    "wildcard_tool_scope": _wildcard_tool_scope,
+    "untrusted_gate_log_only": _untrusted_gate_log_only,
 }
 
 
@@ -476,7 +549,13 @@ def auto_verify_area(area_id: str, project_dir: str, jurisdictions: list[str] | 
             "eu_ai_act": all_controls["eu_ai_act"] if show_eu else [],
         }
 
-    return {
+    # v3.0: MITRE ATLAS citation (SPEC S4.2). Never gated by jurisdiction.
+    # Omitted entirely when the catalog is unavailable (fail-soft, S4.5).
+    atlas_summary = atlas.with_atlas(lambda: atlas.summarize_areas([area_id]), None)
+    if atlas_summary and cited:
+        cited["atlas"] = [m["id"] for m in atlas_summary["mitigations"]]
+
+    out = {
         "area": area_id,
         "project_dir": str(root),
         "files_scanned": len(files),
@@ -493,6 +572,28 @@ def auto_verify_area(area_id: str, project_dir: str, jurisdictions: list[str] | 
         "cited_controls": cited,
         "user_jurisdictions": sorted(user_jurisdictions),
     }
+    if atlas_summary:
+        out["atlas"] = atlas_summary
+    return out
+
+
+def _format_atlas_block(a: dict[str, Any]) -> list[str]:
+    """v3.0: the MITRE ATLAS block of the text report (SPEC S4.2). Separate from
+    the "Controls satisfied / in scope" block on purpose: ATLAS is a threat
+    catalog, so nothing here is "satisfied"."""
+    lines: list[str] = []
+    lines.append(f"── MITRE ATLAS v{a['version']} (threat catalog, not a compliance standard) ──")
+    if not a["mitigations"]:
+        lines.append("  No ATLAS mitigation is mapped to this area.")
+    else:
+        t = a["techniques_addressed"]
+        lines.append(f"  Mitigations this area helps implement (in part): {'; '.join(m['id'] + ' ' + m['name'] for m in a['mitigations'])}")
+        lines.append(f"  Techniques MITRE links to those mitigations: {t['total']} ({t['realized']} Realized, {t['demonstrated']} Demonstrated, {t['feasible']} Feasible)")
+        if a["top_techniques"]:
+            lines.append(f"  Highest maturity: {'; '.join(x['id'] + ' ' + x['name'] for x in a['top_techniques'])}")
+    lines.append(f"  {a['disclaimer']}")
+    lines.append("")
+    return lines
 
 
 def _read_area_controls(area_id: str) -> dict[str, list[str]] | None:
@@ -541,6 +642,10 @@ def format_text_report(result: dict[str, Any]) -> str:
             if cited["iso42001"]: lines.append(f"  ISO/IEC 42001:    {', '.join(cited['iso42001'])}")
             if cited["eu_ai_act"]:lines.append(f"  EU AI Act:        {', '.join(cited['eu_ai_act'])}")
             lines.append("")
+
+    # v3.0: MITRE ATLAS block, immediately before AUTO CHECKS.
+    if result.get("atlas"):
+        lines.extend(_format_atlas_block(result["atlas"]))
 
     if result["auto_checks"]:
         lines.append("── AUTO CHECKS ──")

@@ -5,6 +5,7 @@ controls:
   owasp: []
   nist: [MEASURE-2.8, MEASURE-2.9]
   iso42001: [Annex-A.8, Clause-7.4]
+  atlas: []
 min_risk_tier: high
 system_traits: [influences-decisions, handles-health, jurisdiction-eu]
 ---

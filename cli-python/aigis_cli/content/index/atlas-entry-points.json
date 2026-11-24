@@ -1,0 +1,15 @@
+{
+  "atlas_version": "2026.10",
+  "note": "Aigis judgment, not MITRE data: the ATLAS techniques worth checking first for a system with a given trait.",
+  "entry_points": {
+    "accepts-user-input": { "surface": "User-supplied prompts and files", "techniques": ["AML.T0051.000", "AML.T0054", "AML.T0068"] },
+    "generates-content": { "surface": "Generated content that others read or reuse", "techniques": ["AML.T0061", "AML.T0067", "AML.T0143"] },
+    "is-agentic": { "surface": "Tools and actions the model can invoke", "techniques": ["AML.T0051.001", "AML.T0053", "AML.T0086", "AML.T0101", "AML.T0110"] },
+    "is-external": { "surface": "Public-facing AI endpoint", "techniques": ["AML.T0024", "AML.T0029", "AML.T0049", "AML.T0093", "AML.T0132"] },
+    "multi-model-pipeline": { "surface": "Model-to-model handoffs", "techniques": ["AML.T0061", "AML.T0143"] },
+    "uses-finetuned": { "surface": "Training data and model artifacts", "techniques": ["AML.T0010.002", "AML.T0010.003", "AML.T0011.000", "AML.T0020", "AML.T0137.003"] },
+    "uses-llm": { "surface": "Prompts and system instructions of the LLM", "techniques": ["AML.T0051", "AML.T0069.002"] },
+    "uses-rag": { "surface": "Retrieved documents and knowledge-base content", "techniques": ["AML.T0051.001", "AML.T0070", "AML.T0071", "AML.T0082", "AML.T0085.000"] },
+    "uses-thirdparty-api": { "surface": "Third-party models, packages and hosted AI services", "techniques": ["AML.T0010.001", "AML.T0109"] }
+  }
+}

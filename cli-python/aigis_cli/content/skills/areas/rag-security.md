@@ -5,6 +5,7 @@ controls:
   owasp: [LLM08]
   nist: [MEASURE-2.7]
   iso42001: [Clause-8.2, Annex-A.7]
+  atlas: [AML.M0019, AML.M0020, AML.M0024]
 min_risk_tier: all
 system_traits: [uses-rag]
 ---

@@ -6,6 +6,7 @@ controls:
   nist: [MAP-2.2, MEASURE-2.5, MEASURE-2.9]
   iso42001: [Annex-A.8]
   eu_ai_act: [Art-15(1), Art-15(2), Art-15(3)]
+  atlas: [AML.M0020]
 min_risk_tier: all
 system_traits: [influences-decisions, is-external, generates-content]
 ---

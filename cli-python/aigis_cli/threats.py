@@ -239,9 +239,10 @@ def _plural(n: int, word: str) -> str:
 
 
 def _mitigation_line(m: dict, names: dict) -> str:
+    # `*` marks an area classify did not recommend for these traits (legend in Next).
     if not m["areas"]:
         return f"   - {m['id']} {names[m['id']]} -> no Aigis area"
-    areas = ", ".join(a["id"] if a["recommended"] else f"{a['id']} (not in your brief)" for a in m["areas"])
+    areas = ", ".join(a["id"] if a["recommended"] else f"{a['id']}*" for a in m["areas"])
     return f"   - {m['id']} {names[m['id']]} -> {areas}"
 
 
@@ -314,7 +315,7 @@ def format_threats_text(model: dict) -> str:
 
     L.append("## Next")
     L.append("")
-    L.append('- Fetch the areas named above with `aigis get <area>`. "(not in your brief)" means classify did not recommend that area for these traits.')
+    L.append("- Fetch the areas named above with `aigis get <area>`. An area marked * is not in your brief: classify did not recommend it for these traits.")
     L.append("- Fill in the method: `aigis template threat-model`.")
     if "redteam" not in model:
         L.append("- Test-case stubs: rerun with `--redteam`.")

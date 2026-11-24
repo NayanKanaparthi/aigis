@@ -257,3 +257,12 @@ Full run, `bash build/atlas/evals/e2e.sh`, total 9 to 10 s:
 | E2E-07 | PASS | |
 | E2E-08 | FAIL (a: AC21 not shipped) | real terminal `classify` text has no `ATLAS mitigations` on the Controls line, no `Threat model (MITRE ATLAS):` and no disclaimer. SPEC S5.7 is SHOULD |
 | E2E-09 | FAIL (a: label pass) | `verify agent-tool-safety --auto` prints "No ATLAS mitigation is mapped to this area." because the area's `controls.atlas` is still `[]`; the approved `new-areas.json` mitigations (AML.M0030, M0033, M0038, M0031, M0020, M0029, M0037) are not applied yet (S7.5) |
+
+## Round 5 (against `atlas` 92791c7)
+
+Result: **123 PASS, 1 FAIL** of 124 ids (`scripts/test-all.js` 26/27) and **E2E-01..09 all PASS** (`bash build/atlas/evals/e2e.sh`, 9 s).
+
+- T-THR-01, T-THR-02: test bug, accepted. `oracle()` built the mitigation to area map from `gold/area-mitigations.json` only; it now takes the union with the approved `gold/new-areas.json` (framework `atlas`, decision `include`, keyed by `area` and `id`). Both pass.
+- E2E-09: test bug in the script, accepted. The last assertion demanded that every approved gold mitigation of the two new areas shows its area in `threats --traits uses-llm,is-agentic,accepts-user-input --json`. A mitigation only appears in that output when MITRE links it to a technique in scope for those traits (10 techniques in scope, all shown); AML.M0037, AML.M0043 and AML.M0031 are linked to none of them, so they cannot appear and the product is right. The assertion is now: for every gold row whose mitigation is linked (catalog data) to a shown technique, the output names the gold area for it and the mitigation is not listed as a gap; at least one row per new area must be linked (no vacuous pass). Everything the product outputs for the in-scope mitigations is checked, including AML.M0026/27/28/30/33/38/20/29.
+- T-DOC-02: product, left red. `README.md` says "Aigis areas currently map to 12 of the 44 mitigations"; the union of both approved gold files has 21 distinct mitigations (owner: N6).
+- TESTLOCK regenerated.

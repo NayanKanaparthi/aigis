@@ -5,7 +5,13 @@ function command(args){return run(['threats',...args]);}
 function out(args){const r=command(args);assert.strictEqual(r.status,0,r.stderr);assert.doesNotThrow(()=>JSON.parse(r.stdout),'threats did not print JSON');return JSON.parse(r.stdout);}
 function rank(t){return {Realized:0,Demonstrated:1,Feasible:2}[t.maturity];}
 function compare(a,b){return rank(a)-rank(b)||b.case_studies-a.case_studies||a.id.localeCompare(b.id);}
-function oracle(){const catalog=json('content/index/atlas.json'),entry=json('content/index/atlas-entry-points.json'),gold=requireGold('area-mitigations'),areaMap=includedByArea(gold),reverse={};for(const [area,ids] of Object.entries(areaMap))for(const id of ids)(reverse[id]||=[]).push(area);return {catalog,entry,reverse};}
+function oracle(){// The area -> mitigation map is the union of both approved gold files: the 15 original areas (area-mitigations.json) and the two agent areas (new-areas.json, framework "atlas").
+  const catalog=json('content/index/atlas.json'),entry=json('content/index/atlas-entry-points.json'),areaMap=includedByArea(requireGold('area-mitigations')),newGold=requireGold('new-areas'),reverse={};
+  for(const row of newGold.rows.filter((r)=>r.framework==='atlas'&&r.decision==='include'))(areaMap[row.area]||=[]).push(row.id);
+  for(const ids of Object.values(areaMap))ids.sort();
+  for(const [area,ids] of Object.entries(areaMap))for(const id of [...new Set(ids)])(reverse[id]||=[]).push(area);
+  for(const areas of Object.values(reverse))areas.sort();
+  return {catalog,entry,reverse};}
 function scopeFor(traits){const {catalog,entry}=oracle();const tids=[...new Set(traits.flatMap((t)=>(entry.entry_points[t]||{techniques:[]}).techniques))];return tids.map((id)=>({id,...catalog.techniques[id]})).sort(compare);}
 function stripDescriptionDifferences(model){const c=JSON.parse(JSON.stringify(model));delete c.input;delete c.uncertain_traits;c.entry_points.forEach((e)=>delete e.uncertain);return c;}
 function scratchRun(mutation,args){const dir=makeScratch();try{mutateScratch(dir,mutation);return run(['threats',...args],{root:dir});}finally{fs.rmSync(dir,{recursive:true,force:true});}}

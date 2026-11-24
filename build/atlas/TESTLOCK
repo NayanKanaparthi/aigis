@@ -1,4 +1,4 @@
-6f795293d226091acd46b9c27e8a983ce2ace728a61ad190a9626c24e606f8d1  build/atlas/evals/e2e.sh
+f2b9c3566cbc808e32088bcbdfc6cbe62d7e127c711c1d92203c8aadce726345  build/atlas/evals/e2e.sh
 5dd32aabc76b60dfa897d1d90f4c6a3c549bc41562b53f638186b454d205cf80  test/atlas-area-permissions.test.js
 73b07e91b1e94744e1640c1ed38284ee1bcba75676f31d793c75692086c541f0  test/atlas-area-tool-safety.test.js
 617144e58adf198b5785409f51950498ec44e92c7c8228e62aa93f0b1833a67e  test/atlas-catalog.test.js
@@ -13,7 +13,7 @@ e1af804f112c4b16e704e03c70b0091ec5d67469956305c8fc376bae5a9de369  test/atlas-rel
 cea09c9eef246c0bb001835f2998873261d44e4cd64d68a5674e60e2257f3d25  test/atlas-routing.test.js
 0cd047b30b8cc773c54a0d46e5329f775559bdd59b9bdea5265c92f95ed859e9  test/atlas-surfaces.test.js
 a86f4e834aad078b4a7670144e80bbd88a86b55d21d524b32703cabe6770266c  test/atlas-test-helpers.js
-fd68b4e1120785da06dce4b9419ccea0235590d0e30d9faff2418c20f1e68412  test/atlas-threats.test.js
+8ae6acd16eb4c20fde741bd62f4b537e7c25668ee4bf5e0d5401052d30f72b7a  test/atlas-threats.test.js
 16eb360f21371ab0ee4b88609c7697caec5918fab06a56341078349bcc6b1b22  test/atlas-verify-new.test.js
 af53c4fba06b92217504dd749b793a15a58506cfd4c990fc2f1f7f0c64010b0b  test/atlas-version.test.js
 8a2110945c3625316b4a95c5a0f6c10c5f8658249cd71dd3ba5dbcee10e68dc4  test/fixtures/atlas/areas/a.md

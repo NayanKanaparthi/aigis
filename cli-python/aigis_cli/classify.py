@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from . import atlas
+
 _AREAS_DIR = Path(__file__).resolve().parent / "content" / "skills" / "areas"
 
 ALL_TRAITS = [
@@ -83,8 +85,26 @@ def _read_frontmatter_controls(area_id: str) -> dict | None:
         return None
 
 
+def _atlas_for_areas(area_ids: list[str], traits: list[str]) -> dict | None:
+    """v3.0 (SPEC S4.1): ATLAS citation for a classify result. None when the
+    catalog is unavailable (fail-soft, S4.5): the caller then adds no ATLAS key."""
+    def _fn():
+        summary = atlas.summarize_areas(area_ids)
+        return {
+            "ids": [m["id"] for m in summary["mitigations"]],
+            "block": {
+                "version": summary["version"],
+                "disclaimer": summary["disclaimer"],
+                "techniques_addressed": summary["techniques_addressed"],
+                "threats_command": f"aigis threats --traits {','.join(sorted(traits))}",
+            },
+        }
+    return atlas.with_atlas(_fn, None)
+
+
 def classify(trait_list: list[str]) -> dict:
-    ts = set(trait_list)
+    # Insertion-ordered set (dict keys), so `traits` keeps the input order like Node's Set.
+    ts = dict.fromkeys(trait_list)
     warnings: list[str] = []
 
     invalid = [t for t in trait_list if t not in ALL_TRAITS]
@@ -96,7 +116,7 @@ def classify(trait_list: list[str]) -> dict:
     # Constraint C1: is-internal + is-external
     if "is-internal" in ts and "is-external" in ts:
         warnings.append("Both is-internal and is-external selected. Treating as is-external (stricter).")
-        ts.discard("is-internal")
+        ts.pop("is-internal", None)
 
     # Step 1: trait-based file selection
     files: set[str] = set()
@@ -106,7 +126,7 @@ def classify(trait_list: list[str]) -> dict:
 
     # Step 2: risk tier
     sens_data = bool(
-        ts & {"processes-pii", "handles-financial", "handles-health", "handles-proprietary", "handles-minors"}
+        ts.keys() & {"processes-pii", "handles-financial", "handles-health", "handles-proprietary", "handles-minors"}
     )
 
     tier = "LOW"
@@ -207,11 +227,12 @@ def classify(trait_list: list[str]) -> dict:
             all_nist.update(c["nist"])
             all_iso.update(c["iso"])
 
-    return {
+    implement_files = sorted(files)
+    result = {
         "risk_tier": tier,
         "reason": reason,
         "traits": list(ts),
-        "implement_files": sorted(files),
+        "implement_files": implement_files,
         "templates": list(dict.fromkeys(templates)),
         "guardrails_fired": guardrails_fired,
         "warnings": warnings,
@@ -221,3 +242,11 @@ def classify(trait_list: list[str]) -> dict:
             "iso": sorted(all_iso),
         },
     }
+
+    # v3.0: MITRE ATLAS (additive; omitted entirely when the catalog is unavailable).
+    atlas_info = _atlas_for_areas(implement_files, result["traits"])
+    if atlas_info:
+        result["controls"]["atlas"] = atlas_info["ids"]
+        result["atlas"] = atlas_info["block"]
+
+    return result

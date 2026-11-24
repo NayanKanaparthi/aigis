@@ -1,0 +1,9 @@
+{
+  "args": [
+    "verify",
+    "pii-handling"
+  ],
+  "status": 0,
+  "stdout": "---\nid: checklist-pii-handling\nimplements: pii-handling\n---\n# Verification: PII handling\n\n| # | Check | Control | Status | Evidence |\n|---|-------|---------|--------|----------|\n| V1 | Is PII detected and redacted before being sent to the LLM? | LLM02/P1 | [ ] | |\n| V2 | Does the system send only necessary fields to the LLM (data minimization)? | LLM02/P2 | [ ] | |\n| V3 | Is LLM output scanned for PII before returning to the user? | LLM02/P3 | [ ] | |\n| V4 | Are PII-containing records stored separately from LLM-accessible data? | LLM02/P4 | [ ] | |\n| V5 | Are logs written with redacted content, never raw PII? | LLM02/P5 | [ ] | |\n| V6 | Confirm: no full database records sent to the LLM. | Anti-pattern | [ ] | |\n\n",
+  "stderr": ""
+}

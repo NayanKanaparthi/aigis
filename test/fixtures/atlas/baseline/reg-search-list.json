@@ -1,0 +1,9 @@
+{
+  "args": [
+    "search",
+    "--list"
+  ],
+  "status": 0,
+  "stdout": "Available content:\n\nImplement files (governance patterns):\n\nTemplates (compliance documentation):\n  ai-impact-assessment      AI Impact Assessment Template\n  eu-ai-act-annex-iv        EU AI Act — Annex IV Technical Documentation Template\n  intended-purpose-doc      Intended Purpose Documentation\n  risk-characterization     Risk Characterization Template\n  third-party-assessment    Third-Party AI Assessment\n\nVerify checklists:\n  (one per implement file, auto-fetched via aigis verify <id>)\n",
+  "stderr": ""
+}

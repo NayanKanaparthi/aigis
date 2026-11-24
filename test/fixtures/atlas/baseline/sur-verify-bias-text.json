@@ -1,0 +1,11 @@
+{
+  "args": [
+    "verify",
+    "bias-monitoring",
+    "--auto",
+    "/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/atlas-tests/test/fixtures/atlas/project"
+  ],
+  "status": 0,
+  "stdout": "═══ AUTO-VERIFY: bias-monitoring ═══\n\nProject: /Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/atlas-tests/test/fixtures/atlas/project\nFiles scanned: 1\nAuto-verified: 0/2 PASS, 2 FAIL\nOverclaim recognizers raised: 0\nJudgment required: 3 check(s)\n\n── Controls in scope (partial — fix FAIL/OVERCLAIM to fully satisfy): ──\n  NIST AI RMF:      MAP-2.3, MEASURE-2.11, MEASURE-3.1\n  ISO/IEC 42001:    Clause-6.1, Annex-C\n\n── AUTO CHECKS ──\n\n[FAIL] V1: Fairness-enabling fields in logs\n       no matches for any of 5 pattern(s)\n\n[FAIL] V3: Fairness report generator exists\n       no matches for any of 3 pattern(s)\n\n── JUDGMENT REQUIRED (agent must evaluate) ──\n\n[JUDGMENT] V2: Is distribution monitoring by demographic segments actually wired to a backend (not a stub that returns [])? Requires agent inspection of the monitor implementation.\n\n[JUDGMENT] V4: Confirm protected characteristics are not collected. Absence is hard to prove by regex.\n\n[JUDGMENT] V5: Is override pattern analysis actually implemented (not a placeholder)? Requires agent inspection.\n\n═══ SUMMARY ═══\nAuto-verified: 0 PASS, 2 FAIL out of 2 automatic checks\nOverclaim flags raised: 0\nJudgment required: 3 checks\n\nInterpretation:\n  PASS / FAIL are deterministic based on regex match against project files.\n  Overclaim flags mean the literal checklist wording is satisfied but a stricter\n    operational bar may not be. Mark PARTIAL rather than PASS unless you can\n    rebut the flag with evidence.\n  JUDGMENT checks are not auto-gradable. The agent must evaluate them.\n",
+  "stderr": ""
+}

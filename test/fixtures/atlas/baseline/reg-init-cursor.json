@@ -1,0 +1,9 @@
+{
+  "args": [
+    "init",
+    "cursor"
+  ],
+  "status": 0,
+  "stdout": "\n✓ Created .cursorrules\n\nCursor will read these instructions on every interaction in this project.\n\n",
+  "stderr": ""
+}

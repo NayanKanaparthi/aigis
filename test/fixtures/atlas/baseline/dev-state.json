@@ -1,0 +1,797 @@
+{
+  "D1": {
+    "detection": {
+      "high_confidence_matches": [
+        {
+          "phrase": "chatbot",
+          "traits": [
+            "uses-llm",
+            "accepts-user-input"
+          ]
+        }
+      ],
+      "low_confidence_matches": [
+        {
+          "id": "1",
+          "phrase": "customer support",
+          "traits": [
+            "accepts-user-input",
+            "is-external"
+          ],
+          "confirmation_prompt": "You mentioned customer support. Is this exposed directly to customers (external) or only used by your support team (internal)? (yes / no / unsure)",
+          "notes": "Some support tools are agent-only."
+        }
+      ],
+      "traits_auto_applied": [
+        "uses-llm",
+        "accepts-user-input"
+      ]
+    },
+    "classify_ground_truth": {
+      "risk_tier": "MEDIUM",
+      "reason": "is-external",
+      "traits": [
+        "uses-llm",
+        "accepts-user-input",
+        "is-external"
+      ],
+      "implement_files": [
+        "audit-logging",
+        "confidence-scoring",
+        "eu-ai-act-art-50-transparency-disclosure",
+        "input-validation",
+        "monitoring",
+        "output-sanitization",
+        "prompt-security",
+        "rate-limiting"
+      ],
+      "templates": [
+        "intended-purpose-doc"
+      ],
+      "guardrails_fired": [],
+      "warnings": [],
+      "controls": {
+        "owasp": [
+          "LLM01",
+          "LLM05",
+          "LLM07",
+          "LLM09",
+          "LLM10"
+        ],
+        "nist": [
+          "MANAGE-1.3",
+          "MANAGE-2.4",
+          "MANAGE-4.1",
+          "MANAGE-4.2",
+          "MANAGE-4.3",
+          "MAP-2.2",
+          "MEASURE-2.4",
+          "MEASURE-2.5",
+          "MEASURE-2.6",
+          "MEASURE-2.7",
+          "MEASURE-2.8",
+          "MEASURE-2.9",
+          "MEASURE-3.1"
+        ],
+        "iso": [
+          "Annex-A.6",
+          "Annex-A.8",
+          "Clause-10",
+          "Clause-8.2",
+          "Clause-9.1"
+        ]
+      }
+    },
+    "build": {
+      "areas": [
+        "audit-logging",
+        "confidence-scoring",
+        "input-validation",
+        "monitoring",
+        "output-sanitization",
+        "prompt-security",
+        "rate-limiting"
+      ]
+    }
+  },
+  "D2": {
+    "detection": {
+      "high_confidence_matches": [],
+      "low_confidence_matches": [],
+      "traits_auto_applied": []
+    },
+    "classify_ground_truth": {
+      "risk_tier": "LOW",
+      "reason": "no high/medium triggers",
+      "traits": [
+        "uses-llm",
+        "uses-rag",
+        "accepts-user-input",
+        "is-internal"
+      ],
+      "implement_files": [
+        "audit-logging",
+        "data-integrity",
+        "eu-ai-act-art-50-transparency-disclosure",
+        "input-validation",
+        "monitoring",
+        "output-sanitization",
+        "prompt-security",
+        "rag-security"
+      ],
+      "templates": [],
+      "guardrails_fired": [],
+      "warnings": [],
+      "controls": {
+        "owasp": [
+          "LLM01",
+          "LLM04",
+          "LLM05",
+          "LLM07",
+          "LLM08"
+        ],
+        "nist": [
+          "MANAGE-1.3",
+          "MANAGE-4.1",
+          "MANAGE-4.2",
+          "MANAGE-4.3",
+          "MAP-2.3",
+          "MEASURE-2.4",
+          "MEASURE-2.6",
+          "MEASURE-2.7",
+          "MEASURE-2.8",
+          "MEASURE-3.1"
+        ],
+        "iso": [
+          "Annex-A.6",
+          "Annex-A.7",
+          "Clause-10",
+          "Clause-8.2",
+          "Clause-9.1"
+        ]
+      }
+    },
+    "build": {
+      "error": "No traits resolved from description. Try a more specific description, or use `aigis classify --traits ...` directly."
+    }
+  },
+  "D3": {
+    "detection": {
+      "high_confidence_matches": [],
+      "low_confidence_matches": [
+        {
+          "id": "1",
+          "phrase": "summarize",
+          "traits": [
+            "uses-llm",
+            "generates-content"
+          ],
+          "confirmation_prompt": "You mentioned summarization. Is this an LLM summary, or extractive (pulling sentences out without an LLM)? (yes / no / unsure)",
+          "notes": "Extractive summarization predates LLMs."
+        }
+      ],
+      "traits_auto_applied": []
+    },
+    "classify_ground_truth": {
+      "risk_tier": "HIGH",
+      "reason": "influences-decisions",
+      "traits": [
+        "uses-llm",
+        "handles-health",
+        "influences-decisions",
+        "processes-pii"
+      ],
+      "implement_files": [
+        "audit-logging",
+        "bias-monitoring",
+        "confidence-scoring",
+        "eu-ai-act-art-50-transparency-disclosure",
+        "explainability",
+        "fallback-patterns",
+        "human-oversight",
+        "input-validation",
+        "monitoring",
+        "output-sanitization",
+        "pii-handling",
+        "prompt-security"
+      ],
+      "templates": [
+        "ai-impact-assessment",
+        "intended-purpose-doc",
+        "risk-characterization"
+      ],
+      "guardrails_fired": [
+        {
+          "id": "G11",
+          "action": "ADD fallback-patterns",
+          "rationale": "High-risk systems must fail safely"
+        }
+      ],
+      "warnings": [],
+      "controls": {
+        "owasp": [
+          "LLM01",
+          "LLM02",
+          "LLM05",
+          "LLM06",
+          "LLM07",
+          "LLM09"
+        ],
+        "nist": [
+          "MANAGE-1.3",
+          "MANAGE-2.3",
+          "MANAGE-2.4",
+          "MANAGE-4.1",
+          "MANAGE-4.2",
+          "MANAGE-4.3",
+          "MAP-2.1",
+          "MAP-2.2",
+          "MAP-2.3",
+          "MAP-3.5",
+          "MEASURE-2.10",
+          "MEASURE-2.11",
+          "MEASURE-2.4",
+          "MEASURE-2.5",
+          "MEASURE-2.6",
+          "MEASURE-2.7",
+          "MEASURE-2.8",
+          "MEASURE-2.9",
+          "MEASURE-3.1"
+        ],
+        "iso": [
+          "Annex-A.4",
+          "Annex-A.6",
+          "Annex-A.7",
+          "Annex-A.8",
+          "Annex-A.9",
+          "Annex-C",
+          "Clause-10",
+          "Clause-6.1",
+          "Clause-7.4",
+          "Clause-8.2",
+          "Clause-8.4",
+          "Clause-9.1"
+        ]
+      }
+    },
+    "build": {
+      "areas": [
+        "audit-logging",
+        "bias-monitoring",
+        "confidence-scoring",
+        "input-validation",
+        "monitoring",
+        "output-sanitization",
+        "prompt-security"
+      ]
+    }
+  },
+  "D4": {
+    "detection": {
+      "high_confidence_matches": [],
+      "low_confidence_matches": [],
+      "traits_auto_applied": []
+    },
+    "classify_ground_truth": {
+      "risk_tier": "HIGH",
+      "reason": "generates-code + is-external",
+      "traits": [
+        "uses-llm",
+        "generates-code",
+        "is-external"
+      ],
+      "implement_files": [
+        "audit-logging",
+        "confidence-scoring",
+        "eu-ai-act-art-50-transparency-disclosure",
+        "fallback-patterns",
+        "human-oversight",
+        "input-validation",
+        "monitoring",
+        "output-sanitization",
+        "prompt-security",
+        "rate-limiting"
+      ],
+      "templates": [
+        "ai-impact-assessment",
+        "intended-purpose-doc",
+        "risk-characterization"
+      ],
+      "guardrails_fired": [],
+      "warnings": [],
+      "controls": {
+        "owasp": [
+          "LLM01",
+          "LLM05",
+          "LLM06",
+          "LLM07",
+          "LLM09",
+          "LLM10"
+        ],
+        "nist": [
+          "MANAGE-1.3",
+          "MANAGE-2.3",
+          "MANAGE-2.4",
+          "MANAGE-4.1",
+          "MANAGE-4.2",
+          "MANAGE-4.3",
+          "MAP-2.2",
+          "MAP-3.5",
+          "MEASURE-2.4",
+          "MEASURE-2.5",
+          "MEASURE-2.6",
+          "MEASURE-2.7",
+          "MEASURE-2.8",
+          "MEASURE-2.9",
+          "MEASURE-3.1"
+        ],
+        "iso": [
+          "Annex-A.6",
+          "Annex-A.8",
+          "Annex-A.9",
+          "Clause-10",
+          "Clause-8.2",
+          "Clause-8.4",
+          "Clause-9.1"
+        ]
+      }
+    },
+    "build": {
+      "error": "No traits resolved from description. Try a more specific description, or use `aigis classify --traits ...` directly."
+    }
+  },
+  "D5": {
+    "detection": {
+      "high_confidence_matches": [
+        {
+          "phrase": "fine-tune",
+          "traits": [
+            "uses-finetuned"
+          ]
+        }
+      ],
+      "low_confidence_matches": [],
+      "traits_auto_applied": [
+        "uses-finetuned"
+      ]
+    },
+    "classify_ground_truth": {
+      "risk_tier": "MEDIUM",
+      "reason": "handles-proprietary",
+      "traits": [
+        "uses-llm",
+        "uses-finetuned",
+        "handles-proprietary"
+      ],
+      "implement_files": [
+        "audit-logging",
+        "data-integrity",
+        "eu-ai-act-art-50-transparency-disclosure",
+        "input-validation",
+        "monitoring",
+        "output-sanitization",
+        "pii-handling",
+        "prompt-security"
+      ],
+      "templates": [
+        "intended-purpose-doc"
+      ],
+      "guardrails_fired": [
+        {
+          "id": "G12",
+          "action": "REMOVE supply-chain",
+          "rationale": "Self-hosted models skip third-party controls"
+        }
+      ],
+      "warnings": [],
+      "controls": {
+        "owasp": [
+          "LLM01",
+          "LLM02",
+          "LLM04",
+          "LLM05",
+          "LLM07"
+        ],
+        "nist": [
+          "MANAGE-1.3",
+          "MANAGE-4.1",
+          "MANAGE-4.2",
+          "MANAGE-4.3",
+          "MAP-2.1",
+          "MAP-2.3",
+          "MEASURE-2.10",
+          "MEASURE-2.4",
+          "MEASURE-2.6",
+          "MEASURE-2.7",
+          "MEASURE-2.8",
+          "MEASURE-3.1"
+        ],
+        "iso": [
+          "Annex-A.4",
+          "Annex-A.6",
+          "Annex-A.7",
+          "Clause-10",
+          "Clause-8.2",
+          "Clause-9.1"
+        ]
+      }
+    },
+    "build": {
+      "areas": [
+        "data-integrity",
+        "supply-chain"
+      ]
+    }
+  },
+  "D6": {
+    "detection": {
+      "high_confidence_matches": [],
+      "low_confidence_matches": [],
+      "traits_auto_applied": []
+    },
+    "classify_ground_truth": {
+      "risk_tier": "HIGH",
+      "reason": "influences-decisions",
+      "traits": [
+        "uses-llm",
+        "handles-financial",
+        "influences-decisions"
+      ],
+      "implement_files": [
+        "audit-logging",
+        "bias-monitoring",
+        "confidence-scoring",
+        "eu-ai-act-art-50-transparency-disclosure",
+        "explainability",
+        "fallback-patterns",
+        "human-oversight",
+        "input-validation",
+        "monitoring",
+        "output-sanitization",
+        "pii-handling",
+        "prompt-security"
+      ],
+      "templates": [
+        "ai-impact-assessment",
+        "intended-purpose-doc",
+        "risk-characterization"
+      ],
+      "guardrails_fired": [
+        {
+          "id": "G3",
+          "action": "ADD fallback-patterns",
+          "rationale": "Financial decisions need safe failure"
+        }
+      ],
+      "warnings": [],
+      "controls": {
+        "owasp": [
+          "LLM01",
+          "LLM02",
+          "LLM05",
+          "LLM06",
+          "LLM07",
+          "LLM09"
+        ],
+        "nist": [
+          "MANAGE-1.3",
+          "MANAGE-2.3",
+          "MANAGE-2.4",
+          "MANAGE-4.1",
+          "MANAGE-4.2",
+          "MANAGE-4.3",
+          "MAP-2.1",
+          "MAP-2.2",
+          "MAP-2.3",
+          "MAP-3.5",
+          "MEASURE-2.10",
+          "MEASURE-2.11",
+          "MEASURE-2.4",
+          "MEASURE-2.5",
+          "MEASURE-2.6",
+          "MEASURE-2.7",
+          "MEASURE-2.8",
+          "MEASURE-2.9",
+          "MEASURE-3.1"
+        ],
+        "iso": [
+          "Annex-A.4",
+          "Annex-A.6",
+          "Annex-A.7",
+          "Annex-A.8",
+          "Annex-A.9",
+          "Annex-C",
+          "Clause-10",
+          "Clause-6.1",
+          "Clause-7.4",
+          "Clause-8.2",
+          "Clause-8.4",
+          "Clause-9.1"
+        ]
+      }
+    },
+    "build": {
+      "error": "No traits resolved from description. Try a more specific description, or use `aigis classify --traits ...` directly."
+    }
+  },
+  "D7": {
+    "detection": {
+      "high_confidence_matches": [],
+      "low_confidence_matches": [],
+      "traits_auto_applied": []
+    },
+    "classify_ground_truth": {
+      "risk_tier": "LOW",
+      "reason": "no high/medium triggers",
+      "traits": [
+        "uses-llm",
+        "is-multimodal"
+      ],
+      "implement_files": [
+        "audit-logging",
+        "eu-ai-act-art-50-transparency-disclosure",
+        "input-validation",
+        "monitoring",
+        "output-sanitization",
+        "pii-handling",
+        "prompt-security"
+      ],
+      "templates": [],
+      "guardrails_fired": [],
+      "warnings": [],
+      "controls": {
+        "owasp": [
+          "LLM01",
+          "LLM02",
+          "LLM05",
+          "LLM07"
+        ],
+        "nist": [
+          "MANAGE-1.3",
+          "MANAGE-4.1",
+          "MANAGE-4.2",
+          "MANAGE-4.3",
+          "MAP-2.1",
+          "MEASURE-2.10",
+          "MEASURE-2.4",
+          "MEASURE-2.6",
+          "MEASURE-2.7",
+          "MEASURE-2.8",
+          "MEASURE-3.1"
+        ],
+        "iso": [
+          "Annex-A.4",
+          "Annex-A.6",
+          "Annex-A.7",
+          "Clause-10",
+          "Clause-8.2",
+          "Clause-9.1"
+        ]
+      }
+    },
+    "build": {
+      "error": "No traits resolved from description. Try a more specific description, or use `aigis classify --traits ...` directly."
+    }
+  },
+  "D8": {
+    "detection": {
+      "high_confidence_matches": [],
+      "low_confidence_matches": [],
+      "traits_auto_applied": []
+    },
+    "classify_ground_truth": {
+      "risk_tier": "MEDIUM",
+      "reason": "is-external",
+      "traits": [
+        "uses-llm",
+        "generates-content",
+        "is-external"
+      ],
+      "implement_files": [
+        "audit-logging",
+        "bias-monitoring",
+        "confidence-scoring",
+        "eu-ai-act-art-50-transparency-disclosure",
+        "input-validation",
+        "monitoring",
+        "output-sanitization",
+        "prompt-security",
+        "rate-limiting"
+      ],
+      "templates": [
+        "intended-purpose-doc"
+      ],
+      "guardrails_fired": [],
+      "warnings": [],
+      "controls": {
+        "owasp": [
+          "LLM01",
+          "LLM05",
+          "LLM07",
+          "LLM09",
+          "LLM10"
+        ],
+        "nist": [
+          "MANAGE-1.3",
+          "MANAGE-2.4",
+          "MANAGE-4.1",
+          "MANAGE-4.2",
+          "MANAGE-4.3",
+          "MAP-2.2",
+          "MAP-2.3",
+          "MEASURE-2.11",
+          "MEASURE-2.4",
+          "MEASURE-2.5",
+          "MEASURE-2.6",
+          "MEASURE-2.7",
+          "MEASURE-2.8",
+          "MEASURE-2.9",
+          "MEASURE-3.1"
+        ],
+        "iso": [
+          "Annex-A.6",
+          "Annex-A.8",
+          "Annex-C",
+          "Clause-10",
+          "Clause-6.1",
+          "Clause-8.2",
+          "Clause-9.1"
+        ]
+      }
+    },
+    "build": {
+      "error": "No traits resolved from description. Try a more specific description, or use `aigis classify --traits ...` directly."
+    }
+  },
+  "D9": {
+    "detection": {
+      "high_confidence_matches": [],
+      "low_confidence_matches": [
+        {
+          "id": "1",
+          "phrase": "AI agent",
+          "traits": [
+            "is-agentic"
+          ],
+          "confirmation_prompt": "You mentioned an AI agent. Does an LLM choose the next action at each step (decides which tool to call, when to stop), or is the flow scripted by your code with the LLM only doing per-step generation? (yes / no / unsure)",
+          "notes": "'Agent' is overloaded marketing language. True agentic systems delegate the action loop to the LLM."
+        }
+      ],
+      "traits_auto_applied": []
+    },
+    "classify_ground_truth": {
+      "risk_tier": "MEDIUM",
+      "reason": "is-agentic",
+      "traits": [
+        "uses-llm",
+        "is-agentic",
+        "uses-thirdparty-api"
+      ],
+      "implement_files": [
+        "audit-logging",
+        "eu-ai-act-art-50-transparency-disclosure",
+        "fallback-patterns",
+        "human-oversight",
+        "input-validation",
+        "monitoring",
+        "output-sanitization",
+        "prompt-security",
+        "rate-limiting",
+        "supply-chain"
+      ],
+      "templates": [
+        "intended-purpose-doc",
+        "third-party-assessment"
+      ],
+      "guardrails_fired": [],
+      "warnings": [],
+      "controls": {
+        "owasp": [
+          "LLM01",
+          "LLM03",
+          "LLM05",
+          "LLM06",
+          "LLM07",
+          "LLM10"
+        ],
+        "nist": [
+          "GOVERN-6.1",
+          "GOVERN-6.2",
+          "MANAGE-1.3",
+          "MANAGE-2.3",
+          "MANAGE-2.4",
+          "MANAGE-3.1",
+          "MANAGE-3.2",
+          "MANAGE-4.1",
+          "MANAGE-4.2",
+          "MANAGE-4.3",
+          "MAP-3.5",
+          "MEASURE-2.4",
+          "MEASURE-2.6",
+          "MEASURE-2.7",
+          "MEASURE-2.8",
+          "MEASURE-3.1"
+        ],
+        "iso": [
+          "Annex-A.10",
+          "Annex-A.6",
+          "Annex-A.9",
+          "Clause-10",
+          "Clause-8.2",
+          "Clause-8.4",
+          "Clause-9.1"
+        ]
+      }
+    },
+    "build": {
+      "areas": [
+        "audit-logging",
+        "fallback-patterns",
+        "human-oversight",
+        "rate-limiting"
+      ]
+    }
+  },
+  "D10": {
+    "detection": {
+      "high_confidence_matches": [],
+      "low_confidence_matches": [],
+      "traits_auto_applied": []
+    },
+    "classify_ground_truth": {
+      "risk_tier": "MEDIUM",
+      "reason": "multi-model-pipeline",
+      "traits": [
+        "uses-llm",
+        "multi-model-pipeline"
+      ],
+      "implement_files": [
+        "audit-logging",
+        "data-integrity",
+        "eu-ai-act-art-50-transparency-disclosure",
+        "fallback-patterns",
+        "input-validation",
+        "monitoring",
+        "output-sanitization",
+        "prompt-security"
+      ],
+      "templates": [
+        "intended-purpose-doc"
+      ],
+      "guardrails_fired": [],
+      "warnings": [],
+      "controls": {
+        "owasp": [
+          "LLM01",
+          "LLM04",
+          "LLM05",
+          "LLM07"
+        ],
+        "nist": [
+          "MANAGE-1.3",
+          "MANAGE-2.3",
+          "MANAGE-2.4",
+          "MANAGE-4.1",
+          "MANAGE-4.2",
+          "MANAGE-4.3",
+          "MAP-2.3",
+          "MEASURE-2.4",
+          "MEASURE-2.6",
+          "MEASURE-2.7",
+          "MEASURE-2.8",
+          "MEASURE-3.1"
+        ],
+        "iso": [
+          "Annex-A.6",
+          "Annex-A.7",
+          "Clause-10",
+          "Clause-8.2",
+          "Clause-9.1"
+        ]
+      }
+    },
+    "build": {
+      "error": "No traits resolved from description. Try a more specific description, or use `aigis classify --traits ...` directly."
+    }
+  }
+}

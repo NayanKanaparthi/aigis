@@ -1,0 +1,12 @@
+{
+  "args": [
+    "verify",
+    "bias-monitoring",
+    "--auto",
+    "/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/atlas-tests/test/fixtures/atlas/project",
+    "--json"
+  ],
+  "status": 0,
+  "stdout": "{\n  \"area\": \"bias-monitoring\",\n  \"project_dir\": \"/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/atlas-tests/test/fixtures/atlas/project\",\n  \"files_scanned\": 1,\n  \"summary\": {\n    \"auto_total\": 2,\n    \"auto_pass\": 0,\n    \"auto_fail\": 2,\n    \"overclaims_raised\": 0,\n    \"judgment_required\": 3\n  },\n  \"auto_checks\": {\n    \"V1\": {\n      \"desc\": \"Fairness-enabling fields in logs\",\n      \"patterns\": [\n        \"fairness\",\n        \"claim_type\",\n        \"input_length_bucket\",\n        \"submission_channel\",\n        \"bucket_length\"\n      ],\n      \"require\": \"any\",\n      \"status\": \"FAIL\",\n      \"evidence\": [],\n      \"matched_patterns\": [],\n      \"total_patterns\": 5,\n      \"inverse\": false\n    },\n    \"V3\": {\n      \"desc\": \"Fairness report generator exists\",\n      \"patterns\": [\n        \"generate_fairness_report\",\n        \"fairness_report\",\n        \"BiasMonitor\"\n      ],\n      \"require\": \"any\",\n      \"status\": \"FAIL\",\n      \"evidence\": [],\n      \"matched_patterns\": [],\n      \"total_patterns\": 3,\n      \"inverse\": false\n    }\n  },\n  \"overclaim_checks\": {},\n  \"judgment_checks\": {\n    \"V2\": {\n      \"desc\": \"Is distribution monitoring by demographic segments actually wired to a backend (not a stub that returns [])? Requires agent inspection of the monitor implementation.\",\n      \"status\": \"JUDGMENT\"\n    },\n    \"V4\": {\n      \"desc\": \"Confirm protected characteristics are not collected. Absence is hard to prove by regex.\",\n      \"status\": \"JUDGMENT\"\n    },\n    \"V5\": {\n      \"desc\": \"Is override pattern analysis actually implemented (not a placeholder)? Requires agent inspection.\",\n      \"status\": \"JUDGMENT\"\n    }\n  },\n  \"cited_controls\": {\n    \"owasp\": [],\n    \"nist\": [\n      \"MAP-2.3\",\n      \"MEASURE-2.11\",\n      \"MEASURE-3.1\"\n    ],\n    \"iso42001\": [\n      \"Clause-6.1\",\n      \"Annex-C\"\n    ],\n    \"eu_ai_act\": []\n  },\n  \"user_jurisdictions\": []\n}\n",
+  "stderr": ""
+}

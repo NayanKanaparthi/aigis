@@ -1,0 +1,11 @@
+{
+  "args": [
+    "classify",
+    "--traits",
+    "uses-llm,is-agentic,accepts-user-input,is-external,uses-thirdparty-api",
+    "--json"
+  ],
+  "status": 0,
+  "stdout": "{\n  \"risk_tier\": \"MEDIUM\",\n  \"reason\": \"is-external\",\n  \"traits\": [\n    \"accepts-user-input\",\n    \"is-agentic\",\n    \"is-external\",\n    \"uses-llm\",\n    \"uses-thirdparty-api\"\n  ],\n  \"implement_files\": [\n    \"audit-logging\",\n    \"confidence-scoring\",\n    \"fallback-patterns\",\n    \"human-oversight\",\n    \"input-validation\",\n    \"monitoring\",\n    \"output-sanitization\",\n    \"prompt-security\",\n    \"rate-limiting\",\n    \"supply-chain\"\n  ],\n  \"templates\": [\n    \"intended-purpose-doc\",\n    \"third-party-assessment\"\n  ],\n  \"guardrails_fired\": [],\n  \"warnings\": [],\n  \"controls\": {\n    \"owasp\": [\n      \"LLM01\",\n      \"LLM03\",\n      \"LLM05\",\n      \"LLM06\",\n      \"LLM07\",\n      \"LLM09\",\n      \"LLM10\"\n    ],\n    \"nist\": [\n      \"GOVERN-6.1\",\n      \"GOVERN-6.2\",\n      \"MANAGE-1.3\",\n      \"MANAGE-2.3\",\n      \"MANAGE-2.4\",\n      \"MANAGE-3.1\",\n      \"MANAGE-3.2\",\n      \"MANAGE-4.1\",\n      \"MANAGE-4.2\",\n      \"MANAGE-4.3\",\n      \"MAP-2.2\",\n      \"MAP-3.5\",\n      \"MEASURE-2.4\",\n      \"MEASURE-2.5\",\n      \"MEASURE-2.6\",\n      \"MEASURE-2.7\",\n      \"MEASURE-2.8\",\n      \"MEASURE-2.9\",\n      \"MEASURE-3.1\"\n    ],\n    \"iso\": [\n      \"Annex-A.10\",\n      \"Annex-A.6\",\n      \"Annex-A.8\",\n      \"Annex-A.9\",\n      \"Clause-10\",\n      \"Clause-8.2\",\n      \"Clause-8.4\",\n      \"Clause-9.1\"\n    ]\n  },\n  \"filtered_by_jurisdiction\": {\n    \"user_jurisdictions\": [],\n    \"dropped_count\": 1\n  }\n}\n",
+  "stderr": ""
+}

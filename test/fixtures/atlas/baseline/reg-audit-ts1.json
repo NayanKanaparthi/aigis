@@ -1,0 +1,11 @@
+{
+  "args": [
+    "audit",
+    "--traits",
+    "uses-llm,accepts-user-input,uses-rag",
+    "--json"
+  ],
+  "status": 1,
+  "stdout": "",
+  "stderr": "/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/atlas-tests/lib/fetch.js:11\n    throw new Error(`File not found: ${dir}/${id}.md`);\n    ^\n\nError: File not found: verify/checklist-eu-ai-act-art-50-transparency-disclosure.md\n    at readFile (/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/atlas-tests/lib/fetch.js:11:11)\n    at verify (/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/atlas-tests/lib/fetch.js:215:21)\n    at Command.<anonymous> (/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/atlas-tests/bin/aigis.js:507:27)\n    at Command.listener [as _actionHandler] (/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/atlas-tests/node_modules/commander/lib/command.js:542:17)\n    at /Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/atlas-tests/node_modules/commander/lib/command.js:1502:14\n    at Command._chainOrCall (/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/atlas-tests/node_modules/commander/lib/command.js:1386:12)\n    at Command._parseCommand (/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/atlas-tests/node_modules/commander/lib/command.js:1501:27)\n    at /Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/atlas-tests/node_modules/commander/lib/command.js:1265:27\n    at Command._chainOrCall (/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/atlas-tests/node_modules/commander/lib/command.js:1386:12)\n    at Command._dispatchSubcommand (/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/atlas-tests/node_modules/commander/lib/command.js:1261:25)\n\nNode.js v24.12.0\n"
+}

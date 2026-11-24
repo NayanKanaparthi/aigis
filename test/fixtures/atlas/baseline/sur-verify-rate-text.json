@@ -1,0 +1,11 @@
+{
+  "args": [
+    "verify",
+    "rate-limiting",
+    "--auto",
+    "/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/atlas-tests/test/fixtures/atlas/project"
+  ],
+  "status": 0,
+  "stdout": "═══ AUTO-VERIFY: rate-limiting ═══\n\nProject: /Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/atlas-tests/test/fixtures/atlas/project\nFiles scanned: 1\nAuto-verified: 1/4 PASS, 3 FAIL\nOverclaim recognizers raised: 0\nJudgment required: 1 check(s)\n\n── Controls in scope (partial — fix FAIL/OVERCLAIM to fully satisfy): ──\n  OWASP LLM Top 10: LLM10\n  NIST AI RMF:      MEASURE-2.6, MANAGE-2.4\n  ISO/IEC 42001:    Clause-8.2\n\n── AUTO CHECKS ──\n\n[FAIL] V1: Per-user rate limiter\n       no matches for any of 3 pattern(s)\n\n[FAIL] V2: Token budget (daily / per-request limits)\n       no matches for any of 3 pattern(s)\n\n[FAIL] V4: Timeout configured on LLM calls\n       no matches for any of 4 pattern(s)\n\n[PASS] V5: Rate limit keyed on API key or user id (not IP only)\n       app.py:13  def rate_limit(user_id, requests, window_seconds=60):\n\n── OVERCLAIM RECOGNIZERS ──\n\n[no signal] V1: Rate limiter exists but 429 responses do not include Retry-After header\n       recognizer: rate_limit_no_retry_after\n       No 429 response sites found.\n\n── JUDGMENT REQUIRED (agent must evaluate) ──\n\n[JUDGMENT] V3: Cost monitoring / alerting is typically external infrastructure; regex can't detect 'alerts are configured'.\n\n═══ SUMMARY ═══\nAuto-verified: 1 PASS, 3 FAIL out of 4 automatic checks\nOverclaim flags raised: 0\nJudgment required: 1 checks\n\nInterpretation:\n  PASS / FAIL are deterministic based on regex match against project files.\n  Overclaim flags mean the literal checklist wording is satisfied but a stricter\n    operational bar may not be. Mark PARTIAL rather than PASS unless you can\n    rebut the flag with evidence.\n  JUDGMENT checks are not auto-gradable. The agent must evaluate them.\n",
+  "stderr": ""
+}

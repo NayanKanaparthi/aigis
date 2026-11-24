@@ -10,123 +10,126 @@ min_risk_tier: all
 system_traits: [is-agentic]
 ---
 
-This area limits what an AI agent can do under its identity and permissions. It applies when the model can call tools or act with someone's permissions. Every check runs in code outside the model, in the tool layer or gateway, denies by default and fails closed; nothing relies on prompt text. It does not stop prompt injection; it limits what injected text can make the agent do.
+This area limits what an AI agent can do with its identity and permissions when it calls tools or acts for someone. Checks run in code outside the model, deny by default and fail closed. It does not stop prompt injection; it limits what injected text can make the agent do.
 
 ## Common incomplete implementations
 
-1. **The agent runs on a developer token or shared admin account.** Prevented by Step 1.
+1. **The agent uses a developer token or shared admin account.** Prevented by Step 1.
 2. **Authorization lives in the system prompt.** Prevented by Step 4.
 3. **A shared tool checks its own privilege, not the caller's.** Prevented by Step 4.
-4. **The agent can mint itself a key or edit its own scopes.** Prevented by Step 5.
-5. **Tokens, webhooks, jobs and cloud resources outlive the task.** Prevented by Step 6.
+4. **Tokens, webhooks, jobs and cloud resources outlive the task.** Prevented by Step 6.
 
 ## Implementation procedure
 
 ### Step 1 — Declare each agent identity as service or user-delegated ⚠ CRITICAL
 
-**What to do.** List every agent in one `AGENT_IDENTITY` map, in config no tool can write, as `service` (own workload identity, started by requests, events or schedules) or `delegated` (acts for one signed-in user). Give each its own identity, never a developer token or shared admin account. Deny unlisted agents. Keep credentials out of model context.
+**What to do.** List every agent in one `AGENT_IDENTITY` map, in config no tool can write, as `service` (own workload identity) or `delegated` (acts for a signed-in user). Each entry names the agent's own credential reference (never a developer token or shared admin account), kept out of model context. Deny unlisted agents.
 
-**Verification checkpoint.** `start_run("ghost", "t1", "u1")` raises `Denied`.
+**Verification checkpoint.** `start_run("ghost", "t1", "u1")` raises `Denied`, and no two `AGENT_IDENTITY` entries share a credential reference.
 
 ### Step 2 — Bind every service identity to an explicit list of authorized workflows
 
-**What to do.** In `AUTHORIZED_WORKFLOWS`, list each service agent's workflows with their operations and allowed initiators. At run start, deny unless the workflow is listed for that agent and the verified initiator may start it; the run gets only that workflow's operations. Keep permission and credential changes out of routine workflows.
+**What to do.** In `AUTHORIZED_WORKFLOWS`, list each service agent's workflows with their operations, allowed initiators and resource root. At run start, deny unless the workflow is listed for that agent and the verified initiator may start it; the run gets only its operations.
 
 **Verification checkpoint.** Starting `bot` with an unlisted workflow or initiator raises `Denied`.
 
 ### Step 3 — Cap a delegated agent at the intersection of the user's permissions and the task scope
 
-**What to do.** Set the run's operations to `effective_permissions(user_permissions, task)`: the user's permissions intersected with the task scope in trusted config (`TASK_SCOPES`), never the agent's reading of the request. Prefer read-only operations. Reload the user's permissions on each tool call so removals apply at once. Use short-lived credentials scoped to user and task.
+**What to do.** Set the run's operations to `effective_permissions(user_permissions, task)`: the user's permissions intersected with the task scope in trusted config (`TASK_SCOPES`). List write operations in `TASK_SCOPES` only for tasks that need them; the task id comes from the authenticated request. Re-check the user's permissions on every call.
 
-**Verification checkpoint.** A user with `mail:read` and `mail:send` on `triage` gets only `mail:read`; once they lose it, reads are denied.
+**Verification checkpoint.** A user with `mail:read` and `mail:send` on `triage` gets only `mail:read`, denied once they lose it.
 
 ### Step 4 — Authorize every tool call per caller inside the tool layer ⚠ CRITICAL
 
-**What to do.** Route every tool call through a dispatcher that first calls `authorize_tool_call(run, caller, operation, resource)`. Build `caller` (agent, principal, tenant, user permissions) from the authenticated session, never model arguments; the operation comes from your tool registry. Allow only if the caller matches the run, run and user hold the operation and the resource is in the caller's tenant. Separate read, modify and delete; errors deny. Shared tools use a caller-scoped credential, never their own wider privilege. A static tool allowlist is not this step.
+**What to do.** Route every tool call through a dispatcher that calls `authorize_tool_call(run, caller, operation, resource)`. Build `caller` (agent, principal, tenant, user permissions) from the authenticated session, not model arguments; the tool registry sets the operation. Each run gets a resource root at start: `tenants/{tenant}/users/{principal}/` if delegated, else its workflow's prefix. Allow only if the caller matches the run, run and user hold the operation and the resource is inside the run's resource root. Deny any `resource` containing `%` or `\`; normalize it before the prefix check. The tool acts only on the authorized `resource`; `args` carry no second target (deny undeclared arg names). Shared tools use caller-scoped credentials, never their own. A static tool allowlist is not this step.
 
-**Verification checkpoint.** `grep -rn "TOOLS\[" src/` hits only `dispatch_tool`; tenant `t2` asking for `tenants/t1/x` is denied.
+**Verification checkpoint.** `grep -rnE "TOOLS(\[|\.get\()" src/` hits only the dispatcher; another tenant's resource and another user's resource, same tenant, are denied.
 
 ### Step 5 — Fix the maximum authority before the run and block self-granting
 
-**What to do.** Declare `MAX_AUTHORITY` per agent in reviewed config. At run start, intersect the run's operations with it, drop self-granting operations (creating credentials, keys, roles or service accounts; editing the agent's own scopes) and freeze the result. Only a human editing config out of band grants more. Give a sub-agent a subset of its parent's operations.
+**What to do.** Declare `MAX_AUTHORITY` per agent in reviewed config. At run start, intersect the run's operations with it, drop self-granting (creating credentials, keys, roles or service accounts; editing the agent's own scopes) and freeze the result. Only a human editing config out of band grants more; a sub-agent gets a subset of its parent's operations.
 
-**Verification checkpoint.** `Run` is immutable; `iam:create_key` is denied even when a workflow lists it.
+**Verification checkpoint.** `iam:create_key` is denied even when a workflow lists it.
 
 ### Step 6 — Register, attribute and expire every external resource the agent creates
 
-**What to do.** Make `register_agent_resource(run, kind, create, ttl_seconds)` the only way tools create cloud resources, accounts, tokens, webhooks or scheduled jobs. It refuses kinds without a revoker or over-long lifetimes and records agent, principal, run, creation and expiry. A scheduler outside the agent runs `sweep_agent_resources`: on run end or expiry it revokes credentials, deletes the resource, confirms both and retries failures.
+**What to do.** Make `register_agent_resource(run, kind, create, ttl_seconds)` the only way tools create cloud resources, accounts, tokens, webhooks or scheduled jobs. It refuses kinds without a revoker or over-long lifetimes and records agent, principal, run and expiry. A scheduler outside the agent runs `sweep_agent_resources`: on run end or expiry it revokes credentials, deletes the resource, confirms both and retries failures.
 
-**Verification checkpoint.** Provider create calls appear only in `create` callbacks given to `register_agent_resource`; a sweep after run end marks records `revoked`.
+**Verification checkpoint.** Sweeping after run end marks its records `revoked`.
 
 ### Step 7 — Prove the denials with negative tests
 
-**What to do.** Call the real dispatcher. Assert `Denied` and that the tool did not run for: unlisted agent, workflow or initiator; operation outside the task; permission lost mid-run; other tenant; `..` in the path; self-granting; unknown tool. Add one allowed call so deny-everything fails.
+**What to do.** Against the real dispatcher, assert `Denied` and that no tool ran for: unlisted agent, workflow or initiator; operation outside the task; permission lost mid-run; other tenant; another user's resource, same tenant; `..`, `%` or `\` in the path; undeclared args; self-granting; unknown tool. Include one allowed call as a control.
 
-**Verification checkpoint.** Deleting the tenant check from `authorize_tool_call` makes the cross-tenant test fail.
+**Verification checkpoint.** Deleting the root check from `authorize_tool_call` makes the other-user test fail.
 
 ## Complete working example
 
 ```python
+import posixpath
 import time
 import uuid
 from collections import namedtuple
 
 NONE = frozenset()
-Run = namedtuple("Run", "run_id agent_id tenant_id principal delegated operations")
+Run = namedtuple("Run", "run_id agent_id tenant_id principal delegated operations root")
 
 class Denied(Exception):
     pass
 
-# Reviewed config that no tool can write
-AGENT_IDENTITY = {"bot": "service", "aide": "delegated"}
-AUTHORIZED_WORKFLOWS = {"bot": {"report": ({"db:read", "doc:write"}, {"cron"})}}  # ops, initiators
-TASK_SCOPES = {"triage": {"mail:read", "mail:label"}}
-MAX_AUTHORITY = {"bot": {"db:read", "doc:write"}, "aide": {"mail:read", "mail:label", "mail:send"}}
-SELF_GRANTING = {"iam:create_key", "iam:create_role", "agent:edit_scopes"}
+AGENT_IDENTITY = {"bot": ("service", "kv:bot"), "aide": ("delegated", "kv:aide")}
+AUTHORIZED_WORKFLOWS = {"bot": {"report": ({"db:read", "doc:write"}, {"cron"}, "reports/")}}
+TASK_SCOPES = {"triage": {"mail:read"}}
+MAX_AUTHORITY = {"bot": {"db:read", "doc:write"}, "aide": {"mail:read", "mail:send"}}
+SELF_GRANTING = {"iam:create_key", "agent:edit_scopes"}
 
 def effective_permissions(user_permissions, task):
     return frozenset(user_permissions) & TASK_SCOPES.get(task, NONE)
 
 def start_run(agent_id, tenant_id, principal, task=None, user_permissions=(), workflow=None):
-    kind = AGENT_IDENTITY.get(agent_id)
+    kind = AGENT_IDENTITY.get(agent_id, (None,))[0]
     if kind == "service":
-        ops, starters = AUTHORIZED_WORKFLOWS.get(agent_id, {}).get(workflow, (NONE, NONE))
+        ops, starters, sub = AUTHORIZED_WORKFLOWS.get(agent_id, {}).get(workflow, (NONE, NONE, ""))
         if principal not in starters:
             raise Denied("workflow")
     elif kind == "delegated":
-        ops = effective_permissions(user_permissions, task)
+        ops, sub = effective_permissions(user_permissions, task), f"users/{principal}/"
     else:
         raise Denied("identity")
     ops = (frozenset(ops) & MAX_AUTHORITY.get(agent_id, NONE)) - SELF_GRANTING
-    return Run(uuid.uuid4().hex, agent_id, tenant_id, principal, kind == "delegated", ops)
+    return Run(uuid.uuid4().hex, agent_id, tenant_id, principal, kind == "delegated", ops, f"tenants/{tenant_id}/{sub}")
 
 def authorize_tool_call(run, caller, operation, resource):
     if any(caller[k] != getattr(run, k) for k in ("agent_id", "tenant_id", "principal")):
         raise Denied("caller")
     if operation not in run.operations or (run.delegated and operation not in caller["user_permissions"]):
         raise Denied("operation")
-    if ".." in resource.split("/") or not resource.startswith(f"tenants/{run.tenant_id}/"):
+    path = posixpath.normpath(resource)
+    if "%" in resource or "\\" in resource or not path.startswith(run.root):
         raise Denied("resource")
+    return path
 
-TOOLS = {}  # name -> (operation, fn); you set the operation, not the model
+TOOLS = {}  # name -> (operation, arg names, fn)
 
 def dispatch_tool(run, caller, name, resource, args):
     try:
-        operation, fn = TOOLS[name]
-        authorize_tool_call(run, caller, operation, resource)
-    except Exception as exc:  # fail closed
+        operation, arg_names, fn = TOOLS[name]
+        path = authorize_tool_call(run, caller, operation, resource)
+        if set(args) - set(arg_names):
+            raise Denied("args")
+    except Exception as exc:
         raise Denied(str(exc)) from exc
-    return fn(args, caller=caller, resource=resource)
+    return fn(args, caller=caller, resource=path)
 
-RESOURCES = {}  # a database table in production
-REVOKERS = {}  # kind -> fn(id): revoke, delete, confirm
+RESOURCES = {}  # use a database table
+REVOKERS = {}  # kind -> revoke, delete, confirm
 
 def register_agent_resource(run, kind, create, ttl_seconds):
     if kind not in REVOKERS or not 0 < ttl_seconds <= 3600:
         raise Denied("resource")
-    rid, now = create(), time.time()
+    rid = create()
     RESOURCES[rid] = dict(kind=kind, agent=run.agent_id, principal=run.principal, run=run.run_id,
-                          created=now, expires=now + ttl_seconds, status="active")
+                          expires=time.time() + ttl_seconds, status="active")
     return rid
 
 def sweep_agent_resources(ended_runs=()):
@@ -136,68 +139,70 @@ def sweep_agent_resources(ended_runs=()):
                 REVOKERS[rec["kind"]](rid)
                 rec["status"] = "revoked"
             except Exception:
-                pass  # retried next sweep
+                pass  # retried later
 ```
 
 ```javascript
 const { randomUUID } = require('node:crypto');
+const { posix } = require('node:path');
 
 class Denied extends Error {}
 const get = (o, k) => (o && Object.hasOwn(o, k) ? o[k] : undefined);
 
-const AGENT_IDENTITY = { bot: 'service', aide: 'delegated' };
-const AUTHORIZED_WORKFLOWS = { bot: { report: [['db:read', 'doc:write'], ['cron']] } }; // ops, initiators
-const TASK_SCOPES = { triage: ['mail:read', 'mail:label'] };
-const MAX_AUTHORITY = { bot: ['db:read', 'doc:write'], aide: ['mail:read', 'mail:label', 'mail:send'] };
-const SELF_GRANTING = ['iam:create_key', 'iam:create_role', 'agent:edit_scopes'];
+const AGENT_IDENTITY = { bot: ['service', 'kv:bot'], aide: ['delegated', 'kv:aide'] };
+const AUTHORIZED_WORKFLOWS = { bot: { report: [['db:read', 'doc:write'], ['cron'], 'reports/'] } };
+const TASK_SCOPES = { triage: ['mail:read'] };
+const MAX_AUTHORITY = { bot: ['db:read', 'doc:write'], aide: ['mail:read', 'mail:send'] };
+const SELF_GRANTING = ['iam:create_key', 'agent:edit_scopes'];
 
 const effectivePermissions = (userPermissions, task) =>
   (get(TASK_SCOPES, task) || []).filter((op) => userPermissions.includes(op));
 
 function startRun(agentId, tenantId, principal, { task, userPermissions = [], workflow } = {}) {
-  const kind = get(AGENT_IDENTITY, agentId);
-  let ops;
+  const [kind] = get(AGENT_IDENTITY, agentId) || [];
+  let ops, starters, sub;
   if (kind === 'service') {
-    const [wfOps, starters] = get(get(AUTHORIZED_WORKFLOWS, agentId), workflow) || [[], []];
+    [ops, starters, sub] = get(get(AUTHORIZED_WORKFLOWS, agentId), workflow) || [[], []];
     if (!starters.includes(principal)) throw new Denied('workflow');
-    ops = wfOps;
-  } else if (kind === 'delegated') ops = effectivePermissions(userPermissions, task);
+  } else if (kind === 'delegated') [ops, sub] = [effectivePermissions(userPermissions, task), `users/${principal}/`];
   else throw new Denied('identity');
   const ceiling = get(MAX_AUTHORITY, agentId) || [];
   return Object.freeze({ runId: randomUUID(), agentId, tenantId, principal, delegated: kind === 'delegated',
+    root: `tenants/${tenantId}/${sub}`,
     operations: Object.freeze(ops.filter((op) => ceiling.includes(op) && !SELF_GRANTING.includes(op))) });
 }
 
 function authorizeToolCall(run, caller, operation, resource) {
-  if (['agentId', 'tenantId', 'principal'].some((k) => caller[k] !== run[k]))
-    throw new Denied('caller');
+  if (['agentId', 'tenantId', 'principal'].some((k) => caller[k] !== run[k])) throw new Denied('caller');
   if (!run.operations.includes(operation) || (run.delegated && !caller.userPermissions.includes(operation)))
     throw new Denied('operation');
-  if (resource.split('/').includes('..') || !resource.startsWith(`tenants/${run.tenantId}/`))
-    throw new Denied('resource');
+  const path = posix.normalize(resource);
+  if (/[%\\]/.test(resource) || !path.startsWith(run.root)) throw new Denied('resource');
+  return path;
 }
 
-const TOOLS = new Map(); // name -> { operation, fn }
+const TOOLS = new Map(); // name -> { operation, args, fn }
 
 async function dispatchTool(run, caller, name, resource, args) {
   const tool = TOOLS.get(name);
+  let path;
   try {
-    authorizeToolCall(run, caller, tool.operation, resource);
+    path = authorizeToolCall(run, caller, tool.operation, resource);
+    if (Object.keys(args).some((k) => !tool.args.includes(k))) throw new Denied('args');
   } catch (err) {
     throw new Denied(err.message); // fail closed
   }
-  return tool.fn(args, { caller, resource });
+  return tool.fn(args, { caller, resource: path });
 }
 
 const RESOURCES = new Map();
-const REVOKERS = new Map(); // kind -> async revoke, delete, confirm
+const REVOKERS = new Map();
 
 async function registerAgentResource(run, kind, create, ttlSeconds) {
   if (!REVOKERS.has(kind) || !(ttlSeconds > 0 && ttlSeconds <= 3600)) throw new Denied('resource');
   const rid = await create();
-  const now = Date.now();
   RESOURCES.set(rid, { kind, agent: run.agentId, principal: run.principal, run: run.runId,
-    created: now, expires: now + ttlSeconds * 1000, status: 'active' });
+    expires: Date.now() + ttlSeconds * 1000, status: 'active' });
   return rid;
 }
 
@@ -207,7 +212,7 @@ async function sweepAgentResources(endedRuns = new Set()) {
     try {
       await REVOKERS.get(rec.kind)(rid);
       rec.status = 'revoked';
-    } catch { /* retried next sweep */ }
+    } catch { /* retried later */ }
   }
 }
 
@@ -216,10 +221,8 @@ module.exports = { Denied, TOOLS, REVOKERS, startRun, dispatchTool, registerAgen
 
 ## What this does not cover
 
-- Detecting prompt injection (`input-validation`), or gating tools on untrusted context (`agent-tool-safety`).
-- Ceilings set too broadly in config.
-- Approvals (`human-oversight`), logging (`audit-logging`), rate limits (`rate-limiting`).
+Prompt injection detection (`input-validation`), tool gating on untrusted context (`agent-tool-safety`), approvals (`human-oversight`), logging (`audit-logging`).
 
 ## Related patterns
 
-`human-oversight`, `agent-tool-safety`, `audit-logging`, `input-validation`.
+`human-oversight`, `agent-tool-safety`, `audit-logging`.

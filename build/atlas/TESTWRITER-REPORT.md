@@ -234,3 +234,26 @@ T-REG-01 no longer compares the `audit --traits TS1` baseline (it recorded the c
 ### Per-file result
 
 area-permissions 5/2 (T-NA-06 G1, T-NA-07 NV), area-tool-safety 5/2 (T-NB-06 G1, T-NB-07 NV), docs 10/1 (T-DOC-02 G1), verify-new 8/4 (T-NV-09 to T-NV-12, all NV), regression 5/2 (T-REG-06, T-REG-07, both NV). Every other atlas file is all PASS (catalog 11, lib 14, frontmatter 7, routing 3, surfaces 12, failsoft 5, threats 20, version 1, honesty 1, python-parity 3, release 3). TESTLOCK regenerated.
+
+## Round 4 (`build/atlas/evals/e2e.sh` install and timeout fix)
+
+Merged `atlas` at 870a95c first. Test-wrong accepted: the script exported dead proxies for the whole run, so `npm install` of the tarball and `pip install` of the wheel could not fetch their normal dependencies and hung. Changes:
+
+- Global proxy exports removed. Dependency installs use the network (`npm install --ignore-scripts --prefer-offline --no-audit --no-fund`, plain `pip install`, `python3 -m build`).
+- Every `aigis` invocation (repo Node CLI, installed npm CLI, installed Python CLI, the atlas index generator, the `script` terminal run) goes through `offline`, which sets `HTTP(S)_PROXY`, `ALL_PROXY` and lowercase twins to `http://127.0.0.1:9` and `NODE_USE_ENV_PROXY=1`. Checked: a Node `fetch` and a Python `urlopen` under `offline` both fail immediately.
+- Each case runs in its own process group under a watchdog (`E2E_TIMEOUT`, default 180 s); on a timeout the group is killed and the case prints `FAIL <id> (<s>s): timed out after <n>s; last step: ...`. Other failures print the exit code and the last traced steps (every case runs under `set -x` into a private log). Verified with `E2E_TIMEOUT=1`. PASS lines now end with the elapsed time; the final line prints the total.
+- No assertion removed or weakened. Two assertions were wrong about output format and are now precise: E2E-05 compared the whole `aigis --version` line to `3.0.0` but click prints `aigis, version 3.0.0` (now the last word must equal `3.0.0`); E2E-07 expected the bare word `OK` but the generator prints `OK (source sha256 <hash>)` (now: first word `OK`, and the hash must be the pinned `ac41ee9f...e142d`, which is stricter). E2E-08 now gives `script` an explicit empty stdin, because from a background job `script` otherwise printed nothing.
+
+Full run, `bash build/atlas/evals/e2e.sh`, total 9 to 10 s:
+
+| Case | Result | Note |
+|---|---|---|
+| E2E-01 | PASS | npm tarball install, `aigis --version` 3.0.0 |
+| E2E-02 | PASS | |
+| E2E-03 | PASS | |
+| E2E-04 | PASS | |
+| E2E-05 | PASS | wheel in a fresh venv, Node and Python `threats` JSON equal |
+| E2E-06 | PASS | |
+| E2E-07 | PASS | |
+| E2E-08 | FAIL (a: AC21 not shipped) | real terminal `classify` text has no `ATLAS mitigations` on the Controls line, no `Threat model (MITRE ATLAS):` and no disclaimer. SPEC S5.7 is SHOULD |
+| E2E-09 | FAIL (a: label pass) | `verify agent-tool-safety --auto` prints "No ATLAS mitigation is mapped to this area." because the area's `controls.atlas` is still `[]`; the approved `new-areas.json` mitigations (AML.M0030, M0033, M0038, M0031, M0020, M0029, M0037) are not applied yet (S7.5) |

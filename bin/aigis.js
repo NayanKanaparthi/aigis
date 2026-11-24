@@ -18,7 +18,7 @@ const program = new Command();
 program
   .name('aigis')
   .description('AI governance guardrails for coding agents')
-  .version('2.1.1');
+  .version('3.0.0');
 
 // ============================================================
 // aigis classify
@@ -770,6 +770,39 @@ program
   .option('--hook', 'Install .git/hooks/pre-commit that runs aigis verify on areas declared in .aigisrc.json.')
   .action((ide, opts) => {
     init(ide, { refresh: !!opts.refresh, ci: opts.ci, hook: !!opts.hook });
+  });
+
+// ============================================================
+// aigis threats (v3.0, MITRE ATLAS; logic in lib/threats.js)
+// ============================================================
+program
+  .command('threats')
+  .description('Threat model for your system\'s entry points (MITRE ATLAS: a catalog, not a standard)')
+  .argument('[description]', 'Plain-English description of the system (in quotes); traits are resolved like `aigis build`, uncertain ones marked')
+  .option('--traits <traits>', 'Comma-separated trait IDs (additive with the description)')
+  .option('--top <n>', 'Number of techniques to show, 1 to 25 (default 10)')
+  .option('--json', 'Output JSON instead of plain markdown')
+  .option('--redteam', 'Add red-team test-case stubs for the top techniques')
+  .action((description, opts) => {
+    const threats = require('../lib/threats');
+    try {
+      const top = threats.parseTop(opts.top);
+      const resolved = threats.resolveThreatTraits({ description, traitsFlag: opts.traits });
+      const model = threats.buildThreatModel({ ...resolved, top, redteam: !!opts.redteam });
+      process.stdout.write(opts.json ? threats.formatThreatsJSON(model) : threats.formatThreatsText(model));
+    } catch (err) {
+      if (err instanceof threats.ThreatsInputError) {
+        process.stderr.write(`${err.message}\n`);
+        process.exitCode = 1;
+        return;
+      }
+      if (err instanceof threats.AtlasCatalogError) {
+        process.stderr.write(`${threats.catalogErrorLine(err)}\n`);
+        process.exitCode = 2;
+        return;
+      }
+      throw err;
+    }
   });
 
 // ============================================================

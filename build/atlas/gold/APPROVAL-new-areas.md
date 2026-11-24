@@ -14,3 +14,7 @@ Plain summary for Nayan. Every row below has the rulebook's exact sentence and t
 
 Left out (claimed more than the guide does): agent-tool-safety AML.M0036; agent-tool-safety LLM10; agent-permissions MANAGE-1.3; agent-tool-safety MANAGE-1.3
 ISO 42001: none (standard text not available to quote).
+
+## Approval
+- Approved by Nayan Kanaparthi in the orchestrator chat ("I approved"), recorded 2026-11-24T22:44:23Z.
+- ISO 42001: no rows (owner did not approve citing by precedent).

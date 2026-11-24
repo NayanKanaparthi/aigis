@@ -64,11 +64,10 @@ function maskVolatile(text) {
     .split(baselineRoot()).join('<ROOT>')
     .split(ROOT).join('<ROOT>')
     .replace(/^> aigis [^\n]* — generated [^\n]+$/gm, '> aigis <VERSION> — generated <TIMESTAMP>')
+    .replace(/(— generated )\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z/g, '$1<TIMESTAMP>')
     .replace(/^> Generated: [^\n]+$/gm, '> Generated: <TIMESTAMP>')
     .replace(/^> Aigis version: [^\n]+$/gm, '> Aigis version: <VERSION>')
-    .replace(/\b2\.1\.1\b/g, '<VERSION>')
-    .replace(/\b2\.2\.0\b/g, '<VERSION>')
-    .replace(/\b3\.0\.0\b/g, '<VERSION>')
+    .replace(/(?<![\d.])(?:2\.1\.1|2\.2\.0|3\.0\.0)(?![\d.])/g, '<VERSION>')
     .replace(/"generated_at":\s*"[^"]+"/g, '"generated_at":"<TIMESTAMP>"');
 }
 function stripAtlas(value) {
@@ -102,10 +101,27 @@ function entryPointRows(gold) {
 function directMitigations(catalog, techniqueId) {
   return Object.entries(catalog.mitigations).filter(([, m]) => m.techniques.includes(techniqueId)).map(([id]) => id).sort();
 }
+function tryParseJson(text) { try { return { value: JSON.parse(text) }; } catch (_) { return null; } }
+function jsonStrings(v, out = []) {
+  if (typeof v === 'string') out.push(v);
+  else if (Array.isArray(v)) v.forEach((x) => jsonStrings(x, out));
+  else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) { out.push(k); jsonStrings(x, out); }
+  return out;
+}
+// JSON escapes the quotes inside the disclaimer, so JSON output is parsed first and
+// the exact sentence is looked for in the parsed string values.
+function outputHasDisclaimer(text) {
+  const parsed = tryParseJson(String(text));
+  return parsed ? jsonStrings(parsed.value).some((x) => x.includes(DISCLAIMER)) : String(text).includes(DISCLAIMER);
+}
 function assertNoForbidden(text, label) {
-  const cleaned = String(text).split(DISCLAIMER).join('');
-  const match = cleaned.match(FORBIDDEN);
-  assert.ok(!match, `${label}: forbidden phrase ${match && match[0]}`);
+  const parsed = tryParseJson(String(text));
+  const texts = parsed ? jsonStrings(parsed.value) : [String(text)];
+  for (const t of texts) {
+    const cleaned = t.split(DISCLAIMER).join('');
+    const match = cleaned.match(FORBIDDEN);
+    assert.ok(!match, `${label}: forbidden phrase ${match && match[0]}`);
+  }
 }
 function makeScratch() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aigis-atlas-'));
@@ -144,4 +160,4 @@ function runCases(cases) {
   process.exitCode = failures ? 1 : 0;
 }
 
-module.exports = { assert, fs, os, path, ROOT, FIXTURES, BASELINE, DISCLAIMER, ATLAS_VERSION, ATLAS_SHA256, FORBIDDEN, DS1, DS2, DS3, TS1, TS2, TS3, TS5, AREA_IDS, EU_AREA_IDS, NEW_AREA_IDS, UNIVERSAL_AREA_IDS, sha256, read, json, requireFile, requireGold, run, commandRecord, baseline, maskVolatile, stripAtlas, parseJsonOutput, includedByArea, entryPointRows, directMitigations, assertNoForbidden, makeScratch, mutateScratch, runCases };
+module.exports = { assert, fs, os, path, ROOT, FIXTURES, BASELINE, DISCLAIMER, ATLAS_VERSION, ATLAS_SHA256, FORBIDDEN, DS1, DS2, DS3, TS1, TS2, TS3, TS5, AREA_IDS, EU_AREA_IDS, NEW_AREA_IDS, UNIVERSAL_AREA_IDS, sha256, read, json, requireFile, requireGold, run, commandRecord, baseline, maskVolatile, stripAtlas, parseJsonOutput, includedByArea, entryPointRows, directMitigations, assertNoForbidden, outputHasDisclaimer, makeScratch, mutateScratch, runCases };

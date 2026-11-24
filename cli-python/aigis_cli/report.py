@@ -19,6 +19,7 @@ from typing import Any
 
 import frontmatter
 
+from . import atlas
 from .auto_verify import auto_verify_area
 
 AREAS_DIR = Path(__file__).resolve().parent / "content" / "skills" / "areas"
@@ -41,7 +42,7 @@ def build_report(
     ver = version or _read_version()
 
     per_area: list[dict] = []
-    agg = {"owasp": set(), "nist": set(), "iso42001": set(), "eu_ai_act": set()}
+    agg = {"owasp": set(), "nist": set(), "iso42001": set(), "eu_ai_act": set(), "atlas": set()}
     totals = {"auto_pass": 0, "auto_fail": 0, "overclaims": 0, "judgment": 0}
     areas_fully_passing = 0
 
@@ -73,8 +74,8 @@ def build_report(
 
         if result.get("cited_controls"):
             for fw, vs in result["cited_controls"].items():
-                for v in vs:
-                    agg[fw].add(v)
+                for v in vs or []:
+                    agg.setdefault(fw, set()).add(v)
 
         totals["auto_pass"] += s["auto_pass"]
         totals["auto_fail"] += s["auto_fail"]
@@ -103,7 +104,15 @@ def build_report(
             "evidence": evidence,
         })
 
-    return {
+    # v3.0: MITRE ATLAS (SPEC S4.3). Omitted entirely when the catalog is
+    # unavailable (fail-soft, S4.5); verify then also omits cited_controls.atlas.
+    def _atlas_header():
+        atlas.load_catalog()
+        return {"version": atlas.PINNED["version"], "disclaimer": atlas.DISCLAIMER}
+
+    atlas_header = atlas.with_atlas(_atlas_header, None)
+
+    report = {
         "generated_at": ts,
         "aigis_version": ver,
         "project_dir": project_dir,
@@ -131,6 +140,11 @@ def build_report(
         },
         "per_area": per_area,
     }
+    if atlas_header:
+        report["summary"]["cross_framework_coverage"]["atlas_count"] = len(agg["atlas"])
+        report["summary"]["cross_framework_citations"]["atlas"] = sorted(agg["atlas"])
+        report["atlas"] = atlas_header
+    return report
 
 
 def format_report_markdown(report: dict) -> str:
@@ -166,6 +180,8 @@ def format_report_markdown(report: dict) -> str:
     L.append(f"| ISO/IEC 42001 | {s['cross_framework_coverage']['iso42001_count']} |")
     eu_note = "" if "eu" in report["user_jurisdictions"] else " _(not surfaced — no EU jurisdiction)_"
     L.append(f"| EU AI Act | {s['cross_framework_coverage']['eu_ai_act_count']}{eu_note} |")
+    if report.get("atlas"):
+        L.append(f"| MITRE ATLAS mitigations (threat catalog, not a standard) | {s['cross_framework_coverage']['atlas_count']} |")
     L.append("")
 
     L.append("## Per-area results")
@@ -194,6 +210,8 @@ def format_report_markdown(report: dict) -> str:
                 if c["nist"]:     L.append(f"- NIST AI RMF: {', '.join(f'`{v}`' for v in c['nist'])}")
                 if c["iso42001"]: L.append(f"- ISO/IEC 42001: {', '.join(f'`{v}`' for v in c['iso42001'])}")
                 if c["eu_ai_act"]:L.append(f"- EU AI Act: {', '.join(f'`{v}`' for v in c['eu_ai_act'])}")
+                if report.get("atlas") and c.get("atlas"):
+                    L.append(f"- MITRE ATLAS mitigations (helps implement, in part): {', '.join(f'`{v}`' for v in c['atlas'])}")
                 L.append("")
         if a["evidence"]:
             L.append("**Evidence (file:line excerpts from PASS checks, max 3 per check):**")
@@ -260,6 +278,12 @@ def format_report_markdown(report: dict) -> str:
     L.append("- **Cross-framework citations**: each area's `controls` frontmatter declares which OWASP / NIST / ISO 42001 / EU AI Act controls it satisfies.")
     L.append("- **Jurisdiction gating**: EU AI Act citations are only surfaced when `--jurisdiction eu` was passed.")
     L.append("- **Determinism**: same project + same options + same Aigis version produces byte-identical reports (modulo the timestamp line).")
+    if report.get("atlas"):
+        L.append(
+            f"- **MITRE ATLAS**: mitigation ids come from each area's `controls.atlas` frontmatter "
+            f"(Aigis's own mapping, pinned to ATLAS v{report['atlas']['version']}). "
+            f"A cited mitigation means the area implements part of it. {report['atlas']['disclaimer']}"
+        )
     L.append("")
     L.append("This report is content output. It is not a certification. EU AI Act conformity assessment requires notified-body involvement; this report is preparation material.")
     L.append("")

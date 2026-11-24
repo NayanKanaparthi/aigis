@@ -710,6 +710,30 @@ def init_cmd(ide: str, refresh: bool, ci: str | None, hook: bool) -> None:
     run_init(ide, refresh=refresh, ci=ci, hook=hook)
 
 
+# ── threats (v3.0, MITRE ATLAS; logic in threats.py) ────────────────
+@cli.command("threats")
+@click.argument("description", required=False, default=None)
+@click.option("--traits", "traits_str", default=None, help="Comma-separated trait IDs (additive with the description)")
+@click.option("--top", "top", default=None, help="Number of techniques to show, 1 to 25 (default 10)")
+@click.option("--json", "as_json", is_flag=True, help="Output JSON instead of plain markdown")
+@click.option("--redteam", is_flag=True, help="Add red-team test-case stubs for the top techniques")
+def threats_cmd(description: str | None, traits_str: str | None, top: str | None, as_json: bool, redteam: bool) -> None:
+    """Threat model for your system's entry points (MITRE ATLAS: a catalog, not a standard)"""
+    from . import threats as th
+    try:
+        top_n = th.parse_top(top)
+        resolved = th.resolve_threat_traits(description=description, traits_flag=traits_str)
+        model = th.build_threat_model(**resolved, top=top_n, redteam=redteam)
+        out = th.format_threats_json(model) if as_json else th.format_threats_text(model)
+    except th.ThreatsInputError as err:
+        sys.stderr.write(f"{err}\n")
+        sys.exit(1)
+    except th.AtlasCatalogError as err:
+        sys.stderr.write(f"{th.catalog_error_line(err)}\n")
+        sys.exit(2)
+    click.echo(out, nl=False)
+
+
 # ── traits ──────────────────────────────────────────────────────────
 @cli.command()
 def traits() -> None:

@@ -15,3 +15,6 @@ From N5 (opus-5-5, 16:41):
 
 From E0:
 10. Pre-existing bug (not a test bug): `aigis audit --traits TS1 --json` crashes on a missing EU checklist file on the old code too; baseline recorded the crash. Affects T-NV-06. Tracked for IMPROVEMENTS / fix candidate.
+
+From PY (opus-5-5, 16:57):
+11. T-PY-02: compares report and build JSON across two runs without masking `generated_at`, `meta.generated_at` and the brief "generated" line; can never pass. TESTPLAN says compare only the ATLAS parts.

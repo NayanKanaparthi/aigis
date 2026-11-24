@@ -16,7 +16,7 @@ Select all traits that apply to the AI system being built. The combination deter
 | uses-rag | System retrieves context from a vector database before LLM inference | rag-security, data-integrity |
 | uses-finetuned | System uses a fine-tuned or custom-trained model | data-integrity, supply-chain |
 | uses-thirdparty-api | System calls an external model provider API | supply-chain |
-| is-agentic | System takes actions autonomously (DB writes, API calls, code execution) | human-oversight, rate-limiting, fallback-patterns, audit-logging |
+| is-agentic | System takes actions autonomously (DB writes, API calls, code execution) | human-oversight, rate-limiting, fallback-patterns, audit-logging, agent-permissions, agent-tool-safety |
 | is-multimodal | System processes or generates images, audio, or video | input-validation, output-sanitization, pii-handling |
 
 ## Data sensitivity

@@ -500,18 +500,34 @@ program
 
       // Count checks per scoped area by parsing checklist rows (format: "| V<n> | ...").
       // This gives the deterministic denominator the agent must score against.
+      // v3.0: an area with no checklist file yet (some EU AI Act areas) is listed
+      // as "no checklist yet" and left out of the denominator instead of crashing.
       const checklistsByArea = {};
       const perAreaCounts = {};
+      const noChecklist = [];
       let totalChecks = 0;
       for (const f of classification.implement_files) {
-        const checklist = verify([f]);
+        let checklist;
+        try {
+          checklist = verify([f]);
+        } catch (err) {
+          if (!/^File not found: verify\//.test(err.message)) throw err;
+          noChecklist.push(f);
+          continue;
+        }
         checklistsByArea[f] = checklist;
         const rowMatches = checklist.match(/^\| V\d+\b/gm) || [];
         perAreaCounts[f] = rowMatches.length;
         totalChecks += rowMatches.length;
       }
+      const scoredAreas = classification.implement_files.filter((f) => !noChecklist.includes(f));
       const areasCsv = classification.implement_files.join(', ');
-      const scoreLineTemplate = `Score: <P> / ${totalChecks} total checks across ${classification.implement_files.length} recommended areas (areas: ${areasCsv})`;
+      const noChecklistNote = noChecklist.length > 0
+        ? `No checklist yet, not counted in the denominator: ${noChecklist.join(', ')}`
+        : null;
+      const scoreLineTemplate = noChecklist.length === 0
+        ? `Score: <P> / ${totalChecks} total checks across ${classification.implement_files.length} recommended areas (areas: ${areasCsv})`
+        : `Score: <P> / ${totalChecks} total checks across ${scoredAreas.length} of ${classification.implement_files.length} recommended areas (areas: ${scoredAreas.join(', ')}; no checklist yet: ${noChecklist.join(', ')})`;
 
       if (opts.json) {
         console.log(JSON.stringify({
@@ -522,6 +538,7 @@ program
             recommended_areas_count: classification.implement_files.length,
             recommended_areas: classification.implement_files,
             per_area_check_count: perAreaCounts,
+            ...(noChecklist.length > 0 ? { areas_without_checklist: noChecklist, note: noChecklistNote } : {}),
             score_line_template: scoreLineTemplate,
           },
         }, null, 2));
@@ -534,6 +551,7 @@ program
       console.log(`${chalk.bold('Risk tier:')} ${tierColor.bold(classification.risk_tier)}`);
       console.log(`${chalk.bold('Recommended areas:')} ${classification.implement_files.length}`);
       console.log(`${chalk.bold('Areas:')} ${areasCsv}`);
+      if (noChecklistNote) console.log(chalk.yellow(noChecklistNote));
       console.log(`${chalk.bold('Total checks (deterministic denominator):')} ${totalChecks}\n`);
 
       console.log(chalk.bold('Instructions for agent:'));
@@ -542,14 +560,15 @@ program
       console.log(chalk.dim('At the end of your report, emit this exact line (replace <P> with the PASS count):'));
       console.log(chalk.dim(`  ${scoreLineTemplate}\n`));
 
-      for (const f of classification.implement_files) {
+      for (const f of scoredAreas) {
         console.log(checklistsByArea[f]);
         console.log('');
       }
 
       console.log(chalk.bold('═══ SCORING ═══'));
-      console.log(`Denominator: ${totalChecks} total checks across ${classification.implement_files.length} recommended areas.`);
+      console.log(`Denominator: ${totalChecks} total checks across ${scoredAreas.length === classification.implement_files.length ? '' : `${scoredAreas.length} of `}${classification.implement_files.length} recommended areas.`);
       console.log(`Areas: ${areasCsv}`);
+      if (noChecklistNote) console.log(noChecklistNote);
       console.log(`Emit at end of report: ${chalk.bold(scoreLineTemplate)}`);
 
       if (classification.templates.length > 0) {

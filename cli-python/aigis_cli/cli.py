@@ -559,20 +559,41 @@ def audit(scan: bool, traits_str: str | None, as_json: bool) -> None:
 
         # Count checks per scoped area by parsing checklist rows (format: "| V<n> | ...").
         # Deterministic denominator the agent must score against.
+        # v3.0: an area with no checklist file yet (some EU AI Act areas) is listed
+        # as "no checklist yet" and left out of the denominator instead of crashing.
         checklists_by_area: dict[str, str] = {}
         per_area_counts: dict[str, int] = {}
+        no_checklist: list[str] = []
         total_checks = 0
         for f in classification["implement_files"]:
-            checklist = fetch_verify([f])
+            try:
+                checklist = fetch_verify([f])
+            except FileNotFoundError as err:
+                if not str(err).startswith("File not found: verify/"):
+                    raise
+                no_checklist.append(f)
+                continue
             checklists_by_area[f] = checklist
             row_matches = re.findall(r"^\| V\d+\b", checklist, flags=re.MULTILINE)
             per_area_counts[f] = len(row_matches)
             total_checks += len(row_matches)
+        scored_areas = [f for f in classification["implement_files"] if f not in no_checklist]
         areas_csv = ", ".join(classification["implement_files"])
-        score_line_template = (
-            f"Score: <P> / {total_checks} total checks across "
-            f"{len(classification['implement_files'])} recommended areas (areas: {areas_csv})"
+        no_checklist_note = (
+            f"No checklist yet, not counted in the denominator: {', '.join(no_checklist)}"
+            if no_checklist else None
         )
+        if not no_checklist:
+            score_line_template = (
+                f"Score: <P> / {total_checks} total checks across "
+                f"{len(classification['implement_files'])} recommended areas (areas: {areas_csv})"
+            )
+        else:
+            score_line_template = (
+                f"Score: <P> / {total_checks} total checks across "
+                f"{len(scored_areas)} of {len(classification['implement_files'])} recommended areas "
+                f"(areas: {', '.join(scored_areas)}; no checklist yet: {', '.join(no_checklist)})"
+            )
 
         if as_json:
             click.echo(json.dumps({
@@ -583,6 +604,7 @@ def audit(scan: bool, traits_str: str | None, as_json: bool) -> None:
                     "recommended_areas_count": len(classification["implement_files"]),
                     "recommended_areas": classification["implement_files"],
                     "per_area_check_count": per_area_counts,
+                    **({"areas_without_checklist": no_checklist, "note": no_checklist_note} if no_checklist else {}),
                     "score_line_template": score_line_template,
                 },
             }, indent=2))
@@ -594,6 +616,8 @@ def audit(scan: bool, traits_str: str | None, as_json: bool) -> None:
         console.print(f"[bold]Risk tier:[/bold] [bold {tier_color}]{tier}[/bold {tier_color}]")
         console.print(f"[bold]Recommended areas:[/bold] {len(classification['implement_files'])}")
         console.print(f"[bold]Areas:[/bold] {areas_csv}")
+        if no_checklist_note:
+            console.print(f"[yellow]{no_checklist_note}[/yellow]")
         console.print(f"[bold]Total checks (deterministic denominator):[/bold] {total_checks}\n")
 
         console.print("[bold]Instructions for agent:[/bold]")
@@ -602,16 +626,19 @@ def audit(scan: bool, traits_str: str | None, as_json: bool) -> None:
         console.print("[dim]At the end of your report, emit this exact line (replace <P> with the PASS count):[/dim]")
         console.print(f"[dim]  {score_line_template}[/dim]\n")
 
-        for f in classification["implement_files"]:
+        for f in scored_areas:
             click.echo(checklists_by_area[f])
             click.echo()
 
         console.print("[bold]═══ SCORING ═══[/bold]")
+        scored_prefix = "" if not no_checklist else f"{len(scored_areas)} of "
         console.print(
             f"Denominator: {total_checks} total checks across "
-            f"{len(classification['implement_files'])} recommended areas."
+            f"{scored_prefix}{len(classification['implement_files'])} recommended areas."
         )
         console.print(f"Areas: {areas_csv}")
+        if no_checklist_note:
+            console.print(no_checklist_note)
         console.print(f"Emit at end of report: [bold]{score_line_template}[/bold]")
 
         if classification["templates"]:

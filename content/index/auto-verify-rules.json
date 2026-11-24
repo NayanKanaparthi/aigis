@@ -441,56 +441,62 @@
       "V1": {
         "desc": "Agent identity map (service or delegated) that run start reads, with unlisted agents denied",
         "patterns": [
-          "(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?\\b(?:agent_identity|agentIdentity)[ \\t]*(?::[^=\\n]*)?=[ \\t]*(?:\\{|dict[ \\t]*\\(|new[ \\t]+Map\\b|Object\\.freeze[ \\t]*\\(|MappingProxyType[ \\t]*\\()[\\s\\S]{0,400}?[\"'](?:service|delegated|user[-_]delegated)[\"'])(?![\\s\\S]*?(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?\\b(?:agent_identity|agentIdentity)[ \\t]*(?::[^=\\n]*)?=[ \\t]*(?:\\{|dict[ \\t]*\\(|new[ \\t]+Map\\b|Object\\.freeze[ \\t]*\\(|MappingProxyType[ \\t]*\\()[\\s\\S]{0,400}?[\"'](?:service|delegated|user[-_]delegated)[\"']))",
-          "(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?(?:\\b(?:agent_identity|agentIdentity)[ \\t]*(?:\\.get[ \\t]*\\(|\\[)|\\([ \\t]*(?:agent_identity|agentIdentity)[ \\t]*,)(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,600}?\\b(?:raise|throw)\\b)(?![\\s\\S]*?(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?(?:\\b(?:agent_identity|agentIdentity)[ \\t]*(?:\\.get[ \\t]*\\(|\\[)|\\([ \\t]*(?:agent_identity|agentIdentity)[ \\t]*,)(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,600}?\\b(?:raise|throw)\\b))",
-          "(?:\\b(?:agent_identity|agentIdentity|AGENT_IDENTITY)\\b)(?![\\s\\S]*?(?:\\b(?:agent_identity|agentIdentity|AGENT_IDENTITY)\\b))"
+          "^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?\\b(?:agent_identity|agentIdentity)[ \\t]*(?::[^=\\n]*)?=[ \\t]*(?:\\{|dict[ \\t]*\\(|new[ \\t]+Map\\b|Object\\.freeze[ \\t]*\\(|MappingProxyType[ \\t]*\\()[\\s\\S]{0,400}?[\"'](?:service|delegated|user[-_]delegated)[\"']",
+          "^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?(?:\\b(?:agent_identity|agentIdentity)[ \\t]*(?:\\.get[ \\t]*\\(|\\[)|\\([ \\t]*(?:agent_identity|agentIdentity)[ \\t]*,)(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,600}?\\b(?:raise|throw)\\b",
+          "\\b(?:agent_identity|agentIdentity|AGENT_IDENTITY)\\b"
         ],
-        "require": "all"
+        "require": "all",
+        "code_only": true
       },
       "V2": {
         "desc": "Authorized-workflow map for service agents that run start reads, with unlisted workflows or initiators denied",
         "patterns": [
-          "(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?\\b(?:authorized_workflows|authorizedWorkflows)[ \\t]*(?::[^=\\n]*)?=[ \\t]*(?:\\{|dict[ \\t]*\\(|new[ \\t]+Map\\b|Object\\.freeze[ \\t]*\\(|MappingProxyType[ \\t]*\\())(?![\\s\\S]*?(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?\\b(?:authorized_workflows|authorizedWorkflows)[ \\t]*(?::[^=\\n]*)?=[ \\t]*(?:\\{|dict[ \\t]*\\(|new[ \\t]+Map\\b|Object\\.freeze[ \\t]*\\(|MappingProxyType[ \\t]*\\()))",
-          "(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?(?:\\b(?:authorized_workflows|authorizedWorkflows)[ \\t]*(?:\\.get[ \\t]*\\(|\\[)|\\([ \\t]*(?:authorized_workflows|authorizedWorkflows)[ \\t]*,)(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,600}?\\b(?:raise|throw)\\b)(?![\\s\\S]*?(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?(?:\\b(?:authorized_workflows|authorizedWorkflows)[ \\t]*(?:\\.get[ \\t]*\\(|\\[)|\\([ \\t]*(?:authorized_workflows|authorizedWorkflows)[ \\t]*,)(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,600}?\\b(?:raise|throw)\\b))",
-          "(?:\\b(?:authorized_workflows|authorizedWorkflows|AUTHORIZED_WORKFLOWS)\\b)(?![\\s\\S]*?(?:\\b(?:authorized_workflows|authorizedWorkflows|AUTHORIZED_WORKFLOWS)\\b))"
+          "^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?\\b(?:authorized_workflows|authorizedWorkflows)[ \\t]*(?::[^=\\n]*)?=[ \\t]*(?:\\{|dict[ \\t]*\\(|new[ \\t]+Map\\b|Object\\.freeze[ \\t]*\\(|MappingProxyType[ \\t]*\\()",
+          "^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?(?:\\b(?:authorized_workflows|authorizedWorkflows)[ \\t]*(?:\\.get[ \\t]*\\(|\\[)|\\([ \\t]*(?:authorized_workflows|authorizedWorkflows)[ \\t]*,)(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,600}?\\b(?:raise|throw)\\b",
+          "\\b(?:authorized_workflows|authorizedWorkflows|AUTHORIZED_WORKFLOWS)\\b"
         ],
-        "require": "all"
+        "require": "all",
+        "code_only": true
       },
       "V3": {
         "desc": "effective_permissions intersects user permissions with the task scope and is called to set the run operations",
         "patterns": [
-          "(?:(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:effective_permissions|effectivePermissions)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:effective_permissions|effectivePermissions)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,300}?(?:[^&]&[^&=]|&=|\\bintersection\\b|\\.filter[ \\t]*\\(|\\.issubset\\b))(?![\\s\\S]*?(?:(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:effective_permissions|effectivePermissions)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:effective_permissions|effectivePermissions)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,300}?(?:[^&]&[^&=]|&=|\\bintersection\\b|\\.filter[ \\t]*\\(|\\.issubset\\b)))",
-          "(?:^(?![ \\t]*(?:#|//|/\\*|\\*|(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)\\b|(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:effective_permissions|effectivePermissions)\\b))(?:(?!#|//)[^\\n])*?\\b(?:effective_permissions|effectivePermissions)[ \\t]*\\()(?![\\s\\S]*?(?:^(?![ \\t]*(?:#|//|/\\*|\\*|(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)\\b|(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:effective_permissions|effectivePermissions)\\b))(?:(?!#|//)[^\\n])*?\\b(?:effective_permissions|effectivePermissions)[ \\t]*\\())",
-          "(?:\\b(?:effective_permissions|effectivePermissions)\\b)(?![\\s\\S]*?(?:\\b(?:effective_permissions|effectivePermissions)\\b))"
+          "(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:effective_permissions|effectivePermissions)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:effective_permissions|effectivePermissions)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,300}?(?:[^&]&[^&=]|&=|\\bintersection\\b|\\.filter[ \\t]*\\(|\\.issubset\\b)",
+          "^(?![ \\t]*(?:#|//|/\\*|\\*|(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)\\b|(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:effective_permissions|effectivePermissions)\\b))(?:(?!#|//)[^\\n])*?\\b(?:effective_permissions|effectivePermissions)[ \\t]*\\(",
+          "\\b(?:effective_permissions|effectivePermissions)\\b"
         ],
-        "require": "all"
+        "require": "all",
+        "code_only": true
       },
       "V4": {
-        "desc": "Per-caller tool authorization function: takes the caller (agent, principal, user or tenant) and raises or returns a computed decision",
+        "desc": "Per-caller tool authorization function: takes the caller, reads it (caller fields, tenant or principal) in the body, and raises or returns a computed decision",
         "patterns": [
-          "(?:(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:authorize_tool_call|authorizeToolCall)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:authorize_tool_call|authorizeToolCall)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()[^)]*?\\b(?:caller|principal|user|tenant|identity|subject)\\w*[^)]*\\)(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,800}?(?:\\b(?:raise|throw)\\b|\\breturn[ \\t]+(?!(?:True|true)[ \\t]*(?:$|;|#|//))))(?![\\s\\S]*?(?:(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:authorize_tool_call|authorizeToolCall)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:authorize_tool_call|authorizeToolCall)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()[^)]*?\\b(?:caller|principal|user|tenant|identity|subject)\\w*[^)]*\\)(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,800}?(?:\\b(?:raise|throw)\\b|\\breturn[ \\t]+(?!(?:True|true)[ \\t]*(?:$|;|#|//)))))",
-          "(?:\\b(?:authorize_tool_call|authorizeToolCall)\\b)(?![\\s\\S]*?(?:\\b(?:authorize_tool_call|authorizeToolCall)\\b))"
+          "(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:authorize_tool_call|authorizeToolCall)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:authorize_tool_call|authorizeToolCall)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()[^)]*?\\b(?:caller|principal|user|tenant|identity|subject)\\w*[^)]*\\)(?=(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,800}?(?:\\b(?:caller|principal|subject|identity)\\w*[ \\t]*(?:\\[|\\.[ \\t]*[A-Za-z_])|\\bgetattr[ \\t]*\\([ \\t]*(?:caller|principal|subject)\\b|\\b(?:principal|tenant)\\w*\\b))(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,800}?(?:\\b(?:raise|throw)\\b|\\breturn[ \\t]+(?!(?:True|true)[ \\t]*(?:$|;)))",
+          "\\b(?:authorize_tool_call|authorizeToolCall)\\b"
         ],
-        "require": "all"
+        "require": "all",
+        "code_only": true
       },
       "V5": {
         "desc": "Maximum authority declared per agent, applied at run start, with self-granting operations removed",
         "patterns": [
-          "(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?\\b(?:max_authority|maxAuthority)[ \\t]*(?::[^=\\n]*)?=[ \\t]*(?:\\{|dict[ \\t]*\\(|new[ \\t]+Map\\b|Object\\.freeze[ \\t]*\\(|MappingProxyType[ \\t]*\\())(?![\\s\\S]*?(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?\\b(?:max_authority|maxAuthority)[ \\t]*(?::[^=\\n]*)?=[ \\t]*(?:\\{|dict[ \\t]*\\(|new[ \\t]+Map\\b|Object\\.freeze[ \\t]*\\(|MappingProxyType[ \\t]*\\()))",
-          "(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?(?:\\b(?:max_authority|maxAuthority)[ \\t]*(?:\\.get[ \\t]*\\(|\\[)|\\([ \\t]*(?:max_authority|maxAuthority)[ \\t]*,))(?![\\s\\S]*?(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?(?:\\b(?:max_authority|maxAuthority)[ \\t]*(?:\\.get[ \\t]*\\(|\\[)|\\([ \\t]*(?:max_authority|maxAuthority)[ \\t]*,)))",
-          "(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?(?:-[ \\t]*\\w*self_?grant\\w*|\\b\\w*self_?grant\\w*[ \\t]*\\.[ \\t]*(?:includes|has|contains|__contains__)[ \\t]*\\(|\\bnot[ \\t]+in[ \\t]+\\w*self_?grant\\w*|\\.difference[ \\t]*\\([ \\t]*\\w*self_?grant))(?![\\s\\S]*?(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?(?:-[ \\t]*\\w*self_?grant\\w*|\\b\\w*self_?grant\\w*[ \\t]*\\.[ \\t]*(?:includes|has|contains|__contains__)[ \\t]*\\(|\\bnot[ \\t]+in[ \\t]+\\w*self_?grant\\w*|\\.difference[ \\t]*\\([ \\t]*\\w*self_?grant)))",
-          "(?:\\b(?:max_authority|maxAuthority|MAX_AUTHORITY)\\b)(?![\\s\\S]*?(?:\\b(?:max_authority|maxAuthority|MAX_AUTHORITY)\\b))"
+          "^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?\\b(?:max_authority|maxAuthority)[ \\t]*(?::[^=\\n]*)?=[ \\t]*(?:\\{|dict[ \\t]*\\(|new[ \\t]+Map\\b|Object\\.freeze[ \\t]*\\(|MappingProxyType[ \\t]*\\()",
+          "^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?(?:\\b(?:max_authority|maxAuthority)[ \\t]*(?:\\.get[ \\t]*\\(|\\[)|\\([ \\t]*(?:max_authority|maxAuthority)[ \\t]*,)",
+          "^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?(?:-[ \\t]*\\w*self_?grant\\w*|\\b\\w*self_?grant\\w*[ \\t]*\\.[ \\t]*(?:includes|has|contains|__contains__)[ \\t]*\\(|\\bnot[ \\t]+in[ \\t]+\\w*self_?grant\\w*|\\.difference[ \\t]*\\([ \\t]*\\w*self_?grant)",
+          "\\b(?:max_authority|maxAuthority|MAX_AUTHORITY)\\b"
         ],
-        "require": "all"
+        "require": "all",
+        "code_only": true
       },
       "V6": {
         "desc": "register_agent_resource records an expiry for each agent-created resource, and a sweep function revokes them",
         "patterns": [
-          "(?:(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:register_agent_resource|registerAgentResource)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:register_agent_resource|registerAgentResource)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,800}?\\bexpir\\w*[\"']?[ \\t]*[:=])(?![\\s\\S]*?(?:(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:register_agent_resource|registerAgentResource)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:register_agent_resource|registerAgentResource)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,800}?\\bexpir\\w*[\"']?[ \\t]*[:=]))",
-          "(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+\\w*(?:sweep|reap|expire|cleanup|clean_up|revoke|garbage)\\w*[ \\t]*\\((?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,800}?\\brevok\\w*)(?![\\s\\S]*?(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+\\w*(?:sweep|reap|expire|cleanup|clean_up|revoke|garbage)\\w*[ \\t]*\\((?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,800}?\\brevok\\w*))",
-          "(?:\\b(?:register_agent_resource|registerAgentResource)\\b)(?![\\s\\S]*?(?:\\b(?:register_agent_resource|registerAgentResource)\\b))"
+          "(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:register_agent_resource|registerAgentResource)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:register_agent_resource|registerAgentResource)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,800}?\\bexpir\\w*[\"']?[ \\t]*[:=]",
+          "^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+\\w*(?:sweep|reap|expire|cleanup|clean_up|revoke|garbage)\\w*[ \\t]*\\((?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,800}?\\brevok\\w*",
+          "\\b(?:register_agent_resource|registerAgentResource)\\b"
         ],
-        "require": "all"
+        "require": "all",
+        "code_only": true
       }
     },
     "overclaim": {
@@ -510,46 +516,52 @@
       "V1": {
         "desc": "Context items are appended with a trust_level label, and the label is compared to taint the context",
         "patterns": [
-          "(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?\\.(?:append|push|add|insert|unshift|extend)[ \\t]*\\([^\\n]*\\b(?:trust_level|trustLevel)\\b)(?![\\s\\S]*?(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?\\.(?:append|push|add|insert|unshift|extend)[ \\t]*\\([^\\n]*\\b(?:trust_level|trustLevel)\\b))",
-          "(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?(?:\\b(?:trust_level|trustLevel)\\b[ \\t]*(?:is(?:[ \\t]+not)?\\b|[!=]==?)|(?:\\bis(?:[ \\t]+not)?|[!=]==?)[ \\t]*(?:\\w+\\.)*(?:trust_level|trustLevel)\\b))(?![\\s\\S]*?(?:^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?(?:\\b(?:trust_level|trustLevel)\\b[ \\t]*(?:is(?:[ \\t]+not)?\\b|[!=]==?)|(?:\\bis(?:[ \\t]+not)?|[!=]==?)[ \\t]*(?:\\w+\\.)*(?:trust_level|trustLevel)\\b)))",
-          "(?:\\b(?:trust_level|trustLevel|TrustLevel)\\b)(?![\\s\\S]*?(?:\\b(?:trust_level|trustLevel|TrustLevel)\\b))"
+          "^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?\\.(?:append|push|add|insert|unshift|extend)[ \\t]*\\([^\\n]*\\b(?:trust_level|trustLevel)\\b",
+          "^(?![ \\t]*(?:#|//|/\\*|\\*))(?:(?!#|//)[^\\n])*?(?:\\b(?:trust_level|trustLevel)\\b[ \\t]*(?:is(?:[ \\t]+not)?\\b|[!=]==?)|(?:\\bis(?:[ \\t]+not)?|[!=]==?)[ \\t]*(?:\\w+\\.)*(?:trust_level|trustLevel)\\b)",
+          "\\b(?:trust_level|trustLevel|TrustLevel)\\b"
         ],
-        "require": "all"
+        "require": "all",
+        "code_only": true
       },
       "V2": {
-        "desc": "Tool gate function that reads the trust or taint state before a tool call (log-only gates are caught by the overclaim)",
+        "desc": "Tool gate that is called, reads the trust or taint state, and then blocks (raise, throw, denial, approval) or logs; a gate that only logs is raised by the overclaim",
         "patterns": [
-          "(?:(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:gate_tool_call|gateToolCall)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:gate_tool_call|gateToolCall)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,500}?\\b(?:taint\\w*|trust_?level|untrusted)\\b)(?![\\s\\S]*?(?:(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:gate_tool_call|gateToolCall)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:gate_tool_call|gateToolCall)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,500}?\\b(?:taint\\w*|trust_?level|untrusted)\\b))",
-          "(?:\\b(?:gate_tool_call|gateToolCall)\\b)(?![\\s\\S]*?(?:\\b(?:gate_tool_call|gateToolCall)\\b))"
+          "(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:gate_tool_call|gateToolCall)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:gate_tool_call|gateToolCall)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,500}?\\b(?:taint\\w*|trust_?level|untrusted)\\b(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,400}?(?:\\b(?:raise|throw)\\b|\\b(?:deny|reject|block)\\w*[ \\t]*\\(|\\b(?:require|request)_?approval\\w*[ \\t]*\\(|\\breturn[ \\t]+(?:False|None|null)\\b|\\b(?:logger|logging|log|console)[ \\t]*\\.[ \\t]*(?:debug|info|warn|warning|error|critical|exception|log)[ \\t]*\\(|\\bprint[ \\t]*\\()",
+          "^(?![ \\t]*(?:#|//|/\\*|\\*|(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)\\b|(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:gate_tool_call|gateToolCall)\\b))(?:(?!#|//)[^\\n])*?\\b(?:gate_tool_call|gateToolCall)[ \\t]*\\(",
+          "\\b(?:gate_tool_call|gateToolCall)\\b"
         ],
-        "require": "all"
+        "require": "all",
+        "code_only": true
       },
       "V3": {
         "desc": "validate_tool_args checks arguments against a schema, rejects on failure, and is called before execution",
         "patterns": [
-          "(?:(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:validate_tool_args|validateToolArgs)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:validate_tool_args|validateToolArgs)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?=(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,600}?\\b(?:schema\\w*|isinstance|typeof|model_validate|parse_obj|safe_?parse)\\b)(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,800}?(?:\\b(?:raise|throw)\\b|\\breturn[ \\t]+(?:False|None|null|\\w*(?:err|invalid)\\w*)))(?![\\s\\S]*?(?:(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:validate_tool_args|validateToolArgs)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:validate_tool_args|validateToolArgs)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?=(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,600}?\\b(?:schema\\w*|isinstance|typeof|model_validate|parse_obj|safe_?parse)\\b)(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,800}?(?:\\b(?:raise|throw)\\b|\\breturn[ \\t]+(?:False|None|null|\\w*(?:err|invalid)\\w*))))",
-          "(?:^(?![ \\t]*(?:#|//|/\\*|\\*|(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)\\b|(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:validate_tool_args|validateToolArgs)\\b))(?:(?!#|//)[^\\n])*?\\b(?:validate_tool_args|validateToolArgs)[ \\t]*\\()(?![\\s\\S]*?(?:^(?![ \\t]*(?:#|//|/\\*|\\*|(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)\\b|(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:validate_tool_args|validateToolArgs)\\b))(?:(?!#|//)[^\\n])*?\\b(?:validate_tool_args|validateToolArgs)[ \\t]*\\())",
-          "(?:\\b(?:validate_tool_args|validateToolArgs)\\b)(?![\\s\\S]*?(?:\\b(?:validate_tool_args|validateToolArgs)\\b))"
+          "(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:validate_tool_args|validateToolArgs)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:validate_tool_args|validateToolArgs)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?=(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,600}?\\b(?:schema\\w*|isinstance|typeof|model_validate|parse_obj|safe_?parse)\\b)(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,800}?(?:\\b(?:raise|throw)\\b|\\breturn[ \\t]+(?:False|None|null|\\w*(?:err|invalid)\\w*))",
+          "^(?![ \\t]*(?:#|//|/\\*|\\*|(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)\\b|(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:validate_tool_args|validateToolArgs)\\b))(?:(?!#|//)[^\\n])*?\\b(?:validate_tool_args|validateToolArgs)[ \\t]*\\(",
+          "\\b(?:validate_tool_args|validateToolArgs)\\b"
         ],
-        "require": "all"
+        "require": "all",
+        "code_only": true
       },
       "V4": {
         "desc": "Tool output sanitizer or validator that rejects or cleans results, and is called on tool results",
         "patterns": [
-          "(?:(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:sanitize_tool_output|sanitizeToolOutput|validate_tool_output|validateToolOutput)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:sanitize_tool_output|sanitizeToolOutput|validate_tool_output|validateToolOutput)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,800}?(?:\\.sub[ \\t]*\\(|\\.replace(?:All)?[ \\t]*\\(|\\b(?:raise|throw|redact\\w*|escape\\w*|bleach|DOMPurify)\\b))(?![\\s\\S]*?(?:(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:sanitize_tool_output|sanitizeToolOutput|validate_tool_output|validateToolOutput)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:sanitize_tool_output|sanitizeToolOutput|validate_tool_output|validateToolOutput)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,800}?(?:\\.sub[ \\t]*\\(|\\.replace(?:All)?[ \\t]*\\(|\\b(?:raise|throw|redact\\w*|escape\\w*|bleach|DOMPurify)\\b)))",
-          "(?:^(?![ \\t]*(?:#|//|/\\*|\\*|(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)\\b|(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:sanitize_tool_output|sanitizeToolOutput|validate_tool_output|validateToolOutput)\\b))(?:(?!#|//)[^\\n])*?\\b(?:sanitize_tool_output|sanitizeToolOutput|validate_tool_output|validateToolOutput)[ \\t]*\\()(?![\\s\\S]*?(?:^(?![ \\t]*(?:#|//|/\\*|\\*|(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)\\b|(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:sanitize_tool_output|sanitizeToolOutput|validate_tool_output|validateToolOutput)\\b))(?:(?!#|//)[^\\n])*?\\b(?:sanitize_tool_output|sanitizeToolOutput|validate_tool_output|validateToolOutput)[ \\t]*\\())",
-          "(?:\\b(?:sanitize_tool_output|sanitizeToolOutput|validate_tool_output|validateToolOutput)\\b)(?![\\s\\S]*?(?:\\b(?:sanitize_tool_output|sanitizeToolOutput|validate_tool_output|validateToolOutput)\\b))"
+          "(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:sanitize_tool_output|sanitizeToolOutput|validate_tool_output|validateToolOutput)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:sanitize_tool_output|sanitizeToolOutput|validate_tool_output|validateToolOutput)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,800}?(?:\\.sub[ \\t]*\\(|\\.replace(?:All)?[ \\t]*\\(|\\b(?:raise|throw|redact\\w*|escape\\w*|bleach|DOMPurify)\\b)",
+          "^(?![ \\t]*(?:#|//|/\\*|\\*|(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)\\b|(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:sanitize_tool_output|sanitizeToolOutput|validate_tool_output|validateToolOutput)\\b))(?:(?!#|//)[^\\n])*?\\b(?:sanitize_tool_output|sanitizeToolOutput|validate_tool_output|validateToolOutput)[ \\t]*\\(",
+          "\\b(?:sanitize_tool_output|sanitizeToolOutput|validate_tool_output|validateToolOutput)\\b"
         ],
-        "require": "all"
+        "require": "all",
+        "code_only": true
       },
       "V5": {
         "desc": "check_scope_drift compares the action against the authorized objective, and drift stops the call",
         "patterns": [
-          "(?:(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:check_scope_drift|checkScopeDrift)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:check_scope_drift|checkScopeDrift)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,600}?(?:\\bin[ \\t]+(?:self\\.)?(?:objective|allowed|authori[sz]ed|scope)\\w*|\\b(?:objective|allowed|authori[sz]ed|scope)\\w*(?:\\.\\w+|\\[[^\\]\\n]*\\])*\\.(?:has|includes|contains|issuperset|issubset)[ \\t]*\\())(?![\\s\\S]*?(?:(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:check_scope_drift|checkScopeDrift)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:check_scope_drift|checkScopeDrift)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,600}?(?:\\bin[ \\t]+(?:self\\.)?(?:objective|allowed|authori[sz]ed|scope)\\w*|\\b(?:objective|allowed|authori[sz]ed|scope)\\w*(?:\\.\\w+|\\[[^\\]\\n]*\\])*\\.(?:has|includes|contains|issuperset|issubset)[ \\t]*\\()))",
-          "(?:^(?![ \\t]*(?:#|//|/\\*|\\*|(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)\\b|(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:check_scope_drift|checkScopeDrift)\\b))(?:(?!#|//)[^\\n])*?\\b(?:check_scope_drift|checkScopeDrift)[ \\t]*\\((?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,300}?(?:\\b(?:raise|throw)\\b|\\bpaused?\\b[ \\t]*=[ \\t]*(?:True|true)|\\bescalat\\w*[ \\t]*\\())(?![\\s\\S]*?(?:^(?![ \\t]*(?:#|//|/\\*|\\*|(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)\\b|(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:check_scope_drift|checkScopeDrift)\\b))(?:(?!#|//)[^\\n])*?\\b(?:check_scope_drift|checkScopeDrift)[ \\t]*\\((?:(?!\\n[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b)[\\s\\S]){0,300}?(?:\\b(?:raise|throw)\\b|\\bpaused?\\b[ \\t]*=[ \\t]*(?:True|true)|\\bescalat\\w*[ \\t]*\\()))",
-          "(?:\\b(?:check_scope_drift|checkScopeDrift)\\b)(?![\\s\\S]*?(?:\\b(?:check_scope_drift|checkScopeDrift)\\b))"
+          "(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:check_scope_drift|checkScopeDrift)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:check_scope_drift|checkScopeDrift)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,600}?(?:\\bin[ \\t]+(?:self\\.)?(?:objective|allowed|authori[sz]ed|scope)\\w*|\\b(?:objective|allowed|authori[sz]ed|scope)\\w*(?:\\.\\w+|\\[[^\\]\\n]*\\])*\\.(?:has|includes|contains|issuperset|issubset)[ \\t]*\\()",
+          "^(?![ \\t]*(?:#|//|/\\*|\\*|(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)\\b|(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:check_scope_drift|checkScopeDrift)\\b))(?:(?!#|//)[^\\n])*?\\b(?:check_scope_drift|checkScopeDrift)[ \\t]*\\((?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,300}?(?:\\b(?:raise|throw)\\b|\\bpaused?\\b[ \\t]*=[ \\t]*(?:True|true)|\\bescalat\\w*[ \\t]*\\()",
+          "\\b(?:check_scope_drift|checkScopeDrift)\\b"
         ],
-        "require": "all"
+        "require": "all",
+        "code_only": true
       }
     },
     "overclaim": {

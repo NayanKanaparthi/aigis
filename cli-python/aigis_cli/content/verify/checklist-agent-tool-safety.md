@@ -6,7 +6,7 @@ implements: agent-tool-safety
 
 | # | Check | Control | Status | Evidence |
 |---|-------|---------|--------|----------|
-| V1 | Is every item added to the model context recorded with a `trust_level`, and does one untrusted item taint the rest of the turn? | S1 | [ ] | |
+| V1 | Is every item added to the model context recorded with a `trust_level`, and does one untrusted item taint the context for as long as the item stays in it, across turns? | S1 | [ ] | |
 | V2 | While untrusted data is in context, does a gate (`gate_tool_call`) deny side-effect tools or hold them for human approval, rather than only logging? | S2 | [ ] | |
 | V3 | Are tool arguments checked against a schema by `validate_tool_args` before the tool runs, with the call rejected on failure? | S3 | [ ] | |
 | V4 | Are tool results and retrieved data passed through `sanitize_tool_output` (or `validate_tool_output`), which rejects or cleans them before they re-enter the context? | S4 | [ ] | |

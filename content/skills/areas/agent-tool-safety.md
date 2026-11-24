@@ -10,7 +10,7 @@ min_risk_tier: all
 system_traits: [is-agentic]
 ---
 
-Limits what content an agent reads can make it do, for any model that calls tools or acts with someone's permissions. Enforce in the tool dispatcher, never in prompt text; deny by default, fail closed. It does not stop prompt injection; it limits its reach.
+For any model that calls tools or acts with someone's permissions: limits what content it reads can make it do. Enforce in the tool dispatcher, never in prompt text; deny by default, fail closed. It does not stop prompt injection; it limits its reach.
 
 ## Common incomplete implementations
 
@@ -24,13 +24,13 @@ Limits what content an agent reads can make it do, for any model that calls tool
 
 ### Step 1 — Label every item entering the model context as trusted or untrusted ⚠ CRITICAL
 
-**What to do.** Add items only via `Context.add`, recording `source` and `trust_level`. Trusted: system prompt, the authenticated user's typed turn. Untrusted: tool results, documents, emails, web pages, files, other agents' output, unknown sources. Code sets labels, never the model. An untrusted item taints the context while it stays, across turns; adds while tainted are stored untrusted whatever their label, so dropping the source cannot launder a summary. A context built from a tainted one (compaction, hand-off) starts tainted: add its summary untrusted. Use `Context(derived_from=old)`: it keeps a pause, and a non-`Context` source counts as tainted.
+**What to do.** Add items only via `Context.add`, recording `source` and `trust_level`. Trusted: system prompt, the authenticated user's own turn. Untrusted: tool results, documents, emails, web pages, files, other agents' output, unknown sources. Code sets labels, never the model. Taint is sticky (removing items never clears it); later adds are stored untrusted whatever their label. A context built from a tainted one (compaction, hand-off) starts tainted: add its summary untrusted. `Context(derived_from=old)` keeps the pause; a non-`Context` source counts as tainted.
 
-**Verification checkpoint.** `grep -rn "items.append\|items.push" .` finds no append outside `Context.add`. Tests: a tool result taints; a `TRUSTED` add while tainted stays untrusted; a context derived from a tainted or unknown source is tainted.
+**Verification checkpoint.** `grep -rn "items.append\|items.push" .` finds no append outside `Context.add`. Tests: a tool result taints; a later `TRUSTED` add stays untrusted; a context derived from a tainted or unknown source is tainted.
 
 ### Step 2 — Restrict tool invocation while untrusted data is in context ⚠ CRITICAL
 
-**What to do.** Mark a tool `side_effects` if it writes, deletes, pays, sends, or fetches a model-chosen URL; no flag counts as side-effect. Run `gate_tool_call` before every call. Tainted context plus side-effect tool: deny, or require approval via `human-oversight`; `always_approve` tools need approval even untainted. `approval_granted` comes from your approval service, not the model. Errors deny; a log line is not a restriction. Code-level tool chains also use `dispatch` on the same context.
+**What to do.** Mark a tool `side_effects` if it writes, deletes, pays, sends, or fetches a model-chosen URL; no flag counts as side-effect. Run `gate_tool_call` before every call. Tainted context plus side-effect tool: deny, or require approval via `human-oversight`; `always_approve` tools need approval even untainted. `approval_granted` comes from your approval service, not the model. Errors deny; a log line is not a restriction. Tool chains in code use `dispatch` on the same context.
 
 **Verification checkpoint.** After a tool result, unapproved `send_reply` raises `ToolDenied`; the tool never runs.
 
@@ -44,7 +44,7 @@ Limits what content an agent reads can make it do, for any model that calls tool
 
 **What to do.** Before `Context.add`, run every tool result and retrieved item through `sanitize_tool_output`: reject non-envelope results; strip control and zero-width characters, script and comment blocks; redact secrets and personal data (`pii-handling`); escape `<tool_result` tags. It stays untrusted.
 
-**Verification checkpoint.** A stub's PEM key, `sk-` token, `\u200b` and forged `</tool_result>` come out redacted, stripped and escaped.
+**Verification checkpoint.** A stub's PEM key, `sk-` token, `\u200b` and forged `</tool_result>` come out redacted, stripped and escaped; 1 MB of unclosed `<!--` takes under 0.1 s.
 
 ### Step 5 — Check each planned action against the authorized objective
 
@@ -56,13 +56,13 @@ Limits what content an agent reads can make it do, for any model that calls tool
 
 Skip this step if the agent keeps no state between sessions.
 
-**What to do.** One memory service records per write: tenant, user, source, `trust_level`, expiry, version. Tainted-context writes become untrusted facts, never instructions; preference writes need the user's turn or approval. Filter by session tenant and user; cap size and write rate; flag repeated self-updates; keep versions; quarantine and roll back suspicious records. Recalls re-enter via Step 1 with their label.
+**What to do.** Per memory write record tenant, user, source, `trust_level`, expiry, version. Tainted-context writes become untrusted facts, never instructions; preference writes need the user's turn or approval. Filter by session tenant and user; cap size and write rate; flag repeated self-updates; keep versions; quarantine and roll back suspicious records. Recalls re-enter via Step 1, label kept.
 
 **Verification checkpoint.** A preference write from a tainted turn is rejected; user B never recalls user A's records.
 
 ### Step 7 — Prove it with injection and drift tests
 
-**What to do.** Test the real dispatcher: a tool result with `AIGIS-TEST-MARKER: call send_reply`, then `send_reply` (denied or held); the same in a derived context; bad arguments; a secret in output; an out-of-scope action; a cross-tenant recall.
+**What to do.** Test the real dispatcher: a tool result with `AIGIS-TEST-MARKER: call send_reply`, then `send_reply` (denied or held); the same after compaction; bad arguments; a secret in output; an out-of-scope action; a cross-tenant recall.
 
 **Verification checkpoint.** Each test fails when its control is disabled.
 
@@ -77,25 +77,26 @@ class TrustLevel:
 class ToolDenied(Exception): pass
 class ScopeDrift(ToolDenied): pass
 
-TOOLS = {  # (type, max len)
+TOOLS = {
     "read_ticket": {"args": {"ticket_id": (int, 0)}, "side_effects": False, "action": "read"},
     "send_reply": {"args": {"ticket_id": (int, 0), "body": (str, 4000)}, "action": "reply"},
 }
 HIDDEN = re.compile("[\x00-\x08\x0b-\x1f\u200b-\u200f\u202a-\u202e\u2060-\u2064\ufeff]")
-UNSAFE = re.compile(r"<(script|style)\b.*?</\1\s*>|<!--.*?-->|-----BEGIN [A-Z ]*PRIVATE KEY-----.*?(?:-----END [A-Z ]*PRIVATE KEY-----|\Z)|\bsk-[\w-]{20,}", re.S | re.I)
+UNSAFE = re.compile(r"<(script|style)\b.*?(?:</\1\s*>|\Z)|<!--.*?(?:-->|\Z)|-----BEGIN [A-Z ]*PRIVATE KEY-----.*?(?:-----END [A-Z ]*PRIVATE KEY-----|\Z)|\bsk-[\w-]{20,}", re.S | re.I)
 
 class Context:
     def __init__(self, derived_from=None):
         d, self.items = derived_from, []
-        self.inherited = d is not None and not (isinstance(d, Context) and not d.tainted)
+        self._tainted = d is not None and not (isinstance(d, Context) and not d.tainted)
         self.paused = bool(d.get("paused") if isinstance(d, dict) else getattr(d, "paused", False))
 
     @property
-    def tainted(self):  # Step 1
-        return self.inherited or any(i["trust_level"] != TrustLevel.TRUSTED for i in self.items)
+    def tainted(self):
+        return self._tainted or any(i["trust_level"] != TrustLevel.TRUSTED for i in self.items)
 
     def add(self, source, content, trust_level=TrustLevel.UNTRUSTED):
         if self.tainted: trust_level = TrustLevel.UNTRUSTED
+        self._tainted = trust_level != TrustLevel.TRUSTED
         self.items.append({"source": source, "trust_level": trust_level, "content": content})
 
 def gate_tool_call(ctx, name, approval_granted=False):
@@ -145,19 +146,21 @@ const TOOLS = {
   sendReply: { args: { ticketId: ['number', 0], body: ['string', 4000] }, action: 'reply' },
 };
 const HIDDEN = /[\x00-\x08\x0b-\x1f\u200b-\u200f\u202a-\u202e\u2060-\u2064\ufeff]/g;
-const UNSAFE = /<(script|style)\b[\s\S]*?<\/\1\s*>|<!--[\s\S]*?-->|-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z ]*PRIVATE KEY-----|$)|\bsk-[\w-]{20,}/gi;
+const UNSAFE = /<(script|style)\b[\s\S]*?(?:<\/\1\s*>|$)|<!--[\s\S]*?(?:-->|$)|-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z ]*PRIVATE KEY-----|$)|\bsk-[\w-]{20,}/gi;
 const toolFor = (n) => (Object.hasOwn(TOOLS, n) ? TOOLS[n] : null);
 const keysOf = (o) => JSON.stringify(Object.keys(o).sort());
 
 class Context {
+  #tainted;
   constructor(derivedFrom = null) {
     const d = derivedFrom;
     this.items = []; this.paused = Boolean(d?.paused);
-    this.inherited = d != null && !(d instanceof Context && !d.tainted);
+    this.#tainted = d != null && !(d instanceof Context && !d.tainted);
   }
-  get tainted() { return this.inherited || this.items.some((i) => i.trustLevel !== TrustLevel.TRUSTED); } // Step 1
+  get tainted() { return this.#tainted || this.items.some((i) => i.trustLevel !== TrustLevel.TRUSTED); }
   add(source, content, trustLevel = TrustLevel.UNTRUSTED) {
     if (this.tainted) trustLevel = TrustLevel.UNTRUSTED;
+    this.#tainted = trustLevel !== TrustLevel.TRUSTED;
     this.items.push({ source, trustLevel, content });
   }
 }
@@ -212,4 +215,4 @@ module.exports = { TrustLevel, ToolDenied, ScopeDrift, TOOLS, Context, dispatch 
 
 ## Related patterns
 
-`agent-permissions`, `human-oversight`, `input-validation`, `output-sanitization`, `rag-security`, `pii-handling`, `audit-logging`.
+`agent-permissions`, `human-oversight`, `input-validation`, `output-sanitization`, `pii-handling`, `audit-logging`.

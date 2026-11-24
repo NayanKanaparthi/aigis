@@ -298,7 +298,7 @@
     "planner": false,
     "second": true
    },
-   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); pending owner re-approval",
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); removal approved by owner",
    "decision": "exclude",
    "decided_by": "nayan (approved as proposed)"
   },
@@ -316,7 +316,7 @@
     "planner": false,
     "second": true
    },
-   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); pending owner re-approval",
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); removal approved by owner",
    "decision": "exclude",
    "decided_by": "nayan (approved as proposed)"
   },
@@ -389,7 +389,7 @@
     "planner": false,
     "second": true
    },
-   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); pending owner re-approval",
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); removal approved by owner",
    "decision": "exclude",
    "decided_by": "nayan (approved as proposed)"
   },
@@ -407,7 +407,7 @@
     "planner": false,
     "second": true
    },
-   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); pending owner re-approval",
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); removal approved by owner",
    "decision": "exclude",
    "decided_by": "nayan (approved as proposed)"
   },
@@ -443,7 +443,7 @@
     "planner": true,
     "second": true
    },
-   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); pending owner re-approval",
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); removal approved by owner",
    "decision": "exclude",
    "decided_by": "nayan (approved as proposed)"
   },
@@ -461,7 +461,7 @@
     "planner": true,
     "second": true
    },
-   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); pending owner re-approval",
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); removal approved by owner",
    "decision": "exclude",
    "decided_by": "nayan (approved as proposed)"
   },
@@ -515,12 +515,12 @@
     "planner": false,
     "second": true
    },
-   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); pending owner re-approval",
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); removal approved by owner",
    "decision": "exclude",
    "decided_by": "nayan (approved as proposed)"
   }
  ],
- "approved_by": null,
- "approved_at": null,
- "revision": "r2: 7 rows removed after final audit, pending re-approval"
+ "approved_by": "Nayan Kanaparthi",
+ "approved_at": "2026-11-24T23:59:47Z",
+ "revision": "r2: 7 rows removed after final audit, re-approved"
 }

@@ -18,3 +18,6 @@ ISO 42001: none (standard text not available to quote).
 ## Approval
 - Approved by Nayan Kanaparthi in the orchestrator chat ("I approved"), recorded 2026-11-24T22:44:23Z.
 - ISO 42001: no rows (owner did not approve citing by precedent).
+
+## Re-approval (r2)
+- 7 rows removed after GPT-5.6 Sol final audit (LLM05, LLM02 both areas; MEASURE-2.7 both; MANAGE-2.4 tool-safety). Re-approved by Nayan in chat ("Approve"), 2026-11-24T23:59:47Z.

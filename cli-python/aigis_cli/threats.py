@@ -241,7 +241,7 @@ def _plural(n: int, word: str) -> str:
 def _mitigation_line(m: dict, names: dict) -> str:
     # `*` marks an area classify did not recommend for these traits (legend in Next).
     if not m["areas"]:
-        return f"   - {m['id']} {names[m['id']]} -> no Aigis area"
+        return f"   - {m['id']} {names[m['id']]} -> no mapped Aigis area"
     areas = ", ".join(a["id"] if a["recommended"] else f"{a['id']}*" for a in m["areas"])
     return f"   - {m['id']} {names[m['id']]} -> {areas}"
 
@@ -253,6 +253,7 @@ def format_threats_text(model: dict) -> str:
     L.append("")
     L.append(f"> {model['atlas']['disclaimer']}")
     L.append("> This is a starting list from your traits, not proof of coverage. Method: `aigis template threat-model`.")
+    L.append("> An area named after a mitigation (->) helps implement it, in part.")
     L.append("")
     L.append(f"Traits ({len(model['traits'])}): {', '.join(model['traits'])}")
     if model["uncertain_traits"]:
@@ -287,7 +288,7 @@ def format_threats_text(model: dict) -> str:
             L.append(f"   - +{len(ordered) - MAX_MITIGATION_LINES} more mitigations (use --json)")
     L.append("")
 
-    L.append(f"## Gaps: mitigations MITRE links to these techniques that no Aigis area implements ({len(model['gaps'])})")
+    L.append(f"## Gaps: mitigations MITRE links to these techniques with no mapped Aigis area ({len(model['gaps'])})")
     L.append("")
     if not model["gaps"]:
         L.append("- None for these techniques.")
@@ -305,7 +306,7 @@ def format_threats_text(model: dict) -> str:
             if r["expected_defenses"]:
                 defenses = "; ".join(f"{d['mitigation']} -> {', '.join(d['areas'])}" for d in r["expected_defenses"])
             else:
-                defenses = "none with an Aigis area (see Gaps)"
+                defenses = "none with a mapped Aigis area (see Gaps)"
             L.append(f"{r['id']} {r['technique']} {r['name']} [{r['maturity']}] | entry: {r['entry_point']['trait']} ({r['entry_point']['surface']})")
             L.append(f"   - Attempt: {r['attempt']}")
             L.append(f"   - Expected defenses: {defenses}")

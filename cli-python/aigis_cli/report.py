@@ -282,7 +282,7 @@ def format_report_markdown(report: dict) -> str:
         L.append(
             f"- **MITRE ATLAS**: mitigation ids come from each area's `controls.atlas` frontmatter "
             f"(Aigis's own mapping, pinned to ATLAS v{report['atlas']['version']}). "
-            f"A cited mitigation means the area implements part of it. {report['atlas']['disclaimer']}"
+            f"A cited mitigation means the area helps implement it (in part). {report['atlas']['disclaimer']}"
         )
     L.append("")
     L.append("This report is content output. It is not a certification. EU AI Act conformity assessment requires notified-body involvement; this report is preparation material.")

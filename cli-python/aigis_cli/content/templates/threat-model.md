@@ -56,7 +56,7 @@ Run `aigis threats --traits <traits>` for this system. It lists the techniques f
 
 ## 4. Pick defenses and record gaps
 
-For each priority technique, list the mitigations MITRE links to it and the Aigis area that implements each one. A gap is a mitigation no Aigis area implements. Never mark a gap as handled.
+For each priority technique, list the mitigations MITRE links to it and the Aigis areas that help implement each one (in part). A gap is a mitigation with no mapped Aigis area. Never mark a gap as handled.
 
 | Mitigation | Aigis area | Status (implemented, partial, gap) | Accepted or planned (owner, date) |
 |---|---|---|---|

@@ -2,8 +2,8 @@
 id: agent-permissions
 title: Agent identity, tool permissions and authority limits
 controls:
-  owasp: [LLM01, LLM02, LLM05, LLM06, LLM07]
-  nist: [MEASURE-2.7]
+  owasp: [LLM01, LLM06, LLM07]
+  nist: []
   iso42001: []
   atlas: [AML.M0026, AML.M0027, AML.M0028, AML.M0037, AML.M0043]
 min_risk_tier: all

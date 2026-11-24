@@ -73,7 +73,7 @@ The CI workflow runs `aigis verify` on every PR; the pre-commit hook runs it bef
 - **3.0 is additive: no command, flag or JSON key was removed or renamed.**
 - Aigis now ships 21 governance areas and 17 verify checklists.
 - **MITRE ATLAS mitigations cited** by `aigis classify`, `aigis verify --auto`, `aigis report` and `aigis build`, next to the existing OWASP, NIST and ISO citations.
-- **`aigis threats`** builds a threat model from your traits: attacker techniques for your entry points, the mitigations MITRE links to each, the Aigis area that implements them, and the gaps.
+- **`aigis threats`** builds a threat model from your traits: attacker techniques for your entry points, the mitigations MITRE links to each, the Aigis areas that help implement each one (in part), and the gaps.
 - **`aigis template threat-model`**, a fill-in threat model worksheet.
 - **Your agent is instructed to threat-model on its own.** The core skill that `aigis init` writes tells the agent when to run `aigis threats` without being asked, and `aigis audit --scan` has a new threat model phase.
 - **Pinned ATLAS v2026.10 data, offline.** The catalog ships inside the package. No network calls.
@@ -89,7 +89,7 @@ aigis threats "<description>"
 
 `--traits` is the reliable path. The description path only finds traits the resolver recognizes.
 
-What you get: the techniques for your entry points, Realized first (seen in real attacks); the mitigations MITRE links to each technique; the Aigis area that implements each mitigation; and the gaps, where no Aigis area exists yet. `--redteam` adds test stubs, `--json` is for scripts.
+What you get: the techniques for your entry points, Realized first (seen in real attacks); the mitigations MITRE links to each technique; the Aigis areas that help implement each mitigation (in part); and the gaps, mitigations with no mapped Aigis area. `--redteam` adds test stubs, `--json` is for scripts.
 
 When: designing an AI feature; adding a capability (tools, write access, memory, a new data source); before launch; after an incident. Your agent is instructed to do this at those moments without being asked, and you can run it yourself at any time.
 
@@ -97,7 +97,7 @@ What ships: a pinned subset of ATLAS v2026.10 (16 tactics, 221 techniques, 44 mi
 
 The mapping from areas to mitigations is ours. The links from mitigations to techniques are MITRE's. The entry points come from a reviewed map of 9 traits to 29 techniques.
 
-Limits: MITRE ATLAS is a threat catalog, not a standard. Nobody is "ATLAS compliant". It does not score risk, and it does not cover bias or fairness. A cited mitigation means the area implements part of it. The technique list is a starting point based on your traits, not proof of coverage.
+Limits: MITRE ATLAS is a threat catalog, not a standard. Nobody is "ATLAS compliant". It does not score risk, and it does not cover bias or fairness. A cited mitigation means the area helps implement it (in part). The technique list is a starting point based on your traits, not proof of coverage.
 
 ## What's new in v2.1
 

@@ -194,7 +194,7 @@ Record the output:
 
 ## PHASE 3B: THREAT MODEL (MITRE ATLAS)
 
-With the traits you just detected, run `aigis threats --traits <detected-traits>`. It lists attacker techniques for this system's entry points (Realized first), the mitigations MITRE links to each, the Aigis area that implements them, and gaps. Add every area it names to the audit scope. Report every gap (a mitigation no Aigis area implements) to the user as not covered. If you could not detect traits, fall back to `aigis threats "<description>"`.
+With the traits you just detected, run `aigis threats --traits <detected-traits>`. It lists attacker techniques for this system's entry points (Realized first), the mitigations MITRE links to each, the Aigis areas that help implement each one (in part), and gaps. Add every area it names to the audit scope. Report every gap (a mitigation with no mapped Aigis area) to the user as not covered. If you could not detect traits, fall back to `aigis threats "<description>"`.
 
 MITRE ATLAS is a threat catalog, not a standard. Nobody is "ATLAS compliant". It does not score risk, and it does not cover bias or fairness.
 

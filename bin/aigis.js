@@ -513,6 +513,7 @@ program
         } catch (err) {
           if (!/^File not found: verify\//.test(err.message)) throw err;
           noChecklist.push(f);
+          checklistsByArea[f] = `No checklist yet for ${f}; not counted in the denominator.`;
           continue;
         }
         checklistsByArea[f] = checklist;

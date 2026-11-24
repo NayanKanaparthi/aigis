@@ -471,7 +471,7 @@
       "V4": {
         "desc": "Per-caller tool authorization function: takes the caller, reads it (caller fields, tenant or principal) in the body, and raises or returns a computed decision",
         "patterns": [
-          "(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:authorize_tool_call|authorizeToolCall)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:authorize_tool_call|authorizeToolCall)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()[^)]*?\\b(?:caller|principal|user|tenant|identity|subject)\\w*[^)]*\\)(?=(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,800}?(?:\\b(?:caller|principal|subject|identity)\\w*[ \\t]*(?:\\[|\\.[ \\t]*[A-Za-z_])|\\bgetattr[ \\t]*\\([ \\t]*(?:caller|principal|subject)\\b|\\b(?:principal|tenant)\\w*\\b))(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,800}?(?:\\b(?:raise|throw)\\b|\\breturn[ \\t]+(?!(?:True|true)[ \\t]*(?:$|;)))",
+          "(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:authorize_tool_call|authorizeToolCall)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:authorize_tool_call|authorizeToolCall)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()[^)]*?\\b(?:caller|principal|user|tenant|identity|subject)\\w*[^)]*\\)(?=(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,800}?(?:\\b(?:caller|principal|subject|identity)\\w*[ \\t]*(?:\\[|\\.[ \\t]*[A-Za-z_])|\\.get[ \\t]*\\([ \\t]*(?:caller|principal|subject|identity)\\w*\\b|\\[[ \\t]*(?:caller|principal|subject|identity)\\w*[ \\t]*\\]|\\bgetattr[ \\t]*\\([ \\t]*(?:caller|principal|subject)\\b|\\b(?:principal|tenant)\\w*\\b))(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,800}?(?:\\b(?:raise|throw)\\b|\\breturn[ \\t]+(?!(?:True|true)[ \\t]*(?:$|;)))",
           "\\b(?:authorize_tool_call|authorizeToolCall)\\b"
         ],
         "require": "all",
@@ -524,10 +524,9 @@
         "code_only": true
       },
       "V2": {
-        "desc": "Tool gate that is called, reads the trust or taint state, and then blocks (raise, throw, denial, approval) or logs; a gate that only logs is raised by the overclaim",
+        "desc": "Tool gate that reads the trust or taint state and then blocks (raise, throw, denial, approval) or logs; a gate that only logs is raised by the overclaim, and whether every call goes through the gate is judged by V7 tests",
         "patterns": [
           "(?:^[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)[ \\t]+(?:gate_tool_call|gateToolCall)[ \\t]*\\(|^[ \\t]*(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:gate_tool_call|gateToolCall)[ \\t]*=[ \\t]*(?:async[ \\t]*)?\\()(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,500}?\\b(?:taint\\w*|trust_?level|untrusted)\\b(?:(?!\\n(?:[ \\t]*(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function|class)\\b|[^\\s)\\]]))[\\s\\S]){0,400}?(?:\\b(?:raise|throw)\\b|\\b(?:deny|reject|block)\\w*[ \\t]*\\(|\\b(?:require|request)_?approval\\w*[ \\t]*\\(|\\breturn[ \\t]+(?:False|None|null)\\b|\\b(?:logger|logging|log|console)[ \\t]*\\.[ \\t]*(?:debug|info|warn|warning|error|critical|exception|log)[ \\t]*\\(|\\bprint[ \\t]*\\()",
-          "^(?![ \\t]*(?:#|//|/\\*|\\*|(?:export[ \\t]+)?(?:async[ \\t]+)?(?:def|function)\\b|(?:export[ \\t]+)?(?:const|let|var)[ \\t]+(?:gate_tool_call|gateToolCall)\\b))(?:(?!#|//)[^\\n])*?\\b(?:gate_tool_call|gateToolCall)[ \\t]*\\(",
           "\\b(?:gate_tool_call|gateToolCall)\\b"
         ],
         "require": "all",

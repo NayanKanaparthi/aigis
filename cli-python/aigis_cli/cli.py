@@ -572,6 +572,7 @@ def audit(scan: bool, traits_str: str | None, as_json: bool) -> None:
                 if not str(err).startswith("File not found: verify/"):
                     raise
                 no_checklist.append(f)
+                checklists_by_area[f] = f"No checklist yet for {f}; not counted in the denominator."
                 continue
             checklists_by_area[f] = checklist
             row_matches = re.findall(r"^\| V\d+\b", checklist, flags=re.MULTILINE)

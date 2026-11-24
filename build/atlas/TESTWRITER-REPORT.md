@@ -204,3 +204,33 @@ The 3 FAILs are all (a) expected, G1 (`build/atlas/gold/new-areas.json` not appr
 - TEST-WRONG 11 (T-PY-02 timestamps): **accepted.** The test compared whole report and build JSON across Node and Python runs, so `generated_at`, `meta.generated_at` and the brief "generated" line could never match. It now compares only what TESTPLAN says: classify `controls.atlas` and `atlas`; verify `cited_controls.atlas` and `atlas`; report top-level `atlas`, both summary keys and per-area `cited_controls.atlas`; build `meta.atlas` and the Threat model section text; the whole `threats` document (TS1, TS2, seeded TS4); plus `atlas.disclaimer` in every Python document. The `threats` text bytes and the error cases are unchanged.
 - New test bug found: T-RT-05 ran `report --from-classify <DS3>`, the same DS3 assumption as TEST-WRONG 6 (DS3 resolves no confirmed trait, so the command exits with "No traits resolved"; `bin/aigis.js` is unchanged from 2.1.1 there). It now uses the agentic description from `baseline/rt04-agentic-build.json`.
 - TESTLOCK regenerated after these edits (92 files).
+
+## Round 3 (stricter new-area verify tests, search/audit regressions)
+
+Merged `atlas` first (already up to date). Result on the current product: 113 PASS, 11 FAIL of 124 ids (118 plus six new ids: T-NV-09 to T-NV-12, T-REG-06, T-REG-07). All 11 FAILs are expected, none is a test bug. `scripts/test-all.js`: 22/27 (the 5 red files are the atlas files below).
+
+### New and changed cases (test/atlas-verify-new.test.js and fixtures)
+
+| Id | What it checks | Result now | Reason |
+|---|---|---|---|
+| T-NV-02 (changed) | Item 6: no bare-identifier pattern is forced. Every rule's patterns must compile and name each snake_case and camelCase identifier of the S7.3 contract (UPPER and Pascal spellings are alternates) | PASS | |
+| T-NV-04 (changed) | Item 5: for both areas, `empty-agent` and a new keyword-only fixture per area (`keyword-only-agent-permissions`, `keyword-only-agent-tool-safety`: comments plus unused constants carrying every identifier, in `.py` and `.js`) must FAIL every AUTO check | PASS | |
+| T-NV-05 (changed) | Item 3: `scoped` must PASS V4 and read the caller; `wildcard-scope` still passes V4 with the overclaim raised on line 2, and also reads the caller. Both fixtures rewritten (per-caller map lookup instead of truthiness of `caller`) | PASS | |
+| T-NV-09 (new) | Item 1: for both areas, the own JavaScript example alone passes every AUTO check (sanity), and each of these FAIL every AUTO check: Python example in a triple-quoted string, JavaScript example in `/* */` (an inner `*/` is neutralised), Python example in `/* */`, JavaScript example in a triple-quoted string, and both wrapped together | FAIL (a: NV scanner) | every AUTO check currently passes on all wrapped variants: the scanner does not skip comments or string literals |
+| T-NV-10 (new) | Item 2: tool-safety V2 FAILS on `noop-gate` (`def gate_tool_call(ctx, name): untrusted = False; return True`, never called) and its JavaScript twin | FAIL (a: NV) | V2 passes on the no-op gate |
+| T-NV-11 (new) | Item 3: permissions V4 FAILS on `static-allowlist` (unused `caller`, `return tool_name in ALLOWED`) and its JavaScript twin | FAIL (a: NV) | V4 passes on the static allowlist |
+| T-NV-12 (new) | Item 4: the own Python example passes every AUTO check for both areas when six other files (three `.py`, three `.js`) that only import the identifiers sort before it (`a1`..`a6` versus `z_example.py`) and after it (`z1`..`z6` versus `0_example.py`) | FAIL (a: NV) | the rules only look at the last occurrence of an identifier, so importer files that sort earlier or later break the example (permissions: V1, V2, V3, V5, V6 fail) |
+
+### Pre-existing bug regressions (node NV is fixing them tonight)
+
+| Id | Where | What it checks | Result now |
+|---|---|---|---|
+| T-NA-07, T-NB-07 (restored) | area test files | `aigis search --list` has a row `  <area-id>  <title>` for the area (the round 1 deviation is removed) | FAIL (a: NV) |
+| T-REG-06 (new) | atlas-regression | `search --list` exits 0 and lists a row with the frontmatter title for all 21 area files | FAIL (a: NV): `search --list does not list agent-permissions` |
+| T-REG-07 (new) | atlas-regression | `audit --traits uses-llm,accepts-user-input,uses-rag --json` exits 0; areas without a checklist show "no checklist yet" in `checklists` and are absent from `per_area_check_count`; `total_checks` equals the sum of the V rows of areas that have a checklist; the score line uses the same denominator; the text mode also exits 0, says "no checklist yet" and prints the same denominator | FAIL (a: NV): the command still crashes with `File not found: verify/checklist-eu-ai-act-art-50-transparency-disclosure.md` |
+
+T-REG-01 no longer compares the `audit --traits TS1` baseline (it recorded the crash; T-REG-07 replaces it) and now strips the whole "Implement files" section from `search --list` before comparing, so it keeps passing before and after the fix.
+
+### Per-file result
+
+area-permissions 5/2 (T-NA-06 G1, T-NA-07 NV), area-tool-safety 5/2 (T-NB-06 G1, T-NB-07 NV), docs 10/1 (T-DOC-02 G1), verify-new 8/4 (T-NV-09 to T-NV-12, all NV), regression 5/2 (T-REG-06, T-REG-07, both NV). Every other atlas file is all PASS (catalog 11, lib 14, frontmatter 7, routing 3, surfaces 12, failsoft 5, threats 20, version 1, honesty 1, python-parity 3, release 3). TESTLOCK regenerated.

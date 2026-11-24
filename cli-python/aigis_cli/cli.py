@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 
 import click
@@ -233,7 +234,7 @@ def verify(files: tuple[str, ...], auto_path: str | None, as_json: bool, jurisdi
     from pathlib import Path
     from .auto_verify import auto_verify_area, format_text_report
 
-    proj = Path(auto_path).resolve()
+    proj = Path(os.path.abspath(auto_path))  # like Node path.resolve (no symlink resolution)
     if not proj.exists():
         console.print(f"[red]Project path does not exist: {proj}[/red]")
         sys.exit(1)
@@ -447,7 +448,7 @@ def report(areas_str: str | None, from_classify: str | None, all_areas: bool,
            output_path: str | None) -> None:
     """Compile an audit-ready compliance report (verify across multiple areas + cross-framework citations + evidence)."""
     from pathlib import Path
-    proj = Path(project_dir).resolve()
+    proj = Path(os.path.abspath(project_dir))  # like Node path.resolve (no symlink resolution)
     if not proj.exists():
         console.print(f"[red]Project path does not exist: {proj}[/red]")
         sys.exit(1)

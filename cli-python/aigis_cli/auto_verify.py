@@ -11,6 +11,7 @@ common overclaim patterns, not bulletproof static analysis.
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -51,7 +52,8 @@ def _walk_files(root_dir: Path):
     while stack:
         d = stack.pop()
         try:
-            entries = list(d.iterdir())
+            # Node (libuv scandir) lists a directory sorted by name; match it.
+            entries = sorted(d.iterdir(), key=lambda e: e.name.encode("utf-8", "surrogateescape"))
         except OSError:
             continue
         for entry in entries:
@@ -139,23 +141,32 @@ def _scan_rule(rule: dict[str, Any], files: list[dict[str, Any]]) -> dict[str, A
     inverse = bool(rule.get("inverse"))
     max_evidence = 5
 
-    matched_patterns: set[int] = set()
+    # v3.0 (rubric C-11): rules that opt in with "code_only": true match only
+    # executable code (comments and string blocks blanked, line numbers kept),
+    # and keep trying unmatched patterns after the evidence cap is reached, so
+    # the result does not depend on file order. Rules without the flag behave
+    # exactly as before. Mirror of lib/auto-verify.js.
+    code_only = rule.get("code_only") is True
+
+    matched_patterns: dict[int, None] = {}  # insertion-ordered, like Node's Set
     evidence: list[dict[str, Any]] = []
 
     for f in files:
-        lines = f["content"].split("\n")
+        raw_content = f["content"]
+        content = mask_non_code(raw_content, f["path"]) if code_only else raw_content
+        lines = raw_content.split("\n")
         for i, re_obj in enumerate(patterns):
             if i in matched_patterns and len(evidence) >= max_evidence:
                 continue
-            for m in re_obj.finditer(f["content"]):
-                matched_patterns.add(i)
+            for m in re_obj.finditer(content):
+                matched_patterns[i] = None
                 if len(evidence) < max_evidence:
-                    line = f["content"].count("\n", 0, m.start()) + 1
+                    line = content.count("\n", 0, m.start()) + 1
                     snippet = (lines[line - 1] if line - 1 < len(lines) else "").strip()[:160]
                     evidence.append({"file": f["path"], "line": line, "snippet": snippet, "pattern": i})
                 if len(evidence) >= max_evidence:
                     break
-            if len(evidence) >= max_evidence:
+            if len(evidence) >= max_evidence and not code_only:
                 break
         if len(evidence) >= max_evidence and (require == "any" or len(matched_patterns) == len(patterns)):
             break
@@ -170,7 +181,7 @@ def _scan_rule(rule: dict[str, Any], files: list[dict[str, Any]]) -> dict[str, A
     return {
         "status": "PASS" if passed else "FAIL",
         "evidence": evidence,
-        "matched_patterns": sorted(matched_patterns),
+        "matched_patterns": list(matched_patterns),
         "total_patterns": len(patterns),
         "inverse": inverse,
         "require": require,
@@ -398,74 +409,209 @@ def _rate_limit_no_retry_after(files: list[dict[str, Any]], ctx: dict[str, Any])
     return {"flagged": flagged or partial, "evidence": evidence, "notes": notes}
 
 
-# v3.0 (SPEC S7.3): agent-permissions V4 overclaim. A tool-authorization
-# function exists (V4 PASS) but a scope literally grants everything.
-_WILDCARD_LITERAL_RE = re.compile(r"""(["'])\*\1""")
-_WILDCARD_CONTEXT_RE = re.compile(r"scope|tool|allow|permission", re.IGNORECASE)
-_ALLOW_ALL_RE = re.compile(r"\b(?:allow_all|allowAll|ALLOW_ALL)\b\s*(?:[:=]|==)?\s*(?:True|true|1)\b")
+# ── v3.0 helpers and recognizers (exact mirror of lib/special-recognizers.js) ──
+
+# mask_non_code (v3.0, rubric C-11). Returns the file text with everything
+# that is not executable code replaced by spaces: line comments, block
+# comments (including Ruby =begin/=end), Python triple-quoted strings, JS/Go
+# template literals, and the contents of ordinary string literals that are
+# not a plain token (letters, digits and `_ : . - / * @` only; kept because
+# rules and recognizers read them as data). Newlines are preserved, so line
+# numbers do not move. Used only by rules with "code_only": true and by the
+# two v3.0 recognizers. A tokenizer, not a parser.
+_HASH_COMMENT_EXTS = {".py", ".rb"}
+_C_COMMENT_EXTS = {".js", ".ts", ".tsx", ".jsx", ".mjs", ".cjs", ".go", ".java", ".kt"}
+_PLAIN_STRING = re.compile(r"[A-Za-z0-9_:.\-/*@]*")
+_REGEX_PREFIX_WORDS = {"return", "typeof", "case", "do", "else", "in", "of", "new", "delete", "void", "throw", "yield", "await"}
+_REGEX_PREFIX_CHARS = "(,=:[!&|?{};+-*%<>~^"
+_WORD_CHAR = re.compile(r"[A-Za-z0-9_$]")
+# JS `\s` exactly (Python's `\s` differs on \x1c-\x1f, \x85 and \ufeff).
+_SPACE_CHAR = re.compile("[\t\n\v\f\r \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]")
+
+
+def mask_non_code(src: str, file_path: str) -> str:
+    m = re.search(r"\.[A-Za-z0-9]+$", str(file_path or ""))
+    ext = (m.group(0) if m else "").lower()
+    hash_ = ext in _HASH_COMMENT_EXTS
+    clike = ext in _C_COMMENT_EXTS
+    if not hash_ and not clike:
+        return src
+    py = ext == ".py"
+    out = list(src)
+    n = len(src)
+
+    def blank(frm: int, to: int) -> None:
+        for k in range(frm, min(to, n)):
+            if out[k] != "\n":
+                out[k] = " "
+
+    last_sig = ""
+    last_word = ""
+    i = 0
+    while i < n:
+        c = src[i]
+        if ext == ".rb" and c == "=" and (i == 0 or src[i - 1] == "\n") and re.match(r"=begin\b", src[i:i + 7]):
+            mm = re.search(r"\n=end\b[^\n]*", src[i:])
+            j = i + mm.start() + len(mm.group(0)) if mm else n
+            blank(i, j)
+            i = j
+            continue
+        if (hash_ and c == "#") or (clike and c == "/" and src[i + 1:i + 2] == "/"):
+            j = src.find("\n", i)
+            if j < 0:
+                j = n
+            blank(i, j)
+            i = j
+            continue
+        if clike and c == "/" and src[i + 1:i + 2] == "*":
+            j = src.find("*/", i + 2)
+            j = n if j < 0 else j + 2
+            blank(i, j)
+            i = j
+            continue
+        if py and (src.startswith('"""', i) or src.startswith("\'\'\'", i)):
+            q = src[i:i + 3]
+            j = i + 3
+            while j < n and not src.startswith(q, j):
+                j += 2 if src[j] == "\\" else 1
+            j = min(n, j + 3)
+            blank(i, j)
+            i = j
+            last_sig = '"'
+            last_word = ""
+            continue
+        if c == '"' or c == "'" or (clike and c == "`"):
+            j = i + 1
+            while j < n and src[j] != c and (c == "`" or src[j] != "\n"):
+                j += 2 if src[j] == "\\" else 1
+            end = min(n, j + 1)
+            body = src[i + 1:min(j, n)]
+            if c == "`" or not _PLAIN_STRING.fullmatch(body):
+                blank(i + 1, min(j, n))
+            i = end
+            last_sig = c
+            last_word = ""
+            continue
+        if clike and c == "/" and (last_sig == "" or last_sig in _REGEX_PREFIX_CHARS or last_word in _REGEX_PREFIX_WORDS):
+            # regex literal: skip it unchanged so quotes or slashes inside are not misread
+            j = i + 1
+            in_class = False
+            while j < n and src[j] != "\n":
+                if src[j] == "\\":
+                    j += 2
+                    continue
+                if src[j] == "[":
+                    in_class = True
+                elif src[j] == "]":
+                    in_class = False
+                elif src[j] == "/" and not in_class:
+                    break
+                j += 1
+            i = j + 1
+            last_sig = "/"
+            last_word = ""
+            continue
+        if _WORD_CHAR.match(c):
+            j = i
+            while j < n and _WORD_CHAR.match(src[j]):
+                j += 1
+            last_word = src[i:j]
+            last_sig = "a"
+            i = j
+            continue
+        if not _SPACE_CHAR.match(c):
+            last_sig = c
+            last_word = ""
+        i += 1
+    return "".join(out)
+
+
+# Lines that are only a comment are skipped by the v3.0 recognizers below,
+# so a note such as `# never grant "*" scope` is not read as code.
+_COMMENT_LINE = re.compile(r"^\s*(?:#|//|/\*|\*)")
 
 
 def _wildcard_tool_scope(files: list[dict[str, Any]], ctx: dict[str, Any]) -> dict[str, Any]:
-    hits: list[dict[str, Any]] = []
+    """agent-permissions V4 (SPEC S7.3): an authorization function exists but
+    the code also grants everything somewhere."""
+    evidence: list[dict[str, Any]] = []
+    star_literal = re.compile(r"""(["'])\*\1""")
+    scope_words = re.compile(r"scope|tool|allow|permission", re.IGNORECASE)
+    allow_all_true = re.compile(r"""\b(?:allow_all|allowAll|ALLOW_ALL)\b\s*(?::[^=\n]*)?(?:=|:)\s*(?:True|true|1|["']true["'])\b""")
     for f in files:
-        for i, line in enumerate(f["content"].split("\n")):
-            literal = bool(_WILDCARD_LITERAL_RE.search(line)) and bool(_WILDCARD_CONTEXT_RE.search(line))
-            if literal or _ALLOW_ALL_RE.search(line):
-                hits.append({"file": f["path"], "line": i + 1, "snippet": line.strip()[:120]})
-    flagged = bool(hits)
+        raw = f["content"].split("\n")
+        lines = mask_non_code(f["content"], f["path"]).split("\n")
+        for i, line in enumerate(lines):
+            if _COMMENT_LINE.search(line):
+                continue
+            if (star_literal.search(line) and scope_words.search(line)) or allow_all_true.search(line):
+                if len(evidence) < 3:
+                    evidence.append({"file": f["path"], "line": i + 1, "snippet": (raw[i] if i < len(raw) else "").strip()[:160]})
+    flagged = bool(evidence)
     if flagged:
         notes = (
-            f"{len(hits)} wildcard grant(s) found: a tool, scope or permission is set to \"*\" or allow-all. "
-            "An authorization check that allows everything does not limit the agent. "
-            "Replace the wildcard with an explicit allowlist per agent identity."
+            'A wildcard grant was found ("*" on a scope, tool, allow or permission line, or allow_all set to true). '
+            "An authorization function exists, but a wildcard lets every caller reach every tool or resource, so the per-caller decision of Step 4 does not hold. "
+            "Verify manually; if confirmed, mark PARTIAL rather than PASS."
         )
     else:
-        notes = "No wildcard tool scope or allow-all grant found."
-    return {"flagged": flagged, "evidence": hits[:3], "notes": notes}
+        notes = "No wildcard tool, scope or permission grant found."
+    return {"flagged": flagged, "evidence": evidence, "notes": notes}
 
 
-# v3.0 (SPEC S7.3, AC30): agent-tool-safety V2 overclaim, modeled on
-# injection_log_only. The trust gate tests the label or the taint state
-# (trust_level, trustLevel, untrusted, tainted) but only logs.
-_TRUST_TEST_RE = re.compile(r"^\s*(?:if|elif|else\s+if|when|unless)\b.*(?:trust_level|trustLevel|untrusted|\btaint\w*)|(?:trust_level|trustLevel|untrusted|\btaint\w*)[^\n]*\?\s")
-_TRUST_LOG_RE = re.compile(r"\b(?:log|logger|logging|console|LOG|LOGGER)\.(?:debug|info|warn|warning|error|exception|critical|log)\s*\(")
+_TRUST_TEST_RE = re.compile(r"^\s*(?:\}\s*)?(?:if|elif|else\s+if|while|unless)\b.*(?:trust_?level|untrusted|\btaint\w*)", re.IGNORECASE)
+_TRUST_LOG_RE = re.compile(
+    r"\b(?:logger|logging|log|console|logs|audit_log|auditLog)\s*\.\s*(?:debug|info|warn|warning|error|critical|exception|log|notice)\s*\(|\bprint\s*\(|\b(?:log|logWarning|log_warning)\s*\("
+)
 _TRUST_BLOCK_RE = re.compile(
-    r"\braise\b|\bthrow\b|\brequire_approval\b|\brequireApproval\b"
-    r"|\breturn\s+(?:False|false|None|null|deny\w*|Deny\w*|DENY\w*|Decision\.DENY|\{[^}\n]*(?:allowed|ok)\s*[:=]\s*(?:False|false))"
+    r"""\braise\b|\bthrow\b|\breturn\s+(?:False|false|None|null|deny\w*|denied\w*|Denied\w*|block\w*|reject\w*|\{[^}\n]*\b(?:allowed|ok|allow)["']?\s*:\s*(?:False|false))|require_approval|requireApproval"""
 )
 
 
 def _untrusted_gate_log_only(files: list[dict[str, Any]], ctx: dict[str, Any]) -> dict[str, Any]:
-    sites: list[dict[str, Any]] = []
+    """agent-tool-safety V2 (SPEC S7.3, AC30), modeled on injection_log_only.
+    A conditional on the trust label or taint state logs within 8 lines and,
+    within 8 lines after the log, nothing blocks."""
     evidence: list[dict[str, Any]] = []
+    sites: list[dict[str, Any]] = []
     for f in files:
-        lines = f["content"].split("\n")
-        for i, line in enumerate(lines):
-            if not _TRUST_TEST_RE.search(line):
+        raw = f["content"].split("\n")
+        lines = mask_non_code(f["content"], f["path"]).split("\n")
+        for i in range(len(lines)):
+            if _COMMENT_LINE.search(lines[i]) or not _TRUST_TEST_RE.search(lines[i]):
                 continue
-            window = lines[i : min(i + 9, len(lines))]
-            logs = any(_TRUST_LOG_RE.search(w) for w in window)
-            if not logs:
+            log_at = -1
+            for j in range(i, min(i + 8, len(lines) - 1) + 1):
+                if not _COMMENT_LINE.search(lines[j]) and _TRUST_LOG_RE.search(lines[j]):
+                    log_at = j
+                    break
+            if log_at < 0:
                 continue
-            blocks = any(_TRUST_BLOCK_RE.search(w) for w in window)
+            blocks = False
+            for j in range(log_at, min(log_at + 8, len(lines) - 1) + 1):
+                if not _COMMENT_LINE.search(lines[j]) and _TRUST_BLOCK_RE.search(lines[j]):
+                    blocks = True
+                    break
             sites.append({"file": f["path"], "line": i + 1, "blocks": blocks})
-            if not blocks:
+            if not blocks and len(evidence) < 3:
                 evidence.append({
                     "file": f["path"],
                     "line": i + 1,
-                    "snippet": line.strip() + "  // logs, but the next 8 lines neither raise nor deny",
+                    "snippet": f"{(raw[i] if i < len(raw) else '').strip()[:120]}  // logs at line {log_at + 1}; no raise/throw/denial/approval within 8 lines",
                 })
-    flagged = any(not s["blocks"] for s in sites)
+    log_only = sum(1 for x in sites if not x["blocks"])
+    flagged = log_only > 0
     if not sites:
-        notes = "No trust-label gate with a logging call found."
+        notes = "No trust-label check that logs was found; nothing to flag."
     elif flagged:
         notes = (
-            f"{len(evidence)} trust gate(s) log untrusted context but do not block, deny or require approval. "
-            "The tool call still runs on untrusted data. Block it or route it to human approval."
+            f"{log_only} of {len(sites)} trust-label check(s) log the untrusted case without blocking. "
+            "A gate exists, but logging is not a restriction (Step 2): side-effect tools still run with untrusted data in context. "
+            "Verify manually; if confirmed, mark PARTIAL rather than PASS."
         )
     else:
-        notes = "Every trust gate that logs also blocks, denies or requires approval."
-    return {"flagged": flagged, "evidence": evidence[:3], "notes": notes}
+        notes = "Every trust-label check that logs also blocks (raise/throw/denial/approval)."
+    return {"flagged": flagged, "evidence": evidence, "notes": notes}
 
 
 _SPECIAL_REGISTRY = {
@@ -498,7 +644,8 @@ def auto_verify_area(area_id: str, project_dir: str, jurisdictions: list[str] | 
     # v2.1: read area frontmatter controls for citation in the report.
     all_controls = _read_area_controls(area_id)
 
-    root = Path(project_dir).resolve()
+    # Like Node path.resolve: absolute and normalized, symlinks not followed.
+    root = Path(os.path.abspath(project_dir))
     files = _load_files(root)
 
     auto_results: dict[str, Any] = {}

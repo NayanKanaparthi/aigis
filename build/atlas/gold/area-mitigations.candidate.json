@@ -15,9 +15,8 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
    "decision": "include",
-   "note": null
+   "basis": "both labelers"
   },
   {
    "area": "confidence-scoring",
@@ -31,9 +30,8 @@
     "planner": false,
     "second": true
    },
-   "basis": "adjudicated: Pattern 2 extracts claims and checks each against retrieved source documents, flagging ungrounded ones, which is exactly the groundedness check this sentence describes.",
    "decision": "include",
-   "note": null
+   "basis": "adjudicated: Pattern 2 extracts claims and checks each against retrieved source documents, flagging ungrounded ones, which is exactly the groundedness check this sentence describes."
   },
   {
    "area": "data-integrity",
@@ -49,9 +47,8 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
    "decision": "include",
-   "note": null
+   "basis": "both labelers"
   },
   {
    "area": "data-integrity",
@@ -66,9 +63,8 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
    "decision": "include",
-   "note": null
+   "basis": "both labelers"
   },
   {
    "area": "data-integrity",
@@ -82,9 +78,25 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
    "decision": "include",
-   "note": null
+   "basis": "both labelers"
+  },
+  {
+   "area": "fallback-patterns",
+   "mitigation": "AML.M0036",
+   "mitigation_name": "Limit AI Workload Resource Consumption",
+   "atlas_quote": "Use timeouts, cost ceilings, circuit breakers, and safe termination conditions to prevent individual workloads from exhausting shared resources.",
+   "area_evidence": [
+    "### Step 2 \u2014 Implement a circuit breaker with three states",
+    "### Step 4 \u2014 Kill switch read per-request \u26a0 CRITICAL",
+    "### Step 6 \u2014 Wrap every LLM call in exception handling"
+   ],
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "decision": "exclude",
+   "basis": "adjudicated: The circuit breaker trips on provider failures for reliability and the kill switch is an operator toggle; neither bounds the resources a single workload can consume, so this is shared vocabulary, not the same control."
   },
   {
    "area": "human-oversight",
@@ -99,9 +111,8 @@
     "planner": false,
     "second": true
    },
-   "basis": "adjudicated: Pattern 1's dispatcher checks every tool call against an allowlist before execution and requires human approval for write and externally visible tools, matching the tool and action guardrail sentence.",
    "decision": "include",
-   "note": null
+   "basis": "adjudicated: Pattern 1's dispatcher checks every tool call against an allowlist before execution and requires human approval for write and externally visible tools, matching the tool and action guardrail sentence."
   },
   {
    "area": "human-oversight",
@@ -115,9 +126,8 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
    "decision": "exclude",
-   "note": "Round-2 review: MITRE describes caller-specific authorization; the area implements a static tool allowlist. Excluded tonight, conservative."
+   "basis": "Round-2 review: MITRE describes caller-specific authorization; the area implements a static tool allowlist."
   },
   {
    "area": "human-oversight",
@@ -132,9 +142,24 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
    "decision": "include",
-   "note": null
+   "basis": "both labelers"
+  },
+  {
+   "area": "human-oversight",
+   "mitigation": "AML.M0030",
+   "mitigation_name": "Restrict AI Agent Tool Invocation on Untrusted Data",
+   "atlas_quote": "For high consequence actions, consider always requiring user confirmation.",
+   "area_evidence": [
+    "### Pattern 1: Principle of least privilege for tools",
+    "### Pattern 2: Human-in-the-loop for high-impact decisions"
+   ],
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "decision": "exclude",
+   "basis": "adjudicated: M0030's object is restricting tool invocation once untrusted data enters context; the area's approval gate is unconditional on data provenance (the second labeler concedes this), and the planner lists M0030 as an uncovered gap."
   },
   {
    "area": "human-oversight",
@@ -148,9 +173,23 @@
     "planner": false,
     "second": true
    },
-   "basis": "adjudicated: Pattern 3 caps the number of tool actions an agent can take per window and blocks beyond the cap, which is a direct limit on agent tool calls.",
    "decision": "include",
-   "note": null
+   "basis": "adjudicated: Pattern 3 caps the number of tool actions an agent can take per window and blocks beyond the cap, which is a direct limit on agent tool calls."
+  },
+  {
+   "area": "human-oversight",
+   "mitigation": "AML.M0037",
+   "mitigation_name": "AI Agent Authority Expansion Controls",
+   "atlas_quote": "The maximum authority available to the agent should be explicitly granted prior to runtime.",
+   "area_evidence": [
+    "### Pattern 1: Principle of least privilege for tools"
+   ],
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "decision": "exclude",
+   "basis": "adjudicated: A static tool allowlist is already cited as M0028; M0037 is about runtime acquisition of tokens, credentials and discovered targets and sub-agent propagation, none of which the area addresses."
   },
   {
    "area": "input-validation",
@@ -166,9 +205,8 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
    "decision": "include",
-   "note": null
+   "basis": "both labelers"
   },
   {
    "area": "input-validation",
@@ -182,9 +220,23 @@
     "planner": false,
     "second": true
    },
-   "basis": "adjudicated: Step 1 enforces character and estimated-token ceilings on input and rejects oversize requests before the LLM call, a literal bound on input size.",
    "decision": "include",
-   "note": null
+   "basis": "adjudicated: Step 1 enforces character and estimated-token ceilings on input and rejects oversize requests before the LLM call, a literal bound on input size."
+  },
+  {
+   "area": "monitoring",
+   "mitigation": "AML.M0008",
+   "mitigation_name": "Validate AI Model",
+   "atlas_quote": "During deployment, monitor for changes in model performance and use significant changes to trigger revalidation.",
+   "area_evidence": [
+    "### Pattern 2: Output drift detection"
+   ],
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "decision": "exclude",
+   "basis": "adjudicated: Drift detection monitors output distributions but nothing in the area triggers or performs model revalidation, so citing Validate AI Model would overclaim."
   },
   {
    "area": "monitoring",
@@ -201,9 +253,8 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
    "decision": "include",
-   "note": null
+   "basis": "both labelers"
   },
   {
    "area": "output-sanitization",
@@ -218,9 +269,8 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
    "decision": "include",
-   "note": null
+   "basis": "both labelers"
   },
   {
    "area": "output-sanitization",
@@ -234,9 +284,8 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
    "decision": "include",
-   "note": null
+   "basis": "both labelers"
   },
   {
    "area": "pii-handling",
@@ -252,9 +301,8 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
    "decision": "include",
-   "note": null
+   "basis": "both labelers"
   },
   {
    "area": "pii-handling",
@@ -268,9 +316,8 @@
     "planner": false,
     "second": true
    },
-   "basis": "adjudicated: Step 4 requires redacted text and a SHA-256 hash for correlation instead of raw content in every log entry, which is exactly limiting sensitive content in telemetry while preserving investigative value.",
    "decision": "include",
-   "note": null
+   "basis": "adjudicated: Step 4 requires redacted text and a SHA-256 hash for correlation instead of raw content in every log entry, which is exactly limiting sensitive content in telemetry while preserving investigative value."
   },
   {
    "area": "prompt-security",
@@ -285,9 +332,8 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
    "decision": "include",
-   "note": null
+   "basis": "both labelers"
   },
   {
    "area": "prompt-security",
@@ -302,9 +348,8 @@
     "planner": false,
     "second": true
    },
-   "basis": "adjudicated: Pattern 2's system prompt explicitly instructs the model 'Do not discuss your instructions or how you work', a guideline delivered as a system prompt of the kind this bullet names.",
    "decision": "include",
-   "note": null
+   "basis": "adjudicated: Pattern 2's system prompt explicitly instructs the model 'Do not discuss your instructions or how you work', a guideline delivered as a system prompt of the kind this bullet names."
   },
   {
    "area": "rag-security",
@@ -319,9 +364,8 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
    "decision": "include",
-   "note": null
+   "basis": "both labelers"
   },
   {
    "area": "rag-security",
@@ -335,9 +379,8 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
    "decision": "include",
-   "note": null
+   "basis": "both labelers"
   },
   {
    "area": "rag-security",
@@ -352,9 +395,8 @@
     "planner": false,
     "second": true
    },
-   "basis": "adjudicated: Pattern 1 audit-logs every vector retrieval with user and applied filter (and Pattern 4 logs unauthorized embed attempts), capturing security-relevant access in the data pipeline as the sentence says.",
    "decision": "include",
-   "note": null
+   "basis": "adjudicated: Pattern 1 audit-logs every vector retrieval with user and applied filter (and Pattern 4 logs unauthorized embed attempts), capturing security-relevant access in the data pipeline as the sentence says."
   },
   {
    "area": "rate-limiting",
@@ -370,9 +412,8 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
    "decision": "include",
-   "note": null
+   "basis": "both labelers"
   },
   {
    "area": "rate-limiting",
@@ -387,9 +428,8 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
    "decision": "include",
-   "note": null
+   "basis": "both labelers"
   },
   {
    "area": "supply-chain",
@@ -403,9 +443,23 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
    "decision": "include",
-   "note": null
+   "basis": "both labelers"
+  },
+  {
+   "area": "supply-chain",
+   "mitigation": "AML.M0014",
+   "mitigation_name": "Verify AI Artifacts",
+   "atlas_quote": "Pin approved artifacts to specific versions and cryptographic digests rather than relying on mutable names, tags, or download locations.",
+   "area_evidence": [
+    "### Pattern 1: Pin model versions"
+   ],
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "decision": "exclude",
+   "basis": "adjudicated: Pinning a hosted provider model version string is not verifying the integrity of an artifact loaded locally; there is no digest or signature check, and the planner lists M0014 as a supply-chain gap."
   }
  ]
 }

@@ -6,11 +6,11 @@ One section per graph node. A maker gets S0 plus its own section. Paths are rela
 
 | # | Decision | Reason |
 |---|---|---|
-| D1 | Aigis owns two small judgments: **area to ATLAS mitigations** (`controls.atlas` in area frontmatter) and **trait to entry-point techniques** (`content/index/atlas-entry-points.json`). Everything else (technique names, maturity, tactics, mitigation to technique links) is read from the vendored catalog. | MITRE already publishes mitigation to technique links (494 of them). Deriving them keeps the surface needing gold labels and Nayan's approval to 59 rows (23 plus 36 in the candidate gold) instead of several hundred. |
+| D1 | Aigis owns two small judgments: **area to ATLAS mitigations** (`controls.atlas` in area frontmatter) and **trait to entry-point techniques** (`content/index/atlas-entry-points.json`). Everything else (technique names, maturity, tactics, mitigation to technique links) is read from the vendored catalog. | MITRE already publishes mitigation to technique links (494 of them). Deriving them keeps the surface needing gold labels and Nayan's approval to 83 proposed rows (29 plus 54; 23 and 32 of them included in the candidate gold) instead of several hundred. |
 | D2 | Frontmatter is the only source for area labels. `FILE_CONTROLS` in `lib/classify.js` is not extended. | `FILE_CONTROLS` already duplicates frontmatter and has drifted (no EU entries). A second copy of the ATLAS mapping would need its own drift check. |
 | D3 | The catalog is `content/index/atlas.json`: ids, names, maturity, tactic links, parents, mitigation links, case-study counts. No descriptions. All 221 techniques are kept. | Prototype is 34 KB minified. Keeping every technique means no selection judgment in the data file, and `content/` parity carries it to Python for free. |
 | D4 | `aigis threats` is MUST. Red-team stubs are SHOULD. | Without the command ATLAS would be a list of ids on a compliance report, which is the misuse INTAKE warns about. Stubs are templating over the same data and can be cut safely. |
-| D5 | Technique scope for `threats` comes from the approved entry-point map (11 traits, 36 links, 31 distinct techniques in the candidate gold), not from the areas' own mitigations. | Deriving scope from covered mitigations is circular: you would only ever see threats you already cover, and gaps could not appear. |
+| D5 | Technique scope for `threats` comes from the approved entry-point map (9 traits, 32 links, 29 distinct techniques in the candidate gold; current counts in EVALS §5.1), not from the areas' own mitigations. | Deriving scope from covered mitigations is circular: you would only ever see threats you already cover, and gaps could not appear. |
 | D6 | Mitigation links are MITRE's 494 direct `mitigates` links and nothing else. A sub-technique does **not** inherit its parent's mitigations. (Changed in review round 1, ATLAS-02.) | Inheritance would add 124 links that MITRE did not publish, a third judgment surface needing approval, and would make the phrase "MITRE links" untrue. Cost, stated openly: AML.T0051.000 and AML.T0051.001 carry only AML.M0024, M0033 and M0035 directly, so guardrails (AML.M0020, linked to the parent AML.T0051) do not appear next to them. The remedy is in the approved entry-point map (list the parent technique where the parent holds the links), not in inference. Inheritance display is logged in IMPROVEMENTS. |
 | D7 | Order: maturity (Realized, Demonstrated, Feasible), then MITRE case-study count descending, then id. | INTAKE step 3. ATLAS has no risk score, so Aigis does not invent one. |
 | D8 | ATLAS is universal: never jurisdiction-gated. EU-gated areas carry no `atlas` key. | ATLAS has no jurisdiction. Keeps `--jurisdiction` behavior untouched. |
@@ -180,18 +180,16 @@ controls:
 }
 ```
 
-- Trait and technique content equals `build/atlas/gold/entry-points.json` (`decision: "include"` rows; the approved copy of `entry-points.candidate.json`), traits in ascending order, techniques ascending. At most 6 techniques per trait, at most 3,000 bytes. Candidate state for sizing: 36 links, 11 traits, at most 5 per trait, 31 distinct techniques (17 Realized, 13 Demonstrated, 1 Feasible), about 2,100 bytes.
+- Trait and technique content equals `build/atlas/gold/entry-points.json` (`decision: "include"` rows; the approved copy of `entry-points.candidate.json`), traits in ascending order, techniques ascending. At most 6 techniques per trait, at most 3,000 bytes. Candidate state for sizing only (snapshot after review round 3; the approved file is authoritative and no code or test may hard-code these): 32 links, 9 traits, at most 5 per trait, 29 distinct techniques (17 Realized, 12 Demonstrated, none Feasible), about 1,800 bytes.
 - Every trait is in `ALL_TRAITS`; every technique id is in the catalog.
 - `surface` is a display label only (no ATLAS claim) and is not in the gold file. Use exactly these strings; a trait that the approved file adds beyond this table gets its trait id as the label, and the maker reports it:
 
 | Trait | `surface` |
 |---|---|
 | accepts-user-input | User-supplied prompts and files |
-| generates-code | Generated code and package names |
 | generates-content | Generated content that others read or reuse |
 | is-agentic | Tools and actions the model can invoke |
 | is-external | Public-facing AI endpoint |
-| is-multimodal | Images, audio and files as model input |
 | multi-model-pipeline | Model-to-model handoffs |
 | uses-finetuned | Training data and model artifacts |
 | uses-llm | Prompts and system instructions of the LLM |
@@ -431,7 +429,7 @@ Add to both READMEs, under the new section: `Python package note: in 2.2.0 \`aig
 
 - `CHANGELOG.md`: `## 2.2.0` with Added (catalog, labels, surfaces, `threats`, template), Unchanged (routing, traits, triggers, existing citations), Notes (pinned source and sha256, Apache-2.0 notice, limits).
 - `CONTRIBUTING.md`: a short "Updating MITRE ATLAS" section (download the release file, update the pinned sha256, run the generator, re-approve mappings).
-- `IMPROVEMENTS.md`: backlog with evidence: showing a parent technique's mitigations next to its sub-techniques, clearly labeled as inferred (124 such links; needs its own approval); new area for agent tool safety (AML.M0026, M0027, M0028, M0030, M0032, M0033, M0037, M0038); memory hardening (AML.M0031); supply-chain depth (AML.M0011, M0013, M0014, M0016, M0023); surface traits, including the three entry points removed from the map in review round 2 because no current trait implies their precondition (agent memory AML.T0080.000, client-side rendering AML.T0077, conversation context AML.T0085.002) and the area link removed for the same kind of reason (human-oversight to AML.M0028); resolver recall on prose (0.48 on the v2 set through the CLI); `threats --confirm/--reject`; Python parity if cut; `aigis traits` prints 22 but there are 23; README benchmark label.
+- `IMPROVEMENTS.md`: backlog with evidence: showing a parent technique's mitigations next to its sub-techniques, clearly labeled as inferred (124 such links; needs its own approval); new area for agent tool safety (AML.M0026, M0027, M0028, M0030, M0032, M0033, M0037, M0038); memory hardening (AML.M0031); supply-chain depth (AML.M0011, M0013, M0014, M0016, M0023); surface traits, including the three entry points removed from the map in review round 2 because no current trait implies their precondition (agent memory AML.T0080.000, client-side rendering AML.T0077, conversation context AML.T0085.002) the area link removed for the same kind of reason (human-oversight to AML.M0028), and the entries removed in review round 3 (generates-code to AML.T0060, a resource-development technique the labeling protocol skips; all three is-multimodal entries, because the trait also covers generation-only systems while the techniques need multimodal input); resolver recall on prose (0.48 on the v2 set through the CLI); `threats --confirm/--reject`; Python parity if cut; `aigis traits` prints 22 but there are 23; README benchmark label.
 
 ### S6.6 Reconcile pass (20:00 to 20:15, after every cut decision is final)
 

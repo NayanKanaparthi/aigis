@@ -58,7 +58,7 @@ SHOULD cut order if a reserve is threatened (first cut first): AC21, AC19, AC20,
 
 - Primary, M3 citation accuracy: 1.000 precision and recall on (a) ids, names and maturity, (b) mitigation to technique links, against an independent oracle built from the pinned YAML; area labels and entry points equal to the approved gold files.
 - Coverage on the `--traits` path (ground-truth traits): technique recall 1.000, precision 1.000 against the gold entry-point map. Baseline is 0 (the capability does not exist).
-- Description path: equal to the `--traits` path for the traits the resolver finds (no extra loss). Reported, not gated: planner measured trait recall 0.481 on the v2 descriptions through the CLI resolver, which gives technique recall 0.554 (precision 1.000) with the candidate gold map (36 links, 11 traits).
+- Description path: equal to the `--traits` path for the traits the resolver finds (no extra loss). Reported, not gated: planner measured trait recall 0.481 on the v2 descriptions through the CLI resolver, which gives technique recall 0.541 (precision 1.000) with the candidate gold map after review round 3 (32 links, 9 traits). The current counts live in one place, EVALS §5.1.
 - Guards: M1/M2 area selection and trait detection unchanged (delta 0); brief growth at most 1,000 characters; core skill at most 4,900 characters.
 - M6: deterministic, all tests green. M4 (agent in the loop) is milestone only, not tonight.
 
@@ -112,14 +112,14 @@ Critical path: N1, N2, N5 (140 min of 210). Eval budget: seconds per run (determ
 
 | # | Risk | Mitigation |
 |---|---|---|
-| 1 | Gold approval is on the critical path: two mappings (area to mitigation, trait to technique) need a second independent draft and Nayan's approval by 17:00. | Both drafts are merged into candidate files (23 area links, 36 entry-point links) with every row quoted in `gold/APPROVAL-DETAIL.md`. Nayan approves from `gold/APPROVAL-REQUEST.md`. Rows he rejects become `exclude` and are logged. N1 and N2 do not depend on gold. |
+| 1 | Gold approval is on the critical path: two mappings (area to mitigation, trait to technique) need a second independent draft and Nayan's approval by 17:00. | Both drafts are merged into candidate files, one row per proposed link (A: 29 rows, 23 included; B: 54 rows, 32 included), every quote verbatim from the pinned YAML and shown in `gold/APPROVAL-DETAIL.md`. Nayan approves from `gold/APPROVAL-REQUEST.md`. Rows he rejects become `exclude` and are logged. N1 and N2 do not depend on gold. |
 | 2 | Overclaim: ATLAS inside "Compliance Report" or next to "Controls satisfied" reads as compliance. | Separate block, fixed disclaimer sentence, "helps implement" wording, forbidden-phrase test over content, code, README and outputs (AC14). |
 | 3 | `threats "<description>"` inherits the CLI resolver's low recall on prose (0.48 trait recall on the v2 set), so the list can look thin. | `--traits` is the primary documented path (the agent already picks traits from the resolver block). Output echoes the traits used and tells the user to add missing ones. Resolver fix stays in IMPROVEMENTS. |
 | 4 | Schedule: seven nodes in 3.5 hours; `bin/aigis.js` is a contention point. | One owner per file: N4 is lib-only, N5 owns `bin/aigis.js` and the version strings, INT owns no product file. The Python port is optional with a defined cut-complete state. SHOULD items cut in a fixed order, final at 20:00. 40 minute reserve before freeze. |
 
 ## Open questions for GATE A
 
-1. Approve the two candidate mappings in `gold/APPROVAL-REQUEST.md` (A: 23 area to mitigation links; B: 36 trait to technique links; evidence in `gold/APPROVAL-DETAIL.md`). Default: approve as merged; anything you doubt is excluded tonight.
+1. Approve the two candidate mappings in `gold/APPROVAL-REQUEST.md` (A: 23 area to mitigation links included of 29 proposed; B: 32 trait to technique links included of 54 proposed, covering 9 traits; evidence in `gold/APPROVAL-DETAIL.md`). Default: approve as merged; anything you doubt is excluded tonight.
 2. `aigis threats` is MUST, red-team stubs are SHOULD. Default: yes.
 3. New area for the agentic gap tonight? Default: no, first item for 2.3; `threats` prints the gap.
 4. Python CLI parity is SHOULD with an honest one-line README note if cut. Default: yes.

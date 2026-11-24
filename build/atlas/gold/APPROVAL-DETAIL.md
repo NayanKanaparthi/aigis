@@ -1,8 +1,8 @@
-# Gold mappings: full detail (every row, with MITRE's own words)
+# Gold mappings: full detail
 
-Plain summary for approval: APPROVAL-REQUEST.md. This file is the evidence behind it.
+Every link either labeler proposed, with MITRE's exact words and the decision. Plain summary: APPROVAL-REQUEST.md.
 
-## A. Aigis area -> ATLAS mitigation
+## A. Aigis area -> ATLAS mitigation (23 included of 29 proposed)
 
 - **audit-logging -> AML.M0024 AI Telemetry Logging and Monitoring** [INCLUDE] (both labelers)
   - MITRE says: "Preserve sufficient context to trace activity across components and identify coordinated behavior across accounts and access pathways."
@@ -22,10 +22,6 @@ Plain summary for approval: APPROVAL-REQUEST.md. This file is the evidence behin
 - **human-oversight -> AML.M0020 Generative AI Guardrails** [INCLUDE] (adjudicated: Pattern 1's dispatcher checks every tool call against an allowlist before execution and requires human approval for write and externally visible tools, matching the tool and action guardrail sentence.)
   - MITRE says: "Require human approval for high-impact, irreversible, privileged, or externally visible actions (See [Human In-the-Loop for AI Agent Actions](/mitigations/AML.M0029), [Input and Output Validation for AI Agent Components](/mitigations/AML.M0033))."
   - Aigis step: ['### Pattern 1: Principle of least privilege for tools', '### Pattern 2: Human-in-the-loop for high-impact decisions']
-- **human-oversight -> AML.M0028 Enforce Access Controls for AI Agent Tools** [EXCLUDE] (both labelers)
-  - MITRE says: "Enforce controls outside the model, in the tool implementation, MCP server, gateway, or underlying service."
-  - Aigis step: ['### Pattern 1: Principle of least privilege for tools']
-  - Removed: Round-2 review: MITRE describes caller-specific authorization; the area implements a static tool allowlist. Excluded tonight, conservative.
 - **human-oversight -> AML.M0029 Human In-the-Loop for AI Agent Actions** [INCLUDE] (both labelers)
   - MITRE says: "Systems should require the user or another human stakeholder to approve AI agent actions before the agent takes them."
   - Aigis step: ['### Pattern 1: Principle of least privilege for tools', '### Pattern 2: Human-in-the-loop for high-impact decisions']
@@ -77,8 +73,26 @@ Plain summary for approval: APPROVAL-REQUEST.md. This file is the evidence behin
 - **supply-chain -> AML.M0008 Validate AI Model** [INCLUDE] (both labelers)
   - MITRE says: "Validate newly trained or acquired models and repeat evaluation after fine-tuning, model updates, or changes to the conditions in which the model is used."
   - Aigis step: ['### Pattern 3: Regression testing before model upgrades']
+- **fallback-patterns -> AML.M0036 Limit AI Workload Resource Consumption** [EXCLUDE] (adjudicated: The circuit breaker trips on provider failures for reliability and the kill switch is an operator toggle; neither bounds the resources a single workload can consume, so this is shared vocabulary, not the same control.)
+  - MITRE says: "Use timeouts, cost ceilings, circuit breakers, and safe termination conditions to prevent individual workloads from exhausting shared resources."
+  - Aigis step: ['### Step 2 — Implement a circuit breaker with three states', '### Step 4 — Kill switch read per-request ⚠ CRITICAL', '### Step 6 — Wrap every LLM call in exception handling']
+- **human-oversight -> AML.M0028 Enforce Access Controls for AI Agent Tools** [EXCLUDE] (Round-2 review: MITRE describes caller-specific authorization; the area implements a static tool allowlist.)
+  - MITRE says: "Enforce controls outside the model, in the tool implementation, MCP server, gateway, or underlying service."
+  - Aigis step: ['### Pattern 1: Principle of least privilege for tools']
+- **human-oversight -> AML.M0030 Restrict AI Agent Tool Invocation on Untrusted Data** [EXCLUDE] (adjudicated: M0030's object is restricting tool invocation once untrusted data enters context; the area's approval gate is unconditional on data provenance (the second labeler concedes this), and the planner lists M0030 as an uncovered gap.)
+  - MITRE says: "For high consequence actions, consider always requiring user confirmation."
+  - Aigis step: ['### Pattern 1: Principle of least privilege for tools', '### Pattern 2: Human-in-the-loop for high-impact decisions']
+- **human-oversight -> AML.M0037 AI Agent Authority Expansion Controls** [EXCLUDE] (adjudicated: A static tool allowlist is already cited as M0028; M0037 is about runtime acquisition of tokens, credentials and discovered targets and sub-agent propagation, none of which the area addresses.)
+  - MITRE says: "The maximum authority available to the agent should be explicitly granted prior to runtime."
+  - Aigis step: ['### Pattern 1: Principle of least privilege for tools']
+- **monitoring -> AML.M0008 Validate AI Model** [EXCLUDE] (adjudicated: Drift detection monitors output distributions but nothing in the area triggers or performs model revalidation, so citing Validate AI Model would overclaim.)
+  - MITRE says: "During deployment, monitor for changes in model performance and use significant changes to trigger revalidation."
+  - Aigis step: ['### Pattern 2: Output drift detection']
+- **supply-chain -> AML.M0014 Verify AI Artifacts** [EXCLUDE] (adjudicated: Pinning a hosted provider model version string is not verifying the integrity of an artifact loaded locally; there is no digest or signature check, and the planner lists M0014 as a supply-chain gap.)
+  - MITRE says: "Pin approved artifacts to specific versions and cryptographic digests rather than relying on mutable names, tags, or download locations."
+  - Aigis step: ['### Pattern 1: Pin model versions']
 
-## B. Trait -> attack entry point
+## B. Trait -> attack entry point (32 included of 54 proposed)
 
 - **accepts-user-input -> AML.T0051.000 Direct** [INCLUDE] (both labelers)
   - MITRE says: "An adversary may inject prompts directly as a user of the LLM."
@@ -86,8 +100,6 @@ Plain summary for approval: APPROVAL-REQUEST.md. This file is the evidence behin
   - MITRE says: "Jailbreaks may be achieved via adversarial prompting, or by modifying model weights or safety mechanisms."
 - **accepts-user-input -> AML.T0068 LLM Prompt Obfuscation** [INCLUDE] (both labelers)
   - MITRE says: "Adversaries may hide or otherwise obfuscate prompt injections or retrieval content to avoid detection from humans, large language model (LLM) guardrails, or other detection mechanisms."
-- **generates-code -> AML.T0060 Publish Hallucinated Entities** [INCLUDE] (adjudicated: Package and URL hallucination in executed generated code is the precondition for slopsquatting; although tagged Resource Development, the defender can act on it by vetting dependencies in generated code, and it is the only code-specific entry point proposed.)
-  - MITRE says: "Adversaries may create an entity they control, such as a software package, website, or email address corresponding to a source hallucinated by an LLM. The hallucinations may take the form of package names, commands, URLs..."
 - **generates-content -> AML.T0061 LLM Prompt Self-Replication** [INCLUDE] (adjudicated: Externally published generated artifacts are where self-replicating prompts persist and are re-ingested by other LLMs; Demonstrated, distinct from propagation.)
   - MITRE says: "The reproduced instructions may appear in generated messages, documents, source-code, files, or other artifacts."
 - **generates-content -> AML.T0067 LLM Trusted Output Components Manipulation** [INCLUDE] (adjudicated: Published responses expose links, citations and recommended actions to adversarial manipulation aimed at the audience's trust; Demonstrated.)
@@ -98,44 +110,32 @@ Plain summary for approval: APPROVAL-REQUEST.md. This file is the evidence behin
   - MITRE says: "An adversary may inject prompts indirectly via a separate data channel that the LLM or AI agent ingests, such as text or multimedia pulled from documents, emails, databases or websites."
 - **is-agentic -> AML.T0053 AI Agent Tool Invocation** [INCLUDE] (both labelers)
   - MITRE says: "Adversaries may use their access to an AI agent to invoke tools the agent has access to."
-- **is-agentic -> AML.T0080.000 Memory** [EXCLUDE] (adjudicated: Agent memory is the precondition for persistent context poisoning; Realized with case studies, and preferred over the parent T0080.)
-  - MITRE says: "Adversaries may manipulate the memory of a large language model (LLM) in order to persist changes to the LLM across future chat sessions. Memory is a common feature in LLMs that allows them to remember information across..."
-  - Removed: Requires agent memory; is-agentic does not imply memory.
 - **is-agentic -> AML.T0086 Exfiltration via AI Agent Tool Invocation** [INCLUDE] (adjudicated: Write-capable agent tools are the exfiltration channel; Realized with many case studies.)
-  - MITRE says: "AI agent tools capable of performing write operations may be invoked to exfiltrate data to an adversary. Sensitive information can be encoded into the tool's input parameters and transmitted to an adversary-controlled lo..."
+  - MITRE says: "AI agent tools capable of performing write operations may be invoked to exfiltrate data to an adversary."
 - **is-agentic -> AML.T0101 Data Destruction via AI Agent Tool Invocation** [INCLUDE] (adjudicated: Mutating agent tools are the precondition for data destruction; Realized.)
-  - MITRE says: "Adversaries may invoke an AI agent's tool capable of performing mutative operations to perform Data Destruction. Adversaries may destroy data and files on specific systems or in large numbers on a network to interrupt av..."
+  - MITRE says: "Adversaries may invoke an AI agent's tool capable of performing mutative operations to perform Data Destruction."
 - **is-agentic -> AML.T0110 AI Agent Tool Poisoning** [INCLUDE] (both labelers)
   - MITRE says: "Adversaries may poison tools used by AI agents by introducing or modifying malicious content or behavior in a tool's model-visible definition, executable implementation, or runtime responses."
 - **is-external -> AML.T0024 Exfiltration via AI Inference API** [INCLUDE] (adjudicated: Public access to the inference API is the precondition for exfiltration through model responses; Realized.)
-  - MITRE says: "Adversaries may exfiltrate information from a victim-controlled AI model or service through responses returned by its inference API. Transferred information may include predictions, scores, embeddings, generated content ..."
+  - MITRE says: "Adversaries may exfiltrate information from a victim-controlled AI model or service through responses returned by its inference API."
 - **is-external -> AML.T0029 Denial of AI Service** [INCLUDE] (adjudicated: A publicly reachable AI endpoint is the precondition for request flooding and compute exhaustion; Demonstrated, and it covers the cost/DoS surface.)
-  - MITRE says: "Adversaries may target AI-enabled systems with a flood of requests for the purpose of degrading or shutting down the service. Since many AI systems require significant amounts of specialized compute, they are often expen..."
+  - MITRE says: "Adversaries may target AI-enabled systems with a flood of requests for the purpose of degrading or shutting down the service."
 - **is-external -> AML.T0049 Exploit Public-Facing Application** [INCLUDE] (adjudicated: Internet exposure is the precondition for exploiting the serving application itself (e.g. AI runtime RCEs); Realized with many AI case studies.)
   - MITRE says: "Adversaries may attempt to take advantage of a weakness in an Internet-facing computer or program using software, data, or commands in order to cause unintended or unanticipated behavior."
 - **is-external -> AML.T0093 Prompt Infiltration via Public-Facing Application** [INCLUDE] (both labelers)
   - MITRE says: "Any public-facing application that accepts text input could be a target."
 - **is-external -> AML.T0132 Misconfigured or Publicly Exposed AI Services** [INCLUDE] (adjudicated: Public exposure is the precondition for misconfigured or unauthenticated AI services being found and used; Demonstrated and AI-specific.)
   - MITRE says: "For example, one internet-facing AI service could be more easily discoverable by any unauthenticated user, while another may require compromised credentials to even be discovered."
-- **is-multimodal -> AML.T0051.001 Indirect** [INCLUDE] (adjudicated: Images, audio and documents are an indirect injection channel that exists because the system ingests those modalities; Realized.)
-  - MITRE says: "An adversary may inject prompts indirectly via a separate data channel that the LLM or AI agent ingests, such as text or multimedia pulled from documents, emails, databases or websites."
-- **is-multimodal -> AML.T0068 LLM Prompt Obfuscation** [INCLUDE] (adjudicated: The description explicitly covers hiding instructions in images, audio and video frames; Realized.)
-  - MITRE says: "Similarly, approaches for other modalities include low-contrast or tiny text placed inside an image, text overlaid on a busy or camouflaging background, instructions spoken faintly or sped up in audio, or text shown briefly in a single video frame."
-- **is-multimodal -> AML.T0129 Triggers in Multimodal Inputs** [INCLUDE] (both labelers)
-  - MITRE says: "Adversaries may place instructions or triggers in one part of a multimodal input to influence the model while staying unnoticed by human reviewers and by defenses that do not inspect all input modalities."
 - **multi-model-pipeline -> AML.T0061 LLM Prompt Self-Replication** [INCLUDE] (adjudicated: Chaining models lets one model's output re-introduce a self-replicating prompt to the next; Demonstrated and distinct from propagation.)
   - MITRE says: "When retrieved and ingested by another LLM, the adversary's instructions are re-introduced, potentially long after the original interaction has ended."
 - **multi-model-pipeline -> AML.T0143 LLM Prompt Propagation** [INCLUDE] (both labelers)
   - MITRE says: "This extends the attack beyond its initial point of introduction and may allow adversaries to influence additional targets without directly delivering a malicious prompt payload to each one."
-- **processes-pii -> AML.T0085.002 Conversation Context and Memory** [EXCLUDE] (adjudicated: PII held in conversation context and memory is what this collection technique targets; Demonstrated and the most specific ATLAS fit for PII leakage.)
-  - MITRE says: "Adversaries may collect sensitive information from an AI service's current or stored interactions and memory. This may include user messages, model responses, conversation summaries, and retained user facts and preferenc..."
-  - Removed: Requires stored conversation context or memory; processes-pii does not imply it.
 - **uses-finetuned -> AML.T0010.002 Data Repository** [INCLUDE] (adjudicated: Fine-tuning pulls training data from data repositories that can be compromised; Realized.)
-  - MITRE says: "Adversaries may abuse data repositories or other dataset distribution services to introduce compromised data into downstream AI workflows. They may replace or modify published datasets, manipulate versions or references ..."
+  - MITRE says: "Adversaries may abuse data repositories or other dataset distribution services to introduce compromised data into downstream AI workflows."
 - **uses-finetuned -> AML.T0010.003 Model Repository** [INCLUDE] (adjudicated: Custom models start from downloaded base models in model repositories; Realized with several case studies.)
-  - MITRE says: "Adversaries may abuse model repositories or other model distribution services to introduce compromised models into downstream AI systems. They may replace published artifacts, manipulate model versions or references that..."
+  - MITRE says: "Adversaries may abuse model repositories or other model distribution services to introduce compromised models into downstream AI systems."
 - **uses-finetuned -> AML.T0011.000 Unsafe AI Artifacts** [INCLUDE] (adjudicated: Loading self-managed model artifacts (serialized weights, templates) is the precondition for unsafe-artifact execution; Realized.)
-  - MITRE says: "Adversaries may develop new AI artifacts or manipulate existing AI artifacts that have a deleterious effect when loaded, executed, interpreted, or used for inference by a victim. The unsafe artifacts may continue to work..."
+  - MITRE says: "Adversaries may develop new AI artifacts or manipulate existing AI artifacts that have a deleterious effect when loaded, executed, interpreted, or used for inference by a victim."
 - **uses-finetuned -> AML.T0020 Training Data Poisoning** [INCLUDE] (both labelers)
   - MITRE says: "Adversaries may manipulate data used for training or fine-tuning an AI model to influence the resulting model's behavior."
 - **uses-finetuned -> AML.T0137.003 Extract Memorized Data** [INCLUDE] (adjudicated: Fine-tuning on the defender's own data creates memorized content that can be extracted; Demonstrated.)
@@ -144,11 +144,8 @@ Plain summary for approval: APPROVAL-REQUEST.md. This file is the evidence behin
   - MITRE says: "An adversary may craft malicious prompts as inputs to an LLM that cause the LLM to act in unintended ways."
 - **uses-llm -> AML.T0069.002 System Prompt** [INCLUDE] (adjudicated: Every LLM application with a system prompt has this surface; Demonstrated, and it feeds tailored follow-on attacks.)
   - MITRE says: "Adversaries may discover a large language model's system instructions provided by the AI system builder to learn about the system's capabilities and circumvent its guardrails."
-- **uses-llm -> AML.T0077 LLM Response Rendering** [EXCLUDE] (adjudicated: Rendering LLM output (Markdown, HTML, images) in a client is the precondition for response-rendering exfiltration; Demonstrated with case studies.)
-  - MITRE says: "Adversaries may induce a large language model (LLM) to respond with private information structured in a reference to external content that, when rendered by the user's client, makes a request to an adversary-controlled s..."
-  - Removed: Requires a client that renders model output; uses-llm does not imply it.
 - **uses-rag -> AML.T0051.001 Indirect** [INCLUDE] (adjudicated: Retrieved documents are the canonical indirect prompt injection channel; Realized with the most case studies of any candidate.)
-  - MITRE says: "An adversary may inject prompts indirectly via a separate data channel that the LLM or AI agent ingests, such as text or multimedia pulled from documents, emails, databases or websites. These instructions originate from ..."
+  - MITRE says: "An adversary may inject prompts indirectly via a separate data channel that the LLM or AI agent ingests, such as text or multimedia pulled from documents, emails, databases or websites."
 - **uses-rag -> AML.T0070 RAG Poisoning** [INCLUDE] (both labelers)
   - MITRE says: "Adversaries may inject malicious content into data indexed by a retrieval augmented generation (RAG) system to contaminate a future thread through RAG-based search results."
 - **uses-rag -> AML.T0071 False RAG Entry Injection** [INCLUDE] (both labelers)
@@ -158,6 +155,50 @@ Plain summary for approval: APPROVAL-REQUEST.md. This file is the evidence behin
 - **uses-rag -> AML.T0085.000 RAG Databases** [INCLUDE] (both labelers)
   - MITRE says: "Adversaries may collect sensitive information from data sources that an AI service accesses to retrieve context for its responses."
 - **uses-thirdparty-api -> AML.T0010.001 Software** [INCLUDE] (adjudicated: Calling a provider relies on AI SDKs and integration frameworks that the description names as supply-chain targets; Realized.)
-  - MITRE says: "Adversaries may target software packages that are commonly used in AI-enabled systems or are part of the AI DevOps lifecycle. This can include deep learning frameworks used to build AI models (e.g. PyTorch, TensorFlow, J..."
+  - MITRE says: "Adversaries may target software packages that are commonly used in AI-enabled systems or are part of the AI DevOps lifecycle."
 - **uses-thirdparty-api -> AML.T0109 AI Supply Chain Rug Pull** [INCLUDE] (adjudicated: Depending on third-party AI components is the precondition for a malicious update after adoption; Realized, and the supply-chain area's version pinning addresses it.)
-  - MITRE says: "Adversaries may publish legitimate AI components or software, gain user adoption, then push an update with a malicious variant, leading to [Supply Chain Compromise](/techniques/AML.T0010). More scrutiny is often placed o..."
+  - MITRE says: "Adversaries may publish legitimate AI components or software, gain user adoption, then push an update with a malicious variant, leading to [Supply Chain Compromise](/techniques/AML.T0010)."
+- **accepts-user-input -> AML.T0034.001 Resource-Intensive Queries** [EXCLUDE] (adjudicated: Feasible with no case studies; compute-heavy queries are covered by Denial of AI Service (T0029) on is-external.)
+  - MITRE says: "Adversaries may craft inputs specifically designed to increase the compute resources required for processing."
+- **accepts-user-input -> AML.T0137.003 Extract Memorized Data** [EXCLUDE] (adjudicated: Memorized-data extraction matters where the defender owns the training data; kept under uses-finetuned, redundant here.)
+  - MITRE says: "Adversaries may supply partial passages, contextual cues, or repeated and varied inputs that encourage reproduction of memorized content."
+- **generates-code -> AML.T0060 Publish Hallucinated Entities** [EXCLUDE] (Round-3 review: Resource Development technique (AML.TA0003); protocol 5.2 skips those.)
+  - MITRE says: "Adversaries may create an entity they control, such as a software package, website, or email address corresponding to a source hallucinated by an LLM."
+- **generates-code -> AML.T0102 Generate Malicious Commands** [EXCLUDE] (adjudicated: Describes adversaries using LLMs to generate commands for their own malware (AI Attack Adaptation), not an attack on a code-generating system; the defender cannot act on it from this trait.)
+  - MITRE says: "Adversaries may use large language models (LLMs) to dynamically generate malicious commands from natural language."
+- **generates-content -> AML.T0077 LLM Response Rendering** [EXCLUDE] (adjudicated: Already included under uses-llm, which any LLM content generator also has; listing it twice adds noise.)
+  - MITRE says: "Rendered content can include images, embedded webpages, or link previews and may use HTML, Markdown, or other rendering mechanisms."
+- **handles-proprietary -> AML.T0069.002 System Prompt** [EXCLUDE] (adjudicated: The precondition is an LLM with a system prompt, not proprietary data; included under uses-llm instead, which every handles-proprietary LLM system also has.)
+  - MITRE says: "Adversaries may discover a large language model's system instructions provided by the AI system builder to learn about the system's capabilities and circumvent its guardrails."
+- **handles-proprietary -> AML.T0085.003 System Instructions** [EXCLUDE] (adjudicated: Feasible with no case studies and duplicates the Demonstrated system-prompt extraction (T0069.002) kept under uses-llm.)
+  - MITRE says: "Adversaries may collect non-public instructions used to configure the behavior of an AI model or agent."
+- **is-agentic -> AML.T0034.002 Agentic Resource Consumption** [EXCLUDE] (adjudicated: Feasible with no case studies; the six Realized/Demonstrated agentic techniques take priority under the cap.)
+  - MITRE says: "Adversaries may coerce an agentic AI system into performing computationally expensive tool calls that waste resources and consume API budgets."
+- **is-agentic -> AML.T0080 AI Agent Context Poisoning** [EXCLUDE] (adjudicated: Parent of T0080.000; the Memory sub-technique is the precise fit and is included.)
+  - MITRE says: "Adversaries may attempt to manipulate the context used by an AI agent's large language model (LLM) to influence the responses it generates or actions it takes."
+- **is-agentic -> AML.T0080.000 Memory** [EXCLUDE] (Round-2 review: needs agent memory; is-agentic does not imply memory.)
+  - MITRE says: "Adversaries may manipulate the memory of a large language model (LLM) in order to persist changes to the LLM across future chat sessions."
+- **is-agentic -> AML.T0099 AI Agent Tool Data Poisoning** [EXCLUDE] (adjudicated: Feasible with no case studies and its entry point is the indirect injection (T0051.001) already settled for this trait.)
+  - MITRE says: "Adversaries may manipulate data in a victim-controlled, trusted, or connected data source that is accessible through an AI agent tool."
+- **is-external -> AML.T0034 Cost Harvesting** [EXCLUDE] (adjudicated: Feasible parent with no case studies; the compute-exhaustion entry point is already covered by the Demonstrated T0029.)
+  - MITRE says: "Adversaries may deliberately drive a victim's AI services beyond normal operating capacity with the intent of increasing the cost of services."
+- **is-multimodal -> AML.T0051.001 Indirect** [EXCLUDE] (Round-3 review: is-multimodal includes generation-only systems; technique needs ingesting outside content.)
+  - MITRE says: "An adversary may inject prompts indirectly via a separate data channel that the LLM or AI agent ingests, such as text or multimedia pulled from documents, emails, databases or websites."
+- **is-multimodal -> AML.T0068 LLM Prompt Obfuscation** [EXCLUDE] (Round-3 review: is-multimodal includes generation-only systems; technique needs crafted input.)
+  - MITRE says: "Similarly, approaches for other modalities include low-contrast or tiny text placed inside an image, text overlaid on a busy or camouflaging background, instructions spoken faintly or sped up in audio, or text shown briefly in a single video frame."
+- **is-multimodal -> AML.T0129 Triggers in Multimodal Inputs** [EXCLUDE] (Round-3 review: is-multimodal includes generation-only systems; technique needs multimodal input.)
+  - MITRE says: "Adversaries may place instructions or triggers in one part of a multimodal input to influence the model while staying unnoticed by human reviewers and by defenses that do not inspect all input modalities."
+- **processes-pii -> AML.T0085.002 Conversation Context and Memory** [EXCLUDE] (Round-2 review: needs stored conversation memory; processes-pii does not imply it.)
+  - MITRE says: "Adversaries may collect sensitive information from an AI service's current or stored interactions and memory."
+- **uses-llm -> AML.T0054 LLM Jailbreak** [EXCLUDE] (adjudicated: Jailbreak needs adversary prompt access, already settled under accepts-user-input and reachable via T0051; duplicate noise.)
+  - MITRE says: "Adversaries may induce a large language model (LLM) to ignore, circumvent, or override its safety/alignment behaviors and/or guardrails to elicit outputs the model is intended to withhold."
+- **uses-llm -> AML.T0077 LLM Response Rendering** [EXCLUDE] (Round-2 review: needs a client that renders model output; uses-llm does not imply it.)
+  - MITRE says: "Adversaries may induce a large language model (LLM) to respond with private information structured in a reference to external content that, when rendered by the user's client, makes a request to an adversary-controlled server, exfiltrating the data."
+- **uses-llm -> AML.T0085.003 System Instructions** [EXCLUDE] (adjudicated: Feasible with no case studies and duplicates T0069.002 included for this trait.)
+  - MITRE says: "Adversaries may collect non-public instructions used to configure the behavior of an AI model or agent."
+- **uses-llm -> AML.T0137.003 Extract Memorized Data** [EXCLUDE] (adjudicated: For a provider-hosted foundation model the memorized data is not the defender's; kept under uses-finetuned where it is.)
+  - MITRE says: "Adversaries may elicit and recover sensitive content memorized by a generative AI model during training or fine-tuning."
+- **uses-rag -> AML.T0066 Retrieval Content Crafting** [EXCLUDE] (adjudicated: Content crafting is adversary-side staging (AI Attack Adaptation); the defender-actionable step is RAG Poisoning (T0070), already settled.)
+  - MITRE says: "The adversary must get the crafted content into the victim\u0027s database, such as a vector database used in a retrieval augmented generation (RAG) system."
+- **uses-thirdparty-api -> AML.T0040 AI Model Inference API Access** [EXCLUDE] (adjudicated: Adversary access to the shared provider model is staging the defender cannot act on from this trait, like reconnaissance.)
+  - MITRE says: "Adversaries may use their access to model APIs to identify vulnerabilities such as jailbreaks or hallucinations and then target applications that use the same models."

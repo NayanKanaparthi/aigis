@@ -22,7 +22,7 @@ Agreement between two models is not validation. It only decides which rows Nayan
 | EV-M3c | Area label accuracy | `controls.atlas` of each area vs gold `area-mitigations.json`. | P 1.000, R 1.000 | Primary, hard gate |
 | EV-M3d | Entry-point accuracy | `atlas-entry-points.json` vs gold `entry-points.json`. | P 1.000, R 1.000 | Primary, hard gate |
 | EV-M3e | No citation lost | OWASP, NIST, ISO, EU sets per area and per classify output vs baseline. | identical | Hard gate |
-| EV-M1 | Coverage (recall) | (i) Area recall vs areas implied by ground-truth traits: must equal baseline exactly. (ii) Technique recall of `threats --traits <ground truth>` vs the gold in-scope set (union of gold entry points for the ground-truth traits). The in-scope set is read from the union of `entry_points[].techniques`, which is never truncated; `techniques` must be exactly its first `--top` items in the specified order. (The largest ground-truth in-scope set is 15 on dev and 17 on held-out; all 11 seeded traits together give 31, above the `--top` limit of 25.) (iii) Technique recall of `threats "<description>"`: reported. | (i) delta 0; (ii) 1.000; (iii) equals the recall implied by the traits the resolver found (no extra loss) | Floor |
+| EV-M1 | Coverage (recall) | (i) Area recall vs areas implied by ground-truth traits: must equal baseline exactly. (ii) Technique recall of `threats --traits <ground truth>` vs the gold in-scope set (union of gold entry points for the ground-truth traits). The in-scope set is read from the union of `entry_points[].techniques`, which is never truncated; `techniques` must be exactly its first `--top` items in the specified order. (The largest ground-truth in-scope set is 15 on dev and 17 on held-out; all seeded traits together give more than the `--top` limit of 25: 29 in the candidate gold.) The eval script computes every such count from the approved gold files; none is hard-coded. (iii) Technique recall of `threats "<description>"`: reported. | (i) delta 0; (ii) 1.000; (iii) equals the recall implied by the traits the resolver found (no extra loss) | Floor |
 | EV-M2 | Precision | (i) Area precision: equal to baseline. (ii) Technique precision on the `--traits` path. (iii) On the description path: reported. | (i) delta 0; (ii) 1.000; (iii) at least 0.95 | Floor |
 | EV-M5 | Context efficiency | (i) Brief characters added per description (auto mode) vs baseline. (ii) `core.md` characters. (iii) `threats` default text size. (iv) Size-weighted precision of `threats`: characters of technique entries whose id is in the gold in-scope set / characters of all technique entries. (v) Catalog bytes. | (i) at most +1,000; (ii) at most 4,900; (iii) at most 7,000; (iv) 1.000 on the `--traits` path; (v) at most 64,000 and never printed whole | Guard |
 | EV-M6 | Determinism and tests | Each eval command run twice gives identical bytes after masking the two listed volatile fields; `npm test` green. | identical; green | Hard gate |
@@ -51,7 +51,7 @@ Baseline for the new capability is 0 by construction: on `07ef537` no command pr
 - Planner pre-measurement on the dev set (to be reproduced by E0, not trusted as is):
   - Brief sizes (auto mode, characters): D1 90,672; D3 102,712; D4 65,514; D5 65,548; D6 65,863; D7 95,034; D8 17,622; D9 70,655; D10 65,782. D2 resolves no traits and has no brief.
   - Build-path trait recall 0.481, precision 1.000 (uncertain traits included). Classify-path area recall 0.374, precision 0.950 (low-confidence triggers rejected). These are properties of the CLI resolver on prose, inherited by this feature and not changed by it. They are lower than the README's v2 numbers, which were measured with an agent in the IDE; the difference is logged in IMPROVEMENTS and is outside this feature.
-  - Description-path technique recall: 0.554, precision 1.000 with the candidate gold map (36 links). It was 0.483 with the planner's first draft (30 links).
+  - Description-path technique recall: 0.541, precision 1.000 with the candidate gold map after review round 3 (32 links). For the record: 0.554 with the round-2 candidate (36 links), 0.483 with the planner's first draft (30 links). E0 recomputes it from the approved file.
 - Noise floor: 0. The CLI is deterministic, so any difference between two runs is a defect (EV-M6), not noise. N = 2 runs per command per description, to prove that.
 - Because the noise floor is 0, targets are exact values, not margins.
 - Budget: under one minute of compute in total; no model calls.
@@ -60,7 +60,14 @@ Baseline for the new capability is 0 by construction: on `07ef537` no command pr
 
 ### 5.1 Method
 
-State after review round 2 (orchestrator): both drafts are merged and adjudicated into `gold/area-mitigations.candidate.json` (23 include rows, 1 exclude) and `gold/entry-points.candidate.json` (36 include rows, 3 exclude). `gold/APPROVAL-REQUEST.md` is the summary Nayan approves; `gold/APPROVAL-DETAIL.md` shows every row with MITRE's sentence and the Aigis evidence. On approval the candidate files are copied to `gold/area-mitigations.json` and `gold/entry-points.json` with `approved_by` and `approved_at` added; makers and tests read only those approved files.
+State after review round 3 (orchestrator), and the one place in the plan where the current gold counts are recorded. Both drafts are merged and adjudicated, one row per proposed link, every `atlas_quote` verbatim and asserted against the pinned YAML:
+
+| | Rows | Include | Exclude | Shape of the included set |
+|---|---|---|---|---|
+| A `gold/area-mitigations.candidate.json` | 29 | 23 | 6 | 12 areas labeled, at most 3 mitigations each; 12 distinct mitigations of 44 (AML.M0004, M0007, M0008, M0014, M0019, M0020, M0021, M0024, M0025, M0029, M0032, M0036); bias-monitoring, explainability and fallback-patterns empty |
+| B `gold/entry-points.candidate.json` | 54 | 32 | 22 | 9 traits (accepts-user-input, generates-content, is-agentic, is-external, multi-model-pipeline, uses-finetuned, uses-llm, uses-rag, uses-thirdparty-api), at most 5 techniques each; 29 distinct techniques (17 Realized, 12 Demonstrated, none Feasible) |
+
+Derived from A and B together with MITRE's direct links: for a system with all 9 seeded traits, 29 techniques are in scope, MITRE links 33 mitigations to them, the area labels reach 12 of those, so `aigis threats` lists 21 gaps; one in-scope technique (AML.T0110) has no MITRE mitigation. Every other file in the plan refers here instead of repeating these numbers, and tests and evals compute them from the approved files at run time. `gold/APPROVAL-REQUEST.md` is the summary Nayan approves; `gold/APPROVAL-DETAIL.md` shows every row with MITRE's sentence and the Aigis evidence. On approval the candidate files are copied to `gold/area-mitigations.json` and `gold/entry-points.json` with `approved_by` and `approved_at` added; makers and tests read only those approved files.
 
 1. Planner draft: appendices A and B of this file.
 2. Second draft: GPT-5.6 Sol in a fresh session, given only section 5.2 (protocol), the 15 area files, `aigis traits` output with the trait definitions in `content/index/taxonomy.md`, and the pinned YAML. It must not be shown the appendices.
@@ -82,7 +89,7 @@ Row format: `{ "trait", "surface" (short noun phrase), "technique", "technique_n
 
 ### 5.3 Gold file shape
 
-As built (this supersedes the sketch below where they differ): top level `atlas_version` and `rows`, plus `approved_by` and `approved_at` in the approved copies. Area rows: `area`, `mitigation`, `mitigation_name`, `atlas_quote`, `area_evidence`, `labelers`, `basis`, `decision`, `note`. Entry-point rows: `trait`, `technique`, `technique_name`, `maturity`, `atlas_quote`, `labelers`, `basis`, `decision`, `note`. There is no `surface` field; the display labels are fixed in SPEC S3.3. `check-gold.py` verifies the fields that exist.
+As built (this supersedes the sketch below where they differ): top level `atlas_version` and `rows`, plus `approved_by` and `approved_at` in the approved copies. One row per proposed link, included or excluded. Area rows: `area`, `mitigation`, `mitigation_name`, `atlas_quote`, `area_evidence`, `labelers`, `basis`, `decision`. Entry-point rows: `trait`, `technique`, `technique_name`, `maturity`, `atlas_quote`, `labelers`, `basis`, `decision`. There is no `surface` field; the display labels are fixed in SPEC S3.3. `check-gold.py` verifies the fields that exist.
 
 ```json
 { "atlas_version": "2026.10", "atlas_sha256": "ac41ee9f...", "approved_by": "Nayan Kanaparthi", "approved_at": "<ISO time>",
@@ -110,7 +117,7 @@ Stop and report to Nayan; the outcome is not a release:
 4. EV-M1(ii) or EV-M2(ii) below 1.000 on held-out: the command does not do what the approved map says. Fix once; otherwise stop.
 5. Size-weighted precision EV-M5(iv) below 1.000 on the `--traits` path, or any cap exceeded, and trimming cannot fix it inside the timebox.
 
-Not a kill criterion, but reported at GATE B with the numbers: description-path recall (EV-M1 iii). It is expected to be near 0.55 on dev because of the resolver (trait recall 0.481), and the README and command output say that `--traits` is the reliable path.
+Not a kill criterion, but reported at GATE B with the numbers: description-path recall (EV-M1 iii). It is expected to be near 0.54 on dev because of the resolver (trait recall 0.481), and the README and command output say that `--traits` is the reliable path.
 
 ## 8. Report format (INT writes `build/atlas/evals/results/summary.md`)
 
@@ -118,7 +125,7 @@ One table: metric, baseline, dev, held-out, target, pass or fail. Below it: the 
 
 ---
 
-Appendices A and B are the planner's first draft, kept as a historical record. They are not the gold. The current candidate mappings (23 and 36 include rows) are in `gold/`, and every count elsewhere in the plan uses those.
+Appendices A and B are the planner's first draft, kept as a historical record. They are not the gold. The current candidate mappings (23 and 32 include rows after review round 3) are in `gold/`, and every count elsewhere in the plan uses those.
 
 ## Appendix A. Planner draft: area to mitigation
 

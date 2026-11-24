@@ -20,6 +20,8 @@ const TS3 = 'is-internal';
 const TS5 = `${TS1},jurisdiction-eu`;
 const AREA_IDS = ['audit-logging', 'bias-monitoring', 'confidence-scoring', 'data-integrity', 'explainability', 'fallback-patterns', 'human-oversight', 'input-validation', 'monitoring', 'output-sanitization', 'pii-handling', 'prompt-security', 'rag-security', 'rate-limiting', 'supply-chain'];
 const EU_AREA_IDS = ['eu-ai-act-art-9-risk-management', 'eu-ai-act-art-13-deployer-transparency', 'eu-ai-act-art-50-transparency-disclosure', 'eu-ai-act-art-73-incident-reporting'];
+const NEW_AREA_IDS = ['agent-permissions', 'agent-tool-safety'];
+const UNIVERSAL_AREA_IDS = [...AREA_IDS, ...NEW_AREA_IDS];
 const FORBIDDEN = /ATLAS[ -]?(compliant|compliance|certified|certification)|complies with ATLAS|risk[ -]?scor(e|es|ed|ing)/i;
 
 function sha256(value) { return crypto.createHash('sha256').update(value).digest('hex'); }
@@ -66,6 +68,7 @@ function maskVolatile(text) {
     .replace(/^> Aigis version: [^\n]+$/gm, '> Aigis version: <VERSION>')
     .replace(/\b2\.1\.1\b/g, '<VERSION>')
     .replace(/\b2\.2\.0\b/g, '<VERSION>')
+    .replace(/\b3\.0\.0\b/g, '<VERSION>')
     .replace(/"generated_at":\s*"[^"]+"/g, '"generated_at":"<TIMESTAMP>"');
 }
 function stripAtlas(value) {
@@ -84,8 +87,8 @@ function parseJsonOutput(r, label = 'command') {
   assert.doesNotThrow(() => JSON.parse(r.stdout), `${label} did not print valid JSON`);
   return JSON.parse(r.stdout);
 }
-function includedByArea(gold) {
-  const out = Object.fromEntries(AREA_IDS.map((id) => [id, []]));
+function includedByArea(gold, areaIds = AREA_IDS) {
+  const out = Object.fromEntries(areaIds.map((id) => [id, []]));
   for (const row of gold.rows.filter((r) => r.decision === 'include')) (out[row.area] ||= []).push(row.mitigation);
   for (const ids of Object.values(out)) ids.sort();
   return out;
@@ -141,4 +144,4 @@ function runCases(cases) {
   process.exitCode = failures ? 1 : 0;
 }
 
-module.exports = { assert, fs, os, path, ROOT, FIXTURES, BASELINE, DISCLAIMER, ATLAS_VERSION, ATLAS_SHA256, FORBIDDEN, DS1, DS2, DS3, TS1, TS2, TS3, TS5, AREA_IDS, EU_AREA_IDS, sha256, read, json, requireFile, requireGold, run, commandRecord, baseline, maskVolatile, stripAtlas, parseJsonOutput, includedByArea, entryPointRows, directMitigations, assertNoForbidden, makeScratch, mutateScratch, runCases };
+module.exports = { assert, fs, os, path, ROOT, FIXTURES, BASELINE, DISCLAIMER, ATLAS_VERSION, ATLAS_SHA256, FORBIDDEN, DS1, DS2, DS3, TS1, TS2, TS3, TS5, AREA_IDS, EU_AREA_IDS, NEW_AREA_IDS, UNIVERSAL_AREA_IDS, sha256, read, json, requireFile, requireGold, run, commandRecord, baseline, maskVolatile, stripAtlas, parseJsonOutput, includedByArea, entryPointRows, directMitigations, assertNoForbidden, makeScratch, mutateScratch, runCases };

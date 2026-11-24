@@ -298,8 +298,8 @@
     "planner": false,
     "second": true
    },
-   "basis": "adjudicated: Step 4 confines every tool call to the caller's tenant/user (or workflow) resource root and denies other users' and tenants' resources, i.e. least-privilege data access per user or process, preventing cross-user disclosure through shared tools.",
-   "decision": "include",
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); pending owner re-approval",
+   "decision": "exclude",
    "decided_by": "nayan (approved as proposed)"
   },
   {
@@ -316,8 +316,8 @@
     "planner": false,
     "second": true
    },
-   "basis": "adjudicated: Step 4 builds the caller from the session not model arguments, normalizes the model-supplied resource path, denies '..', '%' and '\\\\' and undeclared args before the backend tool runs: input validation on model output to backend functions, including the path-traversal case LLM05 lists.",
-   "decision": "include",
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); pending owner re-approval",
+   "decision": "exclude",
    "decided_by": "nayan (approved as proposed)"
   },
   {
@@ -389,8 +389,8 @@
     "planner": false,
     "second": true
    },
-   "basis": "adjudicated: Step 4 regex-redacts private keys, API secrets and personal data from tool outputs before Context.add, which is pattern-matching redaction before processing.",
-   "decision": "include",
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); pending owner re-approval",
+   "decision": "exclude",
    "decided_by": "nayan (approved as proposed)"
   },
   {
@@ -407,8 +407,8 @@
     "planner": false,
     "second": true
    },
-   "basis": "adjudicated: Step 3 validates model-produced tool arguments against an exact schema (types, lengths, enums, paths under root, allowlisted hosts) before execution and never coerces: input validation on model responses to backend functions. Planner also listed it as an unproposed candidate.",
-   "decision": "include",
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); pending owner re-approval",
+   "decision": "exclude",
    "decided_by": "nayan (approved as proposed)"
   },
   {
@@ -443,8 +443,8 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
-   "decision": "include",
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); pending owner re-approval",
+   "decision": "exclude",
    "decided_by": "nayan (approved as proposed)"
   },
   {
@@ -461,8 +461,8 @@
     "planner": true,
     "second": true
    },
-   "basis": "both labelers",
-   "decision": "include",
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); pending owner re-approval",
+   "decision": "exclude",
    "decided_by": "nayan (approved as proposed)"
   },
   {
@@ -515,11 +515,12 @@
     "planner": false,
     "second": true
    },
-   "basis": "adjudicated: on scope drift (actions outside the authorized objective) Step 5 pauses the run, denies all further calls and escalates to a human who resumes the authorized plan or ends the task: an applied mechanism to disengage an agent whose outcomes are inconsistent with its intended use. In part only (per task, not system-wide).",
-   "decision": "include",
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); pending owner re-approval",
+   "decision": "exclude",
    "decided_by": "nayan (approved as proposed)"
   }
  ],
- "approved_by": "Nayan Kanaparthi",
- "approved_at": "2026-11-24T22:44:23Z"
+ "approved_by": null,
+ "approved_at": null,
+ "revision": "r2: 7 rows removed after final audit, pending re-approval"
 }

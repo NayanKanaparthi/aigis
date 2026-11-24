@@ -1,0 +1,55 @@
+{
+  "_doc": "Step 6 resolver benchmark — 10 plain-English descriptions paired with ground-truth trait sets. Used in two conditions: BASELINE (v1.0.3 install, agent classifies from description without resolver) and STEP-6 (v2-step-6 branch, resolver available). Two runs per condition = 40 Cursor invocations total. Backlog of 5 more descriptions in backlog.json — run only if Step 6 results are inconclusive.",
+  "descriptions": [
+    {
+      "id": "D1",
+      "text": "Build me a customer support chatbot that uses Claude to answer questions about our product. It should remember conversation history.",
+      "ground_truth_traits": ["uses-llm", "uses-thirdparty-api", "accepts-user-input", "processes-pii", "is-external"]
+    },
+    {
+      "id": "D2",
+      "text": "Add a search feature that lets users ask natural-language questions and get answers from our 10,000-page documentation.",
+      "ground_truth_traits": ["uses-llm", "uses-rag", "accepts-user-input", "is-external"]
+    },
+    {
+      "id": "D3",
+      "text": "Add a content moderation system to flag harmful posts on our forum. Use Claude for the classification.",
+      "ground_truth_traits": ["uses-llm", "uses-thirdparty-api", "influences-decisions", "accepts-user-input", "is-external"]
+    },
+    {
+      "id": "D4",
+      "text": "Build a chatbot for kids ages 8-12 to help with homework. Use OpenAI.",
+      "ground_truth_traits": ["uses-llm", "uses-thirdparty-api", "accepts-user-input", "handles-minors", "processes-pii", "is-external"]
+    },
+    {
+      "id": "D5",
+      "text": "I'm building a service that takes uploaded medical PDFs and extracts diagnosis codes using GPT-4.",
+      "ground_truth_traits": ["uses-llm", "uses-thirdparty-api", "processes-pii", "handles-health", "accepts-user-input"]
+    },
+    {
+      "id": "D6",
+      "text": "Create an internal tool for our underwriters that uses Claude to assess insurance claims and recommend approve/deny/escalate.",
+      "ground_truth_traits": ["uses-llm", "uses-thirdparty-api", "handles-financial", "influences-decisions", "processes-pii", "is-internal", "accepts-user-input"]
+    },
+    {
+      "id": "D7",
+      "text": "Add an EU-compliant chatbot for customers in Germany. Must follow GDPR and EU AI Act.",
+      "ground_truth_traits": ["uses-llm", "accepts-user-input", "is-external", "processes-pii", "jurisdiction-eu"]
+    },
+    {
+      "id": "D8",
+      "text": "I want to fine-tune a small Llama model on our company's internal documents and serve it from our own GPUs.",
+      "ground_truth_traits": ["uses-llm", "uses-finetuned", "handles-proprietary", "is-internal"]
+    },
+    {
+      "id": "D9",
+      "text": "Build a voice assistant for our smart home product that uses an LLM to interpret natural-language commands and decide which IoT devices to control (lights, thermostat, locks).",
+      "ground_truth_traits": ["uses-llm", "is-multimodal", "accepts-user-input", "is-agentic"]
+    },
+    {
+      "id": "D10",
+      "text": "Build a marketplace where users post listings and AI generates descriptions and matches buyers with sellers.",
+      "ground_truth_traits": ["uses-llm", "accepts-user-input", "generates-content", "handles-financial", "influences-decisions", "processes-pii", "is-external"]
+    }
+  ]
+}

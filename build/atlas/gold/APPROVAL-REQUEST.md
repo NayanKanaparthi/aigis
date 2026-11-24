@@ -23,16 +23,14 @@ No ATLAS citation (ATLAS has nothing that matches): bias-monitoring, explainabil
 
 Excluded tonight (6, incl. human-oversight AML.M0028 after round-2 review): fallback-patterns AML.M0036; human-oversight AML.M0030; human-oversight AML.M0037; monitoring AML.M0008; supply-chain AML.M0014
 
-## Mapping B: attack entry points per trait, used by `aigis threats` (36)
+## Mapping B: attack entry points per trait, used by `aigis threats` (32)
 
 | Trait | Techniques (maturity) |
 |---|---|
 | accepts-user-input | AML.T0051.000 Direct (Realized); AML.T0054 LLM Jailbreak (Realized); AML.T0068 LLM Prompt Obfuscation (Realized) |
-| generates-code | AML.T0060 Publish Hallucinated Entities (Demonstrated) |
 | generates-content | AML.T0061 LLM Prompt Self-Replication (Demonstrated); AML.T0067 LLM Trusted Output Components Manipulation (Demonstrated); AML.T0143 LLM Prompt Propagation (Demonstrated) |
 | is-agentic | AML.T0051.001 Indirect (Realized); AML.T0053 AI Agent Tool Invocation (Demonstrated); AML.T0086 Exfiltration via AI Agent Tool Invocation (Realized); AML.T0101 Data Destruction via AI Agent Tool Invocation (Realized); AML.T0110 AI Agent Tool Poisoning (Realized) |
 | is-external | AML.T0024 Exfiltration via AI Inference API (Realized); AML.T0029 Denial of AI Service (Demonstrated); AML.T0049 Exploit Public-Facing Application (Realized); AML.T0093 Prompt Infiltration via Public-Facing Application (Realized); AML.T0132 Misconfigured or Publicly Exposed AI Services (Demonstrated) |
-| is-multimodal | AML.T0051.001 Indirect (Realized); AML.T0068 LLM Prompt Obfuscation (Realized); AML.T0129 Triggers in Multimodal Inputs (Feasible) |
 | multi-model-pipeline | AML.T0061 LLM Prompt Self-Replication (Demonstrated); AML.T0143 LLM Prompt Propagation (Demonstrated) |
 | uses-finetuned | AML.T0010.002 Data Repository (Realized); AML.T0010.003 Model Repository (Realized); AML.T0011.000 Unsafe AI Artifacts (Realized); AML.T0020 Training Data Poisoning (Realized); AML.T0137.003 Extract Memorized Data (Demonstrated) |
 | uses-llm | AML.T0051 LLM Prompt Injection (Realized); AML.T0069.002 System Prompt (Demonstrated) |
@@ -42,3 +40,5 @@ Excluded tonight (6, incl. human-oversight AML.M0028 after round-2 review): fall
 Removed after round-2 review (trait does not imply the precondition): is-agentic AML.T0080.000 (needs memory), uses-llm AML.T0077 (needs output rendering), processes-pii AML.T0085.002 (needs stored conversation memory). Candidate for a later `has-memory` trait.
 
 Every row with MITRE's quote and the Aigis evidence: APPROVAL-DETAIL.md
+
+Removed after round-3 review: generates-code AML.T0060 (a Resource Development technique; the protocol skips those), is-multimodal AML.T0051.001 / AML.T0068 / AML.T0129 (the trait includes generation-only systems, while these techniques need the system to take in outside content). Every proposed link, kept or dropped, is listed with MITRE's exact sentence in APPROVAL-DETAIL.md.

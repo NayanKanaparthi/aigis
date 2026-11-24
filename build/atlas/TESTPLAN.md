@@ -4,6 +4,8 @@ Written by GPT-5.6 Sol (fresh session) from this file and SPEC.md, before any fe
 
 ## Conventions
 
+- **Rev 3 (15:45).** Version is 3.0.0. Sections "New areas" and "Rev 3 amendments to earlier tests" at the end of this file are part of the plan; the amendments override the rows they name.
+
 - Plain Node, `assert`, no framework, one process per file, exit non-zero on failure. Files in `test/` named `atlas-*.test.js` are picked up by `npm test` automatically (the harness itself is frozen and not edited).
 - Each file runs in under 5 seconds; the whole fast suite stays under 60 seconds.
 - CLI tests spawn `process.execPath bin/aigis.js ...` with piped stdout (so `classify` is in JSON mode).
@@ -16,13 +18,13 @@ Written by GPT-5.6 Sol (fresh session) from this file and SPEC.md, before any fe
 - **Fixed inputs.**
   - TS1 `uses-llm,accepts-user-input,uses-rag`
   - TS2 `uses-llm,is-agentic,accepts-user-input,is-external,uses-thirdparty-api`
-  - TS3 `is-internal` (no areas, no entry points)
-  - TS4 every trait that has an entry in `content/index/atlas-entry-points.json`, read at run time. In the candidate gold that is 11 traits (`accepts-user-input,generates-code,generates-content,is-agentic,is-external,is-multimodal,multi-model-pipeline,uses-finetuned,uses-llm,uses-rag,uses-thirdparty-api`) and 31 in-scope techniques, so `--top 25` truncates
+  - TS3 `is-internal` (no areas, no entry points). The test first asserts that this trait has no entry in the entry-point file and no area; if approval ever changes that, it fails with `fixture precondition changed`, not with a misleading assertion
+  - TS4 every trait that has an entry in `content/index/atlas-entry-points.json`, built by the test at run time, never typed in (the candidate gold has 9 such traits and 29 in-scope techniques; see EVALS §5.1)
   - TS5 TS1 plus `jurisdiction-eu`
   - DS1 "Build me a customer support chatbot that uses Claude to answer questions about our product. It should remember conversation history." (resolves 4 traits, 1 uncertain on the build path)
   - DS2 "Add a search feature that lets users ask natural-language questions and get answers from our 10,000-page documentation." (resolves no traits today)
   - DS3 "Build a voice assistant for our smart home product that uses an LLM to interpret natural-language commands and decide which IoT devices to control (lights, thermostat, locks)." (3 traits, all uncertain)
-- If the approved gold differs from the planner draft, expectations follow the gold files, which is why tests read them at run time.
+- **Nothing from the gold files is hard-coded.** Every count or membership that depends on the two Aigis mappings is computed at run time from the approved `build/atlas/gold/area-mitigations.json` and `build/atlas/gold/entry-points.json` (`include` rows) together with the catalog: links per area, labeled and empty areas, seeded traits, techniques per trait, distinct in-scope techniques, maturity split, mitigations reached, gaps, unmitigated techniques, and the README's "N of the 44". Where a test needs a labeled area, an empty area, a seeded trait or an unseeded trait, the names in this plan (for example `rate-limiting` labeled, `bias-monitoring` empty) are the candidate-gold examples: the test asserts that precondition against the approved gold first, or selects a suitable one at run time. Only three kinds of literal are allowed: pinned MITRE facts (SPEC S0, T-CAT-*, T-LIB-05), design caps (sizes, `--top` 1 to 25, at most 6 techniques per trait), and the fixed inputs TS1, TS2, TS5, DS1 to DS3, whose expected outputs are still computed from the gold.
 
 ## L0 `test/atlas-catalog.test.js` (node N1; AC1, AC2, AC3)
 
@@ -82,8 +84,8 @@ Written by GPT-5.6 Sol (fresh session) from this file and SPEC.md, before any fe
 | T-SUR-05 | `verify bias-monitoring --auto <fixture> ` text and JSON (or the first area whose gold list is empty) | block is the header, `  No ATLAS mitigation is mapped to this area.` and the DISCLAIMER line; JSON arrays empty, totals 0, `atlas.disclaimer` present |
 | T-SUR-06 | `verify input-validation --auto <fixture> --json` with and without `--jurisdiction eu` | `cited_controls.atlas` and `atlas` (including `disclaimer`) identical in both; `eu_ai_act` behaves as in baseline |
 | T-SUR-07 | `report --areas input-validation,rate-limiting,bias-monitoring --project <fixture> --format json` | top-level `atlas` equals `{ version: "2026.10", disclaimer: DISCLAIMER }`; `summary.cross_framework_coverage.atlas_count` equals the size of the union; `summary.cross_framework_citations.atlas` sorted union; `per_area[i].cited_controls.atlas`; deleting the new keys gives the baseline (masked) |
-| T-SUR-08 | same with markdown | table row `| MITRE ATLAS mitigations (threat catalog, not a standard) | <n> |`; per-area bullet for the two labeled areas and none for the empty one; the document contains the DISCLAIMER exactly once, in the Methodology bullet; removing those lines gives the baseline (masked). Also run with `--areas bias-monitoring` only (no labeled area): the table row shows 0 and the DISCLAIMER is still present |
-| T-SUR-09 | `build "<DS1>" --json`, `build "<DS1>" --compact --json`, `build "<DS3>" --json`, `build "<DS1>" --jurisdiction eu --json` | brief contains `## Threat model (MITRE ATLAS)` exactly once, before `## Verification`; contains `` `aigis threats --traits <sorted traits passed to classify>` `` and the DISCLAIMER; `meta.char_count` minus baseline is greater than 0 and at most 1,000; `meta.atlas` has `version`, `disclaimer` (equal to the DISCLAIMER), `mitigations`, `threats_command`; removing the section gives the baseline brief (masked); other meta keys equal baseline except `char_count`, `version` |
+| T-SUR-08 | same with markdown | table row `| MITRE ATLAS mitigations (threat catalog, not a standard) | <n> |`; a per-area bullet exactly for the areas whose approved gold list is non-empty, listing exactly those ids; the document contains the DISCLAIMER exactly once, in the Methodology bullet; removing those lines gives the baseline (masked). Also run with `--areas bias-monitoring` only (no labeled area): the table row shows 0 and the DISCLAIMER is still present |
+| T-SUR-09 | `build "<DS1>" --json`, `build "<DS1>" --compact --json`, `build "<DS3>" --json`, `build "<DS1>" --jurisdiction eu --json` | brief contains `## Threat model (MITRE ATLAS)` exactly once, before `## Verification`; contains `` `aigis threats --traits <sorted traits passed to classify>` `` and the DISCLAIMER; `meta.char_count` minus baseline is greater than 0 and at most 1,500; `meta.atlas` has `version`, `disclaimer` (equal to the DISCLAIMER), `mitigations`, `threats_command`; removing the section gives the baseline brief (masked); other meta keys equal baseline except `char_count`, `version` |
 | T-SUR-10 | `build "<DS1>" --list` (SHOULD, AC22) | last three lines are an empty line, `Threat model:`, `  aigis threats --traits ...`; everything before equals baseline |
 | T-SUR-11 | each command above run twice | byte-identical after masking the two listed volatile fields |
 
@@ -116,7 +118,7 @@ Commands C1 to C7, each run in the scratch package: C1 `classify --traits TS1 --
 | T-THR-01 | `threats --traits TS1 --json` | exit 0; top-level keys exactly as SPEC S5.3 in order (no `redteam`); `atlas.version`; `atlas.disclaimer` equals the DISCLAIMER (there is no top-level `disclaimer` key); `traits` sorted; `entry_points` equal the entry-point file rows for those traits; `techniques` ids equal the union ordered by the rule; each technique has name (display name), maturity, tactics with names, `entry_traits`, `case_studies` from the catalog; `mitigations` equal the test's own computation from the catalog's direct links (the mitigations whose `techniques` list contains the id), with no `via` key and no parent inheritance; `areas` equal the reverse index of gold with `recommended` matching `classify(TS1).implement_files` |
 | T-THR-02 | same, and `threats --traits TS4 --top 25 --json` | every (technique, mitigation) pair in the output is in the catalog's direct links, and for each shown technique the list is complete (precision and recall 1 against the catalog); if AML.T0051.001 is in scope its mitigations are exactly M0024, M0033, M0035; `gaps` are exactly the mitigations directly linked to in-scope techniques with no gold area, each listing its in-scope techniques, sorted by count descending then id; `unmitigated_techniques` exact; `mitigation_counts.in_scope = with_area + without_area` and matches the recount; `mitigation_names` covers every id used |
 | T-THR-03 | `threats --traits TS4 --top 25 --json` | maturity rank is non-decreasing down the list; within equal maturity `case_studies` is non-increasing; ties in id order |
-| T-THR-04 | `threats --traits TS4 --top 3 --json` vs `--top 25` | `techniques_shown` 3, `techniques` length 3 and equal to the first 3 of the long list; `techniques_in_scope`, `gaps`, `unmitigated_techniques`, `mitigation_counts` identical in both |
+| T-THR-04 | `threats --traits TS4 --top 3 --json` vs `--top 25` | `techniques_shown` 3, `techniques` length 3 and equal to the first 3 of the long list; `techniques_in_scope`, `gaps`, `unmitigated_techniques`, `mitigation_counts` identical in both; `techniques_in_scope` equals the size of the union the test computes from the entry-point file, and with `--top 25` `techniques_shown` equals `min(25, techniques_in_scope)` |
 | T-THR-05 | `--top 0`, `--top -1`, `--top abc`, `--top 2.5`, `--top 26` with TS1 | exit 1; stdout empty; stderr contains `--top must be an integer from 1 to 25` |
 | T-THR-06 | `threats`; `threats ""`; `threats "   "` | exit 1; stdout empty; stderr first line `Provide --traits, a quoted description, or both.` |
 | T-THR-07 | `threats --traits uses-llm,not-a-trait` | exit 1; stderr `Unknown traits: not-a-trait.` followed by the hint |
@@ -138,17 +140,17 @@ Commands C1 to C7, each run in the scratch package: C1 `classify --traits TS1 --
 
 | Id | Check | Expected |
 |---|---|---|
-| T-REL-01 | version in `package.json`, `package-lock.json` (two places), `bin/aigis.js`, `cli-python/pyproject.toml` | all `2.2.0` |
+| T-REL-01 | version in `package.json`, `package-lock.json` (two places), `bin/aigis.js`, `cli-python/pyproject.toml` | all `3.0.0` |
 
 ## L0 `test/atlas-docs.test.js` (node N6; AC12, AC13, AC14)
 
 | Id | Target | Expected |
 |---|---|---|
-| T-DOC-01 | `content/skills/core.md` | at most 4,900 characters; contains `aigis threats`, the DISCLAIMER byte for byte, and the workflow step numbered 5; contains neither `--redteam` nor "Python"; diff against the baseline fixture touches at most 3 hunks |
-| T-DOC-02 | `README.md` | has `## Threat modeling with MITRE ATLAS` and `## What's new in v2.2`; DISCLAIMER verbatim; the numbers 16, 221, 44, 77 in the "What ships" sentence equal the catalog counts; "map to N of the 44 mitigations" where N equals the number of distinct ids in the gold file; CLI reference has `aigis threats`; License mentions `content/index/atlas-NOTICE.md` and "Apache-2.0"; lines not present in the baseline README contain no U+2014; no FORBIDDEN match after removing the DISCLAIMER; the baseline benchmark numbers are unchanged |
+| T-DOC-01 | `content/skills/core.md` | at most 5,650 characters; contains the DISCLAIMER byte for byte; has the heading `## Threat modeling (MITRE ATLAS)` exactly once, located after the verify-output section and before "How to pick traits"; that section contains, in this order: a sentence with "without being asked" naming all five occasions (the strings "new AI feature", "tools, write access, memory or a new data source", "launch", "audit an existing project", "incident"); a numbered list of 5 items where item 1 mentions deriving traits from the codebase and the request, item 2 contains `aigis threats --traits` before any `aigis threats "<description>"` and the word "fall back", item 3 contains `aigis get <area>` and `aigis verify <area> --auto`, item 4 contains "not covered" and "Never report a gap as handled", item 5 starts with "Rerun"; both workflow lists have a step 5 pointing to the section by name; "Available commands" has an `aigis threats` line; contains neither `--redteam` nor "Python"; the diff against the baseline fixture is insertions only (no baseline line removed or changed) |
+| T-DOC-02 | `README.md` | has `## Threat modeling with MITRE ATLAS` and `## What's new in v3.0`; DISCLAIMER verbatim; the numbers 16, 221, 44, 77 in the "What ships" sentence equal the catalog counts; "map to N of the 44 mitigations" where N equals the number of distinct ids in the gold file; CLI reference has `aigis threats`; License mentions `content/index/atlas-NOTICE.md` and "Apache-2.0"; lines not present in the baseline README contain no U+2014; no FORBIDDEN match after removing the DISCLAIMER; the baseline benchmark numbers are unchanged |
 | T-DOC-03 | `cli-python/README.md` | contains the same two sections with identical text |
 | T-DOC-04 | `content/templates/threat-model.md` and `aigis template threat-model` | file at most 4,500 characters; contains the 16 tactic names in catalog order, the DISCLAIMER, five numbered steps, and the words "tools", "write access", "memory", "data source"; no technique id (`AML.T`); no mention of `--redteam`; the command exits 0 and prints the file; `classify --traits TS2 --json` `templates` does not include `threat-model` |
-| T-DOC-05 | `CHANGELOG.md` | has a `## 2.2.0` heading and mentions "ATLAS" and "2026.10" |
+| T-DOC-05 | `CHANGELOG.md` | has a `## 3.0.0` heading and mentions "ATLAS" and "2026.10" |
 | T-DOC-06 | early check for N6 with the same matcher as T-HON-01: both READMEs, `CHANGELOG.md`, `content/skills/core.md`, `content/templates/threat-model.md` | no FORBIDDEN match (all four patterns of SPEC S0, including the risk-score one) after removing DISCLAIMER occurrences |
 | T-DOC-07 | Python note consistency | if `cli-python/aigis_cli/threats.py` exists, neither README contains the Python note sentence; otherwise both contain it |
 | T-DOC-08 | red-team consistency | `aigis threats --help` lists `--redteam` if and only if both READMEs mention `--redteam`; `CHANGELOG.md` mentions it under the same condition |
@@ -182,11 +184,11 @@ Run with `HTTP_PROXY` and `HTTPS_PROXY` set to a dead address to show nothing ne
 
 | Id | Journey | Pass when |
 |---|---|---|
-| E2E-01 | `npm pack`, install the tarball in a clean temp dir | `aigis --version` prints 2.2.0 |
+| E2E-01 | `npm pack`, install the tarball in a clean temp dir | `aigis --version` prints 3.0.0 |
 | E2E-02 | Design a feature: `aigis classify --traits TS2 --json`, run the printed `atlas.threats_command`, `aigis build "<DS1>"`, `aigis template threat-model` | every step exits 0; threats output starts with the title; the brief has the Threat model section |
 | E2E-03 | Verify and report on a copy of the fixture project | verify shows the ATLAS block; the markdown report has the ATLAS table row and the disclaimer |
 | E2E-04 | `aigis init cursor` in a temp project | `.cursorrules` contains `aigis threats`; resolver block checksum equals baseline |
-| E2E-05 | Build the wheel from `cli-python`, install in a fresh venv | `aigis --version` 2.2.0; `aigis classify --traits TS1 --json` exits 0; if the port shipped, `aigis threats --traits TS1 --json` equals Node's |
+| E2E-05 | Build the wheel from `cli-python`, install in a fresh venv | `aigis --version` 3.0.0; `aigis classify --traits TS1 --json` exits 0; if the port shipped, `aigis threats --traits TS1 --json` equals Node's |
 | E2E-06 | Package contents | tarball and wheel contain the catalog, notice, entry points and template; nothing private (`.claude/`, `.context/`, recovery codes, `*.tgz`, `build/`) |
 | E2E-07 | `node scripts/build-atlas-index.js --source /tmp/atlas-src/ATLAS-2026.10.yaml --check` | prints `OK`, exit 0 |
 | E2E-08 (SHOULD) | `script -q /dev/null aigis classify --traits TS1` (a real terminal) | output contains `ATLAS mitigations` on the Controls line, `Threat model (MITRE ATLAS):` and the DISCLAIMER |
@@ -220,3 +222,120 @@ L4 agent evals are milestone only and not part of this plan.
 | AC23 | T-FS-01 to T-FS-05, T-THR-19, T-THR-20, T-LIB-02, T-LIB-12, T-LIB-14 |
 | AC21 | E2E-08 |
 | AC22 | T-SUR-10 |
+---
+
+## New areas (rev 3). Written by T0b, locked in `build/atlas/TESTLOCK-newareas`
+
+Fixtures (T0b): `test/fixtures/atlas/newareas/empty-agent/` (an agent loop that calls tools with none of the controls), `wildcard-scope/` (per-caller authorization present plus a `"*"` scope), `scoped/` (the same without the wildcard), `log-only-gate/` and `blocking-gate/` (for AC30). "Own example" means: the test extracts the Python block under `## Complete working example` from the area file into a temp directory at run time.
+
+### `test/atlas-area-permissions.test.js` (NA1) and `test/atlas-area-tool-safety.test.js` (NA2); AC24, AC28
+
+Same checks for both areas; ids T-NA-xx for `agent-permissions`, T-NB-xx for `agent-tool-safety`.
+
+| Id | Check | Expected |
+|---|---|---|
+| T-NA-01 / T-NB-01 | file exists; `validateOne` | no errors; `id` equals the file name; `title` equals SPEC S7.1 / S7.2; `system_traits` is exactly `[is-agentic]`; `min_risk_tier` `all`; no `jurisdiction`; no `eu_ai_act` key |
+| T-NA-02 / T-NB-02 | structure | H2 sections in this order: Common incomplete implementations, Implementation procedure, Complete working example, What this does not cover, Related patterns; step headings equal the exact titles of SPEC S7.1 / S7.2, numbered 1 to 7 with no gaps; every step contains `**What to do.**` then `**Verification checkpoint.**`; at least 4 numbered items under Common incomplete implementations, each naming a step; `⚠ CRITICAL` exactly on the steps the SPEC marks |
+| T-NA-03 / T-NB-03 | size | at most 12,000 characters; mirror copy byte-identical |
+| T-NA-04 / T-NB-04 | code | every fenced `python` block passes `python3 -m py_compile` and every `javascript` block passes `node --check` (print `SKIP python` only if `python3` is absent); the complete example contains every identifier of the SPEC S7.3 contract for that area; for T-NB the section of Step 6 starts with the sentence `Skip this step if the agent keeps no state between sessions.` |
+| T-NA-05 / T-NB-05 | honesty | no FORBIDDEN match; none of "guarantee", "fully secure", "prevents all", "eliminates"; the body contains no framework id (`LLM\d\d`, `AML\.`, `MAP-`, `MEASURE-`, `MANAGE-`, `GOVERN-`, `Annex-`, `Clause-`, `Art-`); "What this does not cover" is non-empty |
+| T-NA-06 / T-NB-06 | label pass | `controls.owasp`, `nist`, `iso42001`, `atlas` equal the `include` rows for this area in the approved `build/atlas/gold/new-areas.json` (which has `approved_by`, `approved_at`); `atlas` is non-empty; no `exclude` row appears; before approval this test is red with the message `gold/new-areas.json not approved yet`, which is the expected reason |
+| T-NA-07 / T-NB-07 | commands | `aigis get <area>` exits 0 and prints the file; `--context web`, `agentic`, `rag`, `batch` each keep all 7 steps; `--lang python` leaves no `javascript` block; `aigis search --list` lists the area |
+
+### `test/atlas-verify-new.test.js` (NV); AC26, AC30
+
+| Id | Check | Expected |
+|---|---|---|
+| T-NV-01 | checklists | both exist with `implements: <area>`; rows V1.. in order, one per step (plus V8 for `agent-permissions`); the Control column holds only step references `S1`..`S7`; `aigis verify <area>` prints the checklist, exit 0 |
+| T-NV-02 | rules shape | `auto-verify-rules.json` has both areas with `auto`, `overclaim`, `judgment`; every checklist row id is in exactly one of `auto` or `judgment`; kinds and signals match the SPEC S7.3 table (each listed identifier is matched by a pattern of its check); the 18 pre-existing entries are byte-identical to baseline |
+| T-NV-03 | own example | `verify <area> --auto <own example dir> --json`: `auto_fail` 0 and `auto_pass` equals `auto_total`, for both areas (red until NA1, NA2 are merged: the expected reason is `area file missing`) |
+| T-NV-04 | empty agent | `verify <area> --auto empty-agent --json`: `auto_pass` 0 for both areas |
+| T-NV-05 | `wildcard_tool_scope` | present in `REGISTRY`; on `wildcard-scope`: V4 passes and the overclaim is `raised: true` with evidence pointing at the wildcard line; on `scoped`: `raised: false`; on `empty-agent`: not raised (V4 fails) |
+| T-NV-06 | audit and report | `audit --traits is-agentic --json`: both areas in `recommended_areas`, `per_area_check_count` equals each checklist's row count; `report --areas agent-permissions,agent-tool-safety --project <own example> --format json` exits 0 with both areas PASS |
+| T-NV-07 (SHOULD) | `untrusted_gate_log_only` | raised on `log-only-gate`, not on `blocking-gate`. If the recognizer is absent from `REGISTRY` the test prints `CUT AC30` and instead asserts that V2 of `agent-tool-safety` also has a `judgment` line |
+| T-NV-08 | index and determinism | `content/index/taxonomy.md` `is-agentic` row names both areas; two runs of T-NV-03 to T-NV-05 give byte-identical JSON |
+
+### `test/atlas-routing.test.js` (N4, written by T0: T-RT-01 to T-RT-03); AC27, AC15
+
+T-RT-04 and T-RT-05 need the new area files, so they are placed in `test/atlas-release.test.js` and checked at INT. That keeps the rule that a node's own test files are fully green when the node is done.
+
+NEW = `['agent-permissions', 'agent-tool-safety']`. "Baseline" is the fixture captured on `07ef537`.
+
+| Id | Check | Expected |
+|---|---|---|
+| T-RT-01 | `classify([t])` for every trait `t` in `ALL_TRAITS`, one at a time | both NEW ids present when `t` is `is-agentic`; neither present for any other trait |
+| T-RT-02 | exact delta, for the 10 dev ground-truth trait sets, TS1 to TS5, and every single trait | `implement_files` equals baseline plus NEW when the set contains `is-agentic`, and equals baseline otherwise (same order rule: sorted); `risk_tier`, `reason`, `templates`, `guardrails_fired`, `warnings` identical to baseline in every case |
+| T-RT-03 | controls delta | `controls.owasp`, `nist`, `iso` equal baseline plus, when routed and the area files exist, exactly the frontmatter ids of the NEW areas; for trait sets containing `is-eu-high-risk` but not `is-agentic` they equal baseline (the fallback must not touch EU areas) |
+| T-RT-04 (INT) | build | `build "<DS3>" --json` (agentic through an uncertain trait): `meta.areas` equals baseline plus NEW; `meta.char_count` minus baseline is at most 1,500 plus the two stripped area bodies plus their separators (computed by the test); mode is `full` unless the total exceeds 120,000, in which case the existing auto-fallback applies and exit is 0; `build "<DS1>"` (not agentic) has no NEW area |
+| T-RT-05 (INT) | end to end of routing | `classify --traits is-agentic --json`, then `get` and `verify` (checklist mode) for every id in `implement_files` exit 0; `report --from-classify "<DS3>"` runs without error |
+
+### Python (node PY pass 1); AC29
+
+| Id | Check | Expected |
+|---|---|---|
+| T-PY-03 (MUST) | Node vs Python as parsed JSON: `classify --traits <set> --json` for the T-RT-02 matrix (`implement_files`, `risk_tier`, `controls.owasp/nist/iso`); `verify <new area> --auto <fixture> --json` on own example, `empty-agent`, `wildcard-scope`, `scoped` (`summary`, `auto_checks` statuses, `overclaim_checks` raised flags) | equal. Prints `RAN`; a skip is not accepted at INT |
+
+### Docs (node N6); AC31
+
+| Id | Check | Expected |
+|---|---|---|
+| T-DOC-09 | both READMEs, CHANGELOG | contain the launch line of SPEC S6.7 byte for byte; `## What's new in v3.0` names `agent-permissions` and `agent-tool-safety` and contains "no command, flag or JSON key was removed or renamed"; the area count and checklist count stated in the README equal the number of files in `content/skills/areas/` and `content/verify/`; CHANGELOG `## 3.0.0` starts with "Additive release." and has the "Changed for agentic projects" paragraph including the words "has not been measured" |
+
+### End to end added (INT)
+
+| Id | Journey | Pass when |
+|---|---|---|
+| E2E-09 | Agentic project from the installed tarball: `aigis classify --traits uses-llm,is-agentic,accepts-user-input --json`; `aigis get agent-tool-safety`; write its Python example into a temp project; `aigis verify agent-tool-safety --auto .`; `aigis threats --traits uses-llm,is-agentic,accepts-user-input` | both new areas recommended; verify shows all auto checks PASS and the ATLAS block naming the approved mitigations; in the threats output every mitigation that the approved gold assigns to a new area shows that area instead of "no Aigis area" |
+
+## Rev 3 amendments to earlier tests
+
+| Test | Amendment |
+|---|---|
+| T-REL-01, E2E-01, E2E-05, T-DOC-05 | version and heading are `3.0.0` |
+| T-DOC-02 | the section is `## What's new in v3.0`; N in "map to N of the 44" is computed from both approved gold files (`area-mitigations.json` and `new-areas.json`) |
+| T-FM-02 | 21 area files: the 15 existing non-EU areas and the 2 new areas have `controls.atlas` as an array; the 4 `eu-ai-act-*` files have none |
+| T-FM-03 | unchanged for the 15; the 2 new areas are checked by T-NA-06 / T-NB-06 against `new-areas.json` |
+| T-FM-04, T-FM-05 | apply to the 19 pre-existing area files only (citations and bodies unchanged); the 2 new files are excluded |
+| T-REG-01, T-REG-04 | for an input whose resolved traits include `is-agentic` (TS2 in the matrix, D9 on the build path), the expected output is baseline with the T-RT-02 / T-RT-03 delta applied, and nothing else; for all other inputs unchanged. `search --list` gains the two areas and two checklists; `traits` output unchanged |
+| T-REG-02 | still the 15 labeled existing areas |
+| T-SUR-01, T-SUR-09 | expectations are computed from frontmatter and gold at run time, so they hold with the new areas; TS1 and DS1 are not agentic |
+| T-HON-01 | the static scan already covers the new files under `content/`; add to the command list `verify agent-permissions --auto <own example>` and `verify agent-tool-safety --auto <own example>`, text and `--json`, and `audit --traits is-agentic` |
+| T-THR-01, T-THR-02 | no change in logic: areas per mitigation come from the frontmatter of all 21 files; gaps shrink accordingly once the label pass is merged |
+| T-PY-02 | cut-complete now means: no `atlas.py`, no `threats.py`; pass 1 files may differ from the base commit |
+| AC map additions | AC24: T-NA-01..05, T-NA-07, T-NB-01..05, T-NB-07. AC25: rubric C-1..C-11. AC26: T-NV-01..06, T-NV-08. AC27: T-RT-01..05, EV-RT. AC28: T-NA-06, T-NB-06. AC29: T-PY-03. AC30: T-NV-07. AC31: T-DOC-09. AC15 adds T-RT-01..03 |
+
+| AC | Tests |
+|---|---|
+| AC24 | T-NA-01..05, T-NA-07, T-NB-01..05, T-NB-07 |
+| AC25 | rubric C-1..C-11 (checker, with evidence) |
+| AC26 | T-NV-01..06, T-NV-08 |
+| AC27 | T-RT-01..05, EV-RT |
+| AC28 | T-NA-06, T-NB-06 |
+| AC29 | T-PY-03 |
+| AC30 | T-NV-07 |
+| AC31 | T-DOC-09 |
+---
+
+## Agent-native use (rev 16:00; AC32)
+
+| Id | File, node | Check | Expected |
+|---|---|---|---|
+| T-SUR-12 | `test/atlas-surfaces.test.js`, N4 | `build "<DS1>" --json`, `--compact --json`, `build "<DS3>" --json` | the Threat model section contains "Do this before you finish, without waiting to be asked:" and a numbered list of 4 items: item 1 has the exact `` `aigis threats --traits <csv>` `` command, item 2 has `aigis get <area>`, item 3 has "gap" and "Never report a gap as handled", item 4 starts with "Rerun"; the section lists no `AML.` id; "Instructions for the agent" has a new item 6 naming the section; "Verification" has exactly one new checkbox containing `aigis threats`; removing the section and those two lines gives the baseline brief (masked); total growth at most 1,500 |
+| T-DOC-10 | `test/atlas-docs.test.js`, N6 | `content/index/audit-scan.md` and `aigis audit --scan` | the file contains `## PHASE 3B: THREAT MODEL (MITRE ATLAS)` exactly once, after the `## PHASE 3:` heading and before the `## PHASE 4:` heading; the phase contains `aigis threats --traits`, "Add every area it names to the audit scope", "not covered", the description fallback and the DISCLAIMER; the file differs from the baseline fixture by that one inserted block only, at most 800 characters; `aigis audit --scan` exits 0 and prints the file |
+| T-DOC-11 | `test/atlas-docs.test.js`, N6 | `aigis init <ide>` in a fresh temp directory for each of `cursor`, `windsurf`, `copilot`, `claude-code` | exit 0; the file init writes for that IDE (`.cursorrules`, `.windsurfrules`, `.github/copilot-instructions.md`, and the skill file for claude-code) contains the whole `## Threat modeling (MITRE ATLAS)` section byte for byte as in `core.md`, the two workflow pointers and the DISCLAIMER; where the file has a resolver block, the block and its checksum equal the baseline fixture; no `aigis threats` text appears inside the resolver block |
+
+Amendments:
+
+| Test | Amendment |
+|---|---|
+| T-SUR-09 | growth cap is 1,500; the "removing the section" comparison also removes instruction item 6 and the new Verification checkbox; the mitigation ids are asserted in `meta.atlas.mitigations`, not in the brief text |
+| T-RT-04 | growth cap is 1,500 plus the two area bodies |
+| T-FS-01 to T-FS-03 | in the fail-soft state the brief has none of the three additions (section, item 6, checkbox) |
+| T-REG-01 | add `audit --scan` to the matrix: equal to baseline after removing the one PHASE 3B block |
+| T-REG-05 | unchanged: the rules file grows exactly by the growth of `core.md`, and the resolver block and checksum equal baseline |
+| E2E-04 | from the installed tarball: `aigis init cursor` in a temp project; `.cursorrules` contains the "when" sentence with all five occasions, the five "how" steps with `aigis threats --traits`, `aigis get <area>` and `aigis verify <area> --auto`, and the gap rule; resolver block checksum equals baseline. Then the same file is used as the only instruction for the next journey step: a script follows steps 2 and 3 literally for traits `uses-llm,is-agentic,accepts-user-input` (run `threats`, parse the area ids it names from `--json`, run `aigis get` on each) and every command exits 0. This proves the written loop is executable as written; it does not prove an agent follows it (that is the L4 note in EVALS §10) |
+| T-HON-01 | add `audit --scan` output to the command list |
+
+| AC | Tests |
+|---|---|
+| AC32 | T-DOC-01, T-DOC-10, T-DOC-11, T-SUR-12, T-REG-05, E2E-04 |

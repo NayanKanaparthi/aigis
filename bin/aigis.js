@@ -18,7 +18,7 @@ const program = new Command();
 program
   .name('aigis')
   .description('AI governance guardrails for coding agents')
-  .version('3.0.1');
+  .version('3.1.0');
 
 // ============================================================
 // aigis classify
@@ -792,8 +792,8 @@ program
 program
   .command('init')
   .description('Set up aigis for your IDE (writes core skill + resolver block). Optional --ci and --hook activation surfaces.')
-  .argument('<ide>', 'IDE to configure: cursor, claude-code, windsurf, copilot')
-  .option('--refresh', 'Overwrite existing aigis content (destructive — use after Aigis updates or to fix a stale resolver block checksum)')
+  .argument('<ide>', 'IDE to configure: claude-code, codex, cursor, copilot, windsurf')
+  .option('--refresh', 'Replace the existing Aigis section with the current one and keep the rest of the file (use after Aigis updates or to fix a stale resolver block checksum)')
   .option('--ci <provider>', 'Install CI workflow file. Currently supports: github (drops .github/workflows/aigis.yml).')
   .option('--hook', 'Install .git/hooks/pre-commit that runs aigis verify on areas declared in .aigisrc.json.')
   .action((ide, opts) => {

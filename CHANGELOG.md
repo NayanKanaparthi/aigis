@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.1.0
+
+- Codex support. `aigis init codex` writes the Aigis instructions to `AGENTS.md`, the file Codex reads. If you already have an `AGENTS.md`, Aigis adds its section at the end and leaves your content as it is.
+- Safer refresh. `aigis init <ide> --refresh` now replaces only the Aigis section of the file and keeps everything else you wrote, byte for byte. Before, it rewrote the whole file. If the Aigis section can't be found exactly once, refresh stops with an error and changes nothing. Files that contain only the Aigis section refresh exactly as before.
+
 ## 3.0.1
 
 Documentation only. No change to commands, content or output.

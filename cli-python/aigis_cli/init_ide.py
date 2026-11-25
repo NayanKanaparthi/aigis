@@ -13,9 +13,13 @@ from .fetch import get_core
 from .keywords import TRIGGERS_PATH, load_triggers
 
 console = Console(highlight=False)
+err_console = Console(highlight=False, stderr=True)
+
+HEADER_LINE = "# Aigis core skill — installed by `aigis init`"
+RESOLVER_BLOCK_END = "# --- AIGIS RESOLVER BLOCK END ---"
 
 HEADER = (
-    "# Aigis core skill — installed by `aigis init`\n"
+    HEADER_LINE + "\n"
     "# Re-run `aigis init <ide>` to refresh this file when Aigis updates.\n"
     "# Area + workflow skills load on demand via the aigis CLI; they are NOT in this file.\n\n"
 )
@@ -31,7 +35,10 @@ IDE_DESTINATIONS: dict[str, dict] = {
     "windsurf":    {"file": ".windsurfrules",                "instruction": "Windsurf will read these instructions on every interaction in this project."},
     "copilot":     {"file": ".github/copilot-instructions.md", "instruction": "Copilot will read these instructions for this repository."},
     "claude-code": {"file": None,                            "instruction": "Claude Code will read this skill file. Restart Claude Code for it to take effect."},
+    "codex":       {"file": "AGENTS.md",                     "instruction": "Codex reads AGENTS.md at the project root, so it will follow these instructions in this project."},
 }
+
+AVAILABLE_IDES = "claude-code, codex, cursor, copilot, windsurf"
 
 
 def _short_question(prompt: str) -> str:
@@ -83,7 +90,7 @@ def render_resolver_block(checksum: str) -> str:
         lines.append(f"| {k.ljust(lpw)} | {', '.join(e['traits']).ljust(ltw)} | {_short_question(e['confirmation_prompt']).ljust(askw)} |")
 
     lines.append("")
-    lines.append("# --- AIGIS RESOLVER BLOCK END ---")
+    lines.append(RESOLVER_BLOCK_END)
     return "\n".join(lines)
 
 
@@ -91,6 +98,31 @@ def _build_full_content() -> tuple[str, str]:
     checksum = compute_file_checksum(TRIGGERS_PATH)
     block = render_resolver_block(checksum)
     return HEADER + get_core() + "\n\n" + block + "\n", checksum
+
+
+def _line_starts(text: str, needle: str) -> list[int]:
+    """Positions where `needle` starts a line (start of text or right after a newline)."""
+    out: list[int] = []
+    i = text.find(needle)
+    while i != -1:
+        if i == 0 or text[i - 1] == "\n":
+            out.append(i)
+        i = text.find(needle, i + 1)
+    return out
+
+
+def _replace_aigis_section(existing: str, content: str) -> tuple[str | None, str | None]:
+    """Mirror of replaceAigisSection in lib/init.js. Returns (text, error)."""
+    heads = _line_starts(existing, HEADER_LINE)
+    ends = _line_starts(existing, RESOLVER_BLOCK_END)
+    if len(heads) > 1 or len(ends) > 1:
+        return None, f"found {max(len(heads), len(ends))} Aigis sections, expected exactly one"
+    if not heads:
+        return None, "the Aigis header line was not found"
+    if not ends or ends[0] < heads[0]:
+        return None, f"the Aigis end marker ({RESOLVER_BLOCK_END}) was not found after the Aigis header"
+    fresh = content[: content.rfind(RESOLVER_BLOCK_END) + len(RESOLVER_BLOCK_END)]
+    return existing[: heads[0]] + fresh + existing[ends[0] + len(RESOLVER_BLOCK_END):], None
 
 
 def _write_or_refresh(target: Path, content: str, expected: str, refresh: bool, instruction: str, ide_name: str, display: str) -> None:
@@ -113,7 +145,17 @@ def _write_or_refresh(target: Path, content: str, expected: str, refresh: bool, 
         return
 
     if refresh:
-        target.write_text(content, encoding="utf-8")
+        # Replace only the Aigis section; everything before and after it is kept byte for byte.
+        # newline="" so line endings are neither translated on read nor on write.
+        with target.open("r", encoding="utf-8", newline="") as f:
+            raw = f.read()
+        text, error = _replace_aigis_section(raw, content)
+        if error:
+            err_console.print(f"\n[red]Could not refresh {display}: {error}.[/red]", soft_wrap=True)
+            err_console.print(f"Nothing was changed. Remove the old Aigis section by hand, then re-run [green]aigis init {ide_name}[/green].\n", soft_wrap=True)
+            sys.exit(1)
+        with target.open("w", encoding="utf-8", newline="") as f:
+            f.write(text)
         console.print(f"\n[green]✓ Refreshed {display} (resolver checksum: {expected[:12]}...)[/green]\n")
         console.print(f"[dim]{instruction}\n[/dim]")
         return
@@ -131,7 +173,7 @@ def _write_or_refresh(target: Path, content: str, expected: str, refresh: bool, 
         console.print("[dim]  No resolver block detected, but core marker present.[/dim]")
     console.print("")
     console.print("Options:")
-    console.print(f"  [green]aigis init {ide_name} --refresh[/green]    overwrite the file with the current Aigis core + resolver block")
+    console.print(f"  [green]aigis init {ide_name} --refresh[/green]    replace the Aigis section with the current core + resolver block (your other content is kept)")
     console.print(f"  manually remove the existing aigis section, then re-run [green]aigis init {ide_name}[/green]")
     console.print("")
     sys.exit(1)
@@ -142,7 +184,7 @@ def init(ide: str, refresh: bool = False, ci: str | None = None, hook: bool = Fa
     dest = IDE_DESTINATIONS.get(ide_lower)
     if not dest:
         console.print(f"[red]Unknown IDE: {ide}[/red]")
-        console.print("[dim]Available: cursor, claude-code, windsurf, copilot\n[/dim]")
+        console.print(f"[dim]Available: {AVAILABLE_IDES}\n[/dim]")
         sys.exit(1)
 
     content, checksum = _build_full_content()

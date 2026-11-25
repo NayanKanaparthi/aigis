@@ -4,7 +4,7 @@
 
 Aigis now understands how attackers attack AI systems and helps your agent build defenses against them.
 
-Aigis sits between you and your coding agent (Cursor, Claude Code, GitHub Copilot, Windsurf) and gives the agent curated AI governance patterns mapped to NIST AI RMF, OWASP Top 10 for LLMs, ISO/IEC 42001, and the EU AI Act, with threat modeling from MITRE ATLAS.
+Aigis sits between you and your coding agent (Claude Code, Codex, Cursor, GitHub Copilot or Windsurf) and gives the agent curated AI governance patterns mapped to NIST AI RMF, OWASP Top 10 for LLMs, ISO/IEC 42001, and the EU AI Act, with threat modeling from MITRE ATLAS.
 
 You don't run Aigis. Your agent does. After one setup command, you describe what you're building and your agent picks the right governance patterns, implements them, and verifies the result — all in the same chat where you write code.
 
@@ -40,10 +40,10 @@ npm install -g @aigis-ai/cli
 pip install aigis-cli
 
 cd your-project
-aigis init cursor      # or: claude-code, copilot, windsurf
+aigis init cursor      # or: claude-code, codex, copilot, windsurf
 ```
 
-That's it. `aigis init` writes a single rules file (`.cursorrules` for Cursor, `.github/copilot-instructions.md` for Copilot, etc.) that teaches your agent the Aigis workflow. Your agent reads it on every interaction in this project.
+That's it. `aigis init` writes a single rules file (`.cursorrules` for Cursor, `.github/copilot-instructions.md` for Copilot, `AGENTS.md` for Codex, etc.) that teaches your agent the Aigis workflow. Your agent reads it on every interaction in this project.
 
 ![One command and you're done — your agent takes over.](docs/screenshots/setup.png)
 
@@ -74,7 +74,7 @@ The whole loop — describe, implement, verify — happens without leaving the I
 When you ran `aigis init cursor`, three things landed in your repo:
 
 1. **`.cursorrules`** — the Aigis "core skill" your agent loads on every interaction. It documents the workflow (`classify → build → implement → verify → report`) and embeds a 39-phrase resolver block (high-confidence and low-confidence triggers) the agent uses to pick traits from your description.
-2. **A checksum** at the top of the resolver block. When Aigis updates, `aigis init <ide> --refresh` overwrites cleanly; mismatched checksums error out so you can see what changed.
+2. **A checksum** at the top of the resolver block. When Aigis updates, `aigis init <ide> --refresh` replaces only the Aigis section and keeps the rest of the file; mismatched checksums error out so you can see what changed.
 3. **No hidden services. No telemetry. No background processes.** Just a markdown file your agent reads.
 
 Optional add-ons at init time:
@@ -198,8 +198,10 @@ F1 beats baseline by +0.047. v2.1 ships `--tight` as a flag-gated experiment; pr
 
 ## Supported agents
 
-- Cursor
 - Claude Code
+- Codex: `aigis init codex` writes `AGENTS.md`, which Codex reads, and keeps any content you already have there
+  Codex reads only the first 32 KiB of `AGENTS.md` by default, so `aigis init codex` warns you if the file is larger; you can raise `project_doc_max_bytes` in `~/.codex/config.toml`.
+- Cursor
 - GitHub Copilot
 - Windsurf
 

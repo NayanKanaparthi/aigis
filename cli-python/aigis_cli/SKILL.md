@@ -34,7 +34,8 @@ Run once in the project root:
 
 - `aigis init cursor` writes `.cursorrules`
 - `aigis init claude-code` writes `~/.claude/skills/aigis/SKILL.md`
+- `aigis init codex` writes `AGENTS.md` (appends if the file already exists)
 - `aigis init windsurf` writes `.windsurfrules`
 - `aigis init copilot` writes `.github/copilot-instructions.md`
 
-All four receive the same content: `content/skills/core.md`. Area and workflow skills load on demand; they are not pre-installed into the rules file.
+All five receive the same content: `content/skills/core.md`. Area and workflow skills load on demand; they are not pre-installed into the rules file.

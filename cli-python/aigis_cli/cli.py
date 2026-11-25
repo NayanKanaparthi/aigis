@@ -850,11 +850,14 @@ def annotate(file_id: str | None, note: str | None,
 # ── init ────────────────────────────────────────────────────────────
 @cli.command("init")
 @click.argument("ide")
-@click.option("--refresh", is_flag=True, help="Overwrite existing aigis content (destructive — use after Aigis updates or to fix a stale resolver block checksum)")
+@click.option("--refresh", is_flag=True, help="Replace the existing Aigis section with the current one and keep the rest of the file (use after Aigis updates or to fix a stale resolver block checksum)")
 @click.option("--ci", default=None, help="Install CI workflow file. Currently supports: github (drops .github/workflows/aigis.yml).")
 @click.option("--hook", is_flag=True, help="Install .git/hooks/pre-commit that runs aigis verify on areas declared in .aigisrc.json.")
 def init_cmd(ide: str, refresh: bool, ci: str | None, hook: bool) -> None:
-    """Set up aigis for your IDE (writes core skill + resolver block). Optional --ci and --hook activation surfaces."""
+    """Set up aigis for your IDE (writes core skill + resolver block). Optional --ci and --hook activation surfaces.
+
+    IDE: claude-code, codex, cursor, copilot, windsurf
+    """
     run_init(ide, refresh=refresh, ci=ci, hook=hook)
 
 

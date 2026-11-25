@@ -1,0 +1,110 @@
+diff --git a/app.py b/app.py
+index 87503d2..641c208 100644
+--- a/app.py
++++ b/app.py
+@@ -6,6 +6,7 @@ import os
+ from fastapi import FastAPI
+ from pydantic import BaseModel
+ import anthropic
++from emailer import send_email
+ 
+ app = FastAPI()
+ client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+@@ -16,14 +17,61 @@ SYSTEM_PROMPT = "You are a helpful customer support assistant for Acme Store."
+ class ChatRequest(BaseModel):
+     customer_id: str
+     message: str
++    customer_email: str | None = None  # recipient for send_email_reply; set by our backend
++
++
++SEND_EMAIL_TOOL = {
++    "name": "send_email_reply",
++    "description": (
++        "Send an email to the customer you are currently helping. Use it when an email is "
++        "the right channel: e.g. the customer asks for written confirmation, a summary, or "
++        "follow-up details they will want to keep. Don't use it for ordinary chat answers. "
++        "The recipient is fixed; you cannot choose it. Never include secrets in the email."
++    ),
++    "input_schema": {
++        "type": "object",
++        "properties": {
++            "subject": {"type": "string"},
++            "body": {"type": "string", "description": "Plain-text email body"},
++        },
++        "required": ["subject", "body"],
++    },
++}
+ 
+ 
+ @app.post("/chat")
+ def chat(req: ChatRequest):
+-    response = client.messages.create(
+-        model="claude-sonnet-5-5",
+-        max_tokens=1024,
+-        system=SYSTEM_PROMPT,
+-        messages=[{"role": "user", "content": req.message}],
+-    )
+-    return {"reply": response.content[0].text}
++    tools = [SEND_EMAIL_TOOL] if req.customer_email else []
++    messages = [{"role": "user", "content": req.message}]
++    emails_sent = 0
++    for _ in range(5):
++        kwargs = {"tools": tools} if tools else {}
++        response = client.messages.create(
++            model="claude-sonnet-5-5",
++            max_tokens=1024,
++            system=SYSTEM_PROMPT,
++            messages=messages,
++            **kwargs,
++        )
++        if response.stop_reason != "tool_use":
++            break
++        messages.append({"role": "assistant", "content": response.content})
++        results = []
++        for block in response.content:
++            if block.type != "tool_use":
++                continue
++            if emails_sent >= 1:  # cap: one email per request
++                out, err = "Email already sent for this request.", True
++            else:
++                try:
++                    send_email(req.customer_email, block.input["subject"], block.input["body"])
++                    emails_sent += 1
++                    out, err = "Email sent.", False
++                except Exception as e:
++                    out, err = f"Failed to send email: {e}", True
++            results.append(
++                {"type": "tool_result", "tool_use_id": block.id, "content": out, "is_error": err}
++            )
++        messages.append({"role": "user", "content": results})
++    text = "".join(b.text for b in response.content if b.type == "text")
++    return {"reply": text, "email_sent": emails_sent > 0}
+
+=== NEW FILE emailer.py ===
+"""SMTP sending. Configured via env vars:
+SMTP_HOST, SMTP_PORT (default 587), SMTP_USER, SMTP_PASSWORD, SMTP_FROM, SMTP_STARTTLS (default 1).
+"""
+import os
+import smtplib
+from email.message import EmailMessage
+
+
+def send_email(to: str, subject: str, body: str) -> None:
+    host = os.environ["SMTP_HOST"]
+    port = int(os.environ.get("SMTP_PORT", "587"))
+    sender = os.environ["SMTP_FROM"]
+    # Reject header injection via newlines in subject/recipient.
+    if any(c in s for s in (to, subject) for c in "\r\n"):
+        raise ValueError("Invalid newline in header field")
+    msg = EmailMessage()
+    msg["From"] = sender
+    msg["To"] = to
+    msg["Subject"] = subject
+    msg.set_content(body)
+    with smtplib.SMTP(host, port, timeout=15) as smtp:
+        if os.environ.get("SMTP_STARTTLS", "1") != "0":
+            smtp.starttls()
+        user = os.environ.get("SMTP_USER")
+        if user:
+            smtp.login(user, os.environ["SMTP_PASSWORD"])
+        smtp.send_message(msg)

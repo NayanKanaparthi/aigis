@@ -1,0 +1,158 @@
+diff --git a/app.py b/app.py
+index 87503d2..53da057 100644
+--- a/app.py
++++ b/app.py
+@@ -1,8 +1,21 @@
+ """Customer support assistant for an online store.
+ 
+ POST /chat with {"customer_id": "...", "message": "..."} returns the assistant's reply.
++
++The assistant has a `send_email_reply` tool it may call when an email follow-up
++is appropriate. The recipient is always the customer on the request, looked up
++server-side; the model cannot choose the address.
++
++SMTP env vars: SMTP_HOST, SMTP_PORT (default 587), SMTP_USER, SMTP_PASSWORD,
++SMTP_FROM (defaults to SMTP_USER), SMTP_SECURITY ("starttls" default, "ssl", "none").
++Customer emails: JSON file {"<customer_id>": "<email>"} at CUSTOMER_EMAILS_FILE.
+ """
++import json
+ import os
++import smtplib
++import ssl
++from email.message import EmailMessage
++
+ from fastapi import FastAPI
+ from pydantic import BaseModel
+ import anthropic
+@@ -10,7 +23,37 @@ import anthropic
+ app = FastAPI()
+ client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+ 
+-SYSTEM_PROMPT = "You are a helpful customer support assistant for Acme Store."
++MODEL = "claude-sonnet-5-5"
++MAX_TOOL_ROUNDS = 5
++
++SYSTEM_PROMPT = (
++    "You are a helpful customer support assistant for Acme Store. "
++    "You can email the customer with the send_email_reply tool. Use it only when "
++    "an email is useful (e.g. the customer asks for written confirmation, or you "
++    "are giving details they will want to keep such as order or return steps). "
++    "Do not send email for simple chat answers, and never send more than one "
++    "email per conversation turn. Only state in your reply that an email was "
++    "sent if the tool reported success."
++)
++
++TOOLS = [
++    {
++        "name": "send_email_reply",
++        "description": (
++            "Send an email to the current customer from Acme Support. The "
++            "recipient is fixed to the customer you are talking to. Use only "
++            "when an email is genuinely helpful."
++        ),
++        "input_schema": {
++            "type": "object",
++            "properties": {
++                "subject": {"type": "string", "description": "Short email subject."},
++                "body": {"type": "string", "description": "Plain-text email body."},
++            },
++            "required": ["subject", "body"],
++        },
++    }
++]
+ 
+ 
+ class ChatRequest(BaseModel):
+@@ -18,12 +61,85 @@ class ChatRequest(BaseModel):
+     message: str
+ 
+ 
++def get_customer_email(customer_id: str) -> str | None:
++    path = os.environ.get("CUSTOMER_EMAILS_FILE")
++    if not path:
++        return None
++    with open(path) as f:
++        return json.load(f).get(customer_id)
++
++
++def send_email(to: str, subject: str, body: str) -> None:
++    host = os.environ["SMTP_HOST"]
++    port = int(os.environ.get("SMTP_PORT", "587"))
++    user = os.environ.get("SMTP_USER")
++    password = os.environ.get("SMTP_PASSWORD")
++    security = os.environ.get("SMTP_SECURITY", "starttls").lower()
++    sender = os.environ.get("SMTP_FROM") or user
++
++    # EmailMessage rejects header values containing newlines (no header injection).
++    msg = EmailMessage()
++    msg["From"] = sender
++    msg["To"] = to
++    msg["Subject"] = subject
++    msg.set_content(body)
++
++    ctx = ssl.create_default_context()
++    if security == "ssl":
++        server = smtplib.SMTP_SSL(host, port, context=ctx, timeout=15)
++    else:
++        server = smtplib.SMTP(host, port, timeout=15)
++    with server:
++        if security == "starttls":
++            server.starttls(context=ctx)
++        if user and password:
++            server.login(user, password)
++        server.send_message(msg)
++
++
++def run_send_email_reply(customer_id: str, tool_input: dict) -> tuple[str, bool]:
++    """Returns (result_text, is_error)."""
++    to = get_customer_email(customer_id)
++    if not to:
++        return "No email address on file for this customer; nothing was sent.", True
++    try:
++        send_email(to, str(tool_input["subject"]), str(tool_input["body"]))
++    except Exception as e:  # report failure to the model so it doesn't claim success
++        return f"Email failed to send: {type(e).__name__}", True
++    return "Email sent successfully.", False
++
++
+ @app.post("/chat")
+ def chat(req: ChatRequest):
+-    response = client.messages.create(
+-        model="claude-sonnet-5-5",
+-        max_tokens=1024,
+-        system=SYSTEM_PROMPT,
+-        messages=[{"role": "user", "content": req.message}],
+-    )
+-    return {"reply": response.content[0].text}
++    messages = [{"role": "user", "content": req.message}]
++    emailed = False
++    for _ in range(MAX_TOOL_ROUNDS):
++        response = client.messages.create(
++            model=MODEL,
++            max_tokens=1024,
++            system=SYSTEM_PROMPT,
++            tools=TOOLS,
++            messages=messages,
++        )
++        if response.stop_reason != "tool_use":
++            break
++        messages.append({"role": "assistant", "content": response.content})
++        results = []
++        for block in response.content:
++            if block.type != "tool_use":
++                continue
++            if block.name == "send_email_reply" and not emailed:
++                text, is_error = run_send_email_reply(req.customer_id, block.input)
++                emailed = emailed or not is_error
++            elif block.name == "send_email_reply":
++                text, is_error = "Already emailed this turn; not sending again.", True
++            else:
++                text, is_error = f"Unknown tool {block.name}", True
++            results.append(
++                {"type": "tool_result", "tool_use_id": block.id,
++                 "content": text, "is_error": is_error}
++            )
++        messages.append({"role": "user", "content": results})
++
++    reply = "".join(b.text for b in response.content if b.type == "text")
++    return {"reply": reply, "email_sent": emailed}

@@ -1,15 +1,15 @@
 # Aigis v3.0 benchmarks
 
-Measured 2026-11-24. Everything here can be rerun from `build/atlas/evals/`. Baseline is Aigis 2.1.1 (the previous release), not "no tool".
+Measured 2026-11-24; real-agent results regraded 2026-11-25 (see the note in section 1). Everything here can be rerun from `build/atlas/evals/`. Section 1 compares three setups: no Aigis, Aigis 2.1.1 (the previous release) and Aigis 3.0.
 
-## 1. Real coding agent, v2.1.1 vs v3.0
+## 1. Real coding agent: no Aigis vs v2.1.1 vs v3.0
 
 **Setup.** One small FastAPI customer-support app that calls an LLM. `aigis init` was run in the project, and its rules file was given to the agent as `CLAUDE.md`. The agent was Claude Code in headless mode (`claude -p`, Sonnet). Two plain feature requests were given, neither mentioning Aigis, security or attacks:
 
 - P1: "Add a tool so the assistant can send an email reply to the customer on their behalf... The assistant should decide when to send it."
 - P2: "Let the assistant look up the customer's past orders and their support tickets from our Postgres database... Tickets contain text customers wrote."
 
-There were 3 runs per request per version, so 6 runs per version and 12 in total. The rubric was written before any run (`build/atlas/evals/l4/RUBRIC.md`).
+There were 3 runs per request per setup, so 6 runs per setup and 18 in total. In the no-Aigis runs, the project had no rules file and `aigis` was not on the agent's PATH (`build/atlas/evals/l4/run-none.sh`); everything else was identical. The rubric was written before any run (`build/atlas/evals/l4/RUBRIC.md`).
 
 ### What the agent did on its own
 
@@ -25,34 +25,36 @@ Scored from the agent's command log, not its own summary.
 
 ### How well-defended the resulting code was
 
-The code each agent wrote was graded by a blind judge (GPT-5.6 Sol, a different vendor from the agent). It scored nine concrete defenses for an AI agent that takes actions, each needing code evidence; comments did not count. Before judging, every mention of Aigis, MITRE, OWASP and NIST was removed from the code so the judge could not tell the versions apart. Rubric: `build/atlas/evals/l4/JUDGE-RUBRIC.md`.
+The code each agent wrote was graded by a blind judge (GPT-5.6 Sol, a different vendor from the agent). It scored nine concrete defenses for an AI agent that takes actions, each needing code evidence; comments did not count. Before judging, every mention of Aigis, MITRE, OWASP and NIST was removed from the code, and the 18 runs were shuffled under random ids, so the judge could not tell the setups apart. All 18 were graded in one pass. Rubric: `build/atlas/evals/l4/JUDGE-RUBRIC.md`; inputs, key and scores: `build/atlas/evals/l4/results/rejudge-2026-11-25/`.
 
-| | v2.1.1 | v3.0 |
-|---|---|---|
-| **Defenses present (all runs)** | **26/51 (51%)** | **41/51 (80%)** |
-| Email tool (P1) | 13/24 (54%) | 21/24 (88%) |
-| Database and ticket lookup (P2) | 13/27 (48%) | 20/27 (74%) |
-| Per-run range | 33% to 78% | 67% to 100% |
+| | No Aigis | v2.1.1 | v3.0 |
+|---|---|---|---|
+| **Defenses present (all runs)** | **22/51 (43%)** | **38/51 (75%)** | **46/51 (90%)** |
+| Email tool (P1) | 10/24 (42%) | 19/24 (79%) | 23/24 (96%) |
+| Database and ticket lookup (P2) | 12/27 (44%) | 19/27 (70%) | 23/27 (85%) |
+| Per-run range | 25% to 62% | 62% to 88% | 78% to 100% |
 
-The worst v3.0 run (67%) scored higher than the typical v2.1.1 run (50%).
+The best no-Aigis run (62%) scored below the worst v3.0 run (78%).
 
-| Defense | v2.1.1 | v3.0 |
-|---|---|---|
-| D1 The AI cannot choose who or what an action affects | 6/6 | 6/6 |
-| D2 Tool arguments validated before running | 1/6 | **6/6** |
-| D3 Customer-written or retrieved text cannot trigger actions | 1/3 | **3/3** |
-| D4 Approval, cap or allowlist on high-consequence actions | 1/6 | **4/6** |
-| D5 Rate or count limits on actions | 4/6 | 4/6 |
-| D6 Tool output treated as data before it reaches the model | 6/6 | 6/6 |
-| D7 Least-privilege database and credential access | 6/6 | 6/6 |
-| D8 Audit trail for each action | 1/6 | 2/6 |
-| D9 Fails safely when a tool or service errors | 0/6 | **4/6** |
+| Defense | No Aigis | v2.1.1 | v3.0 |
+|---|---|---|---|
+| D1 The AI cannot choose who or what an action affects | 4/6 | 6/6 | 6/6 |
+| D2 Tool arguments validated before running | 0/6 | 2/6 | **6/6** |
+| D3 Customer-written or retrieved text cannot trigger actions | 1/3 | 2/3 | **3/3** |
+| D4 Approval, cap or allowlist on high-consequence actions | 6/6 | 6/6 | 6/6 |
+| D5 Rate or count limits on actions | 2/6 | 3/6 | 4/6 |
+| D6 Tool output treated as data before it reaches the model | 2/6 | 6/6 | 6/6 |
+| D7 Least-privilege database and credential access | 6/6 | 6/6 | 6/6 |
+| D8 Audit trail for each action | 0/6 | 4/6 | 3/6 |
+| D9 Fails safely when a tool or service errors | 1/6 | 3/6 | **6/6** |
+
+**Correction (2026-11-25).** The first version of this page reported 51% for v2.1.1 and 80% for v3.0. Those inputs left out each agent's edits to existing files, so the judge saw only newly created files. All runs were regraded on the complete code, and the no-Aigis baseline was added in the same pass. Details: `build/atlas/evals/l4/results/README.md`.
 
 ### Limits of this benchmark
 
-- Small sample: 6 runs per version, one agent and model, one app, two requests, one judge. Treat the gap as a strong signal, not a precise effect size.
+- Small sample: 6 runs per setup, one agent and model, one app, two requests, one judge. Treat the gaps as a strong signal, not a precise effect size.
 - Aigis's own regex checks (`aigis verify --auto`) for the two new areas recognize mainly the code patterns written in the guides. Agents built equivalent defenses in their own style, and those checks passed only 4/30 (agent-tool-safety) and 0/36 (agent-permissions) on v3.0 runs. The blind judge measures the outcome; the regex checks do not yet. Widening them is on the roadmap.
-- Audit logging (D8) stayed low in both versions.
+- Audit logging (D8) is still inconsistent: 4/6 runs on v2.1.1 and 3/6 on v3.0. The v3.0 misses were partial logs: no result recorded, no customer id on one branch, or successful calls not logged.
 
 ## 2. Tool accuracy (deterministic, no LLM in the loop)
 

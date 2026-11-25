@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.1
+
+Documentation only. No change to commands, content or output.
+
+- Benchmark corrected and extended. The real-agent benchmark now includes a no-Aigis baseline, and all runs were regraded blind on the complete code: no Aigis 43%, Aigis 2.1.1 75%, Aigis 3.0 90% of agent-safety defenses present. The 3.0.0 readme reported 51% and 80% from an earlier grading pass that left out each agent's edits to existing files. Details in BENCHMARKS.md.
+
 ## 3.0.0
 
 Additive release. Nothing was removed or renamed.

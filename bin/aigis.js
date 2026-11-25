@@ -18,7 +18,7 @@ const program = new Command();
 program
   .name('aigis')
   .description('AI governance guardrails for coding agents')
-  .version('3.0.0');
+  .version('3.0.1');
 
 // ============================================================
 // aigis classify

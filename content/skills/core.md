@@ -46,9 +46,9 @@ When an OVERCLAIM is raised, the area is not complete — fix the anti-pattern b
 Run this yourself, without being asked, when you: build a new AI feature; add tools, write access, memory or a new data source; prepare a launch; audit an existing project; respond to an incident.
 
 1. Derive the traits from the codebase and the user's request (the same traits you give classify).
-2. `aigis threats --traits <traits>`. It lists attacker techniques for this system's entry points (Realized first), the mitigations MITRE links to each, the Aigis area that implements them, and gaps. If you cannot name traits, fall back to `aigis threats "<description>"`.
+2. `aigis threats --traits <traits>`. It lists attacker techniques for this system's entry points (Realized first), the mitigations MITRE links to each, the Aigis areas that help implement each one (in part), and gaps. If you cannot name traits, fall back to `aigis threats "<description>"`.
 3. For every area it names: `aigis get <area>`, implement it, then `aigis verify <area> --auto .`.
-4. For every gap (a mitigation no Aigis area implements): tell the user it is not covered and propose a control. Never report a gap as handled.
+4. For every gap (a mitigation with no mapped Aigis area): tell the user it is not covered and propose a control. Never report a gap as handled.
 5. Rerun when tools, permissions, memory or data sources change.
 
 ## How to pick traits

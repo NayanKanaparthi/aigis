@@ -153,7 +153,7 @@ function validateOne(filename) {
         }
       }
     }
-    // atlas is OPTIONAL: ATLAS mitigation ids this area implements in part.
+    // atlas is OPTIONAL: ATLAS mitigation ids this area helps implement (in part).
     if ('atlas' in fm.controls) {
       if (!Array.isArray(fm.controls.atlas)) {
         errors.push('controls.atlas must be an array if present');

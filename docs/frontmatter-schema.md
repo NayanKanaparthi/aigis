@@ -15,7 +15,7 @@ controls:                                       # REQUIRED — at least three fr
   nist: [MAP-2.1, ...]                          # REQUIRED key, array (may be empty)
   iso42001: [Annex-A.7, ...]                   # REQUIRED key, array (may be empty)
   eu_ai_act: [Art-50, Art-13(1)(b)]            # OPTIONAL — list of EU AI Act article references
-  atlas: [AML.M0020, AML.M0036]                # OPTIONAL: MITRE ATLAS mitigation ids this area implements in part (may be empty)
+  atlas: [AML.M0020, AML.M0036]                # OPTIONAL: MITRE ATLAS mitigation ids this area helps implement (in part) (may be empty)
 min_risk_tier: all                             # REQUIRED — one of: low | medium | high | all
 system_traits: [processes-pii, ...]            # REQUIRED — non-empty array of trait identifiers
 jurisdiction: [eu]                             # OPTIONAL — list of jurisdictions where this area applies
@@ -49,9 +49,9 @@ The `eu_ai_act` field is the v2.1 addition. It is optional on existing areas; ne
 
 ### `controls.atlas` (optional, v3.0 addition)
 
-Lists the MITRE ATLAS mitigation ids that this area's procedure implements in part. Written as one flow-style line, last key of `controls`, ids in ascending order. An empty list (`atlas: []`) means no approved link: the area helps no ATLAS mitigation in a way Aigis is willing to claim.
+Lists the MITRE ATLAS mitigation ids that this area's procedure helps implement (in part). Written as one flow-style line, last key of `controls`, ids in ascending order. An empty list (`atlas: []`) means no approved link: the area helps no ATLAS mitigation in a way Aigis is willing to claim.
 
-- **"Implements in part", never "satisfies".** Following an area's procedure helps with the listed mitigation; it does not mean the mitigation is fully in place in your system. MITRE ATLAS is a threat catalog, not a standard, so there is nothing to comply with.
+- **"Helps implement (in part)", never "implements" or "satisfies".** Following an area's procedure helps with the listed mitigation; it does not mean the mitigation is fully in place in your system. MITRE ATLAS is a threat catalog, not a standard, so there is nothing to comply with.
 - **Mitigations, not techniques.** Every value matches `^AML\.M\d{4}$` and must exist in the vendored catalog `content/index/atlas.json` (ATLAS 2026.10). Technique ids (`AML.T####`) are rejected here. The techniques an area helps against are derived at runtime from MITRE's own `mitigates` links in the catalog (`lib/atlas.js`); they are never stored in frontmatter.
 - **Never jurisdiction-gated.** ATLAS citations apply everywhere, so an area that declares `jurisdiction:` must not declare `atlas`. The four `eu-ai-act-*` areas carry no `atlas` key.
 - **How a mapping change is approved.** The values come from the approved gold file `build/atlas/gold/area-mitigations.json` (rows with `decision: include`). Adding, removing or changing a link means editing that gold file and getting the project owner's (Nayan's) approval recorded in `build/atlas/gold/APPROVAL.md`, then updating the area frontmatter and `scripts/area-controls-baseline.json` in the same commit. The validator's no-deletion check protects `atlas` like the other framework arrays.

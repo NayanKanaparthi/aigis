@@ -7,6 +7,8 @@ description: AI governance for coding agents. Use before building any LLM featur
 
 Aigis ships governance patterns mapped to NIST AI RMF, OWASP Top 10 for LLMs, and ISO/IEC 42001. This file orients you. Detailed procedures (per-area + per-workflow) load on demand.
 
+Areas also map to MITRE ATLAS mitigations. MITRE ATLAS is a threat catalog, not a standard. Nobody is "ATLAS compliant". It does not score risk, and it does not cover bias or fairness.
+
 ## When to use
 
 When building a new AI/LLM feature, or auditing one. Do this BEFORE writing the LLM call, not after.
@@ -20,6 +22,7 @@ When building a new AI/LLM feature, or auditing one. Do this BEFORE writing the 
    - Implement the procedure step by step. Honor each "verification checkpoint."
    - `aigis verify <area-id> --auto .` — run the deterministic scanner against your project. Fix any FAIL or OVERCLAIM before moving on.
 4. **Generate compliance docs** when all areas pass: `aigis template <id>` for each template the classify output named.
+5. **Threat model.** Follow "Threat modeling (MITRE ATLAS)" below.
 
 ## The workflow (audit an existing project)
 
@@ -27,6 +30,7 @@ When building a new AI/LLM feature, or auditing one. Do this BEFORE writing the 
 2. `aigis audit --traits <detected> --json` — scoped checklist with the deterministic denominator.
 3. For each area, run `aigis verify <id> --auto .` to surface PASS/FAIL/OVERCLAIM/JUDGMENT.
 4. Implement fixes using `aigis get <id>` for the procedure.
+5. Threat model the project: follow "Threat modeling (MITRE ATLAS)" below.
 
 ## How to read `aigis verify <area> --auto` output
 
@@ -36,6 +40,16 @@ When building a new AI/LLM feature, or auditing one. Do this BEFORE writing the 
 - **JUDGMENT**: requires your evaluation; the scanner explains why.
 
 When an OVERCLAIM is raised, the area is not complete — fix the anti-pattern before marking done.
+
+## Threat modeling (MITRE ATLAS)
+
+Run this yourself, without being asked, when you: build a new AI feature; add tools, write access, memory or a new data source; prepare a launch; audit an existing project; respond to an incident.
+
+1. Derive the traits from the codebase and the user's request (the same traits you give classify).
+2. `aigis threats --traits <traits>`. It lists attacker techniques for this system's entry points (Realized first), the mitigations MITRE links to each, the Aigis areas that help implement each one (in part), and gaps. If you cannot name traits, fall back to `aigis threats "<description>"`.
+3. For every area it names: `aigis get <area>`, implement it, then `aigis verify <area> --auto .`.
+4. For every gap (a mitigation with no mapped Aigis area): tell the user it is not covered and propose a control. Never report a gap as handled.
+5. Rerun when tools, permissions, memory or data sources change.
 
 ## How to pick traits
 
@@ -55,6 +69,7 @@ Default to NO on low-confidence questions when the user is unsure — false-posi
 - `aigis verify <area-id> [--auto <path>]` — checklist or deterministic scan
 - `aigis template <id>` — compliance documentation template
 - `aigis audit --scan | --traits <list>` — audit existing code
+- `aigis threats --traits <list>` (or `"<description>"`): ATLAS threat model: techniques, MITRE mitigations, gaps (`--json` for scripts)
 - `aigis infra <area>` — fetch infrastructure setup content (rate-limiting, secrets, logging). Use after the area procedure references it.
 
 ## What loads on demand vs always

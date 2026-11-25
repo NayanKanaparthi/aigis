@@ -1,0 +1,25 @@
+{
+  "provenance": {
+    "commit": "07ef537",
+    "version": "2.1.1",
+    "note": "pre-feature product; high-confidence is-agentic detection from baseline triggers (T-REG-03 pins triggers.json)"
+  },
+  "description": "Build a coding agent that uses an LLM to read a repository, run shell commands and open pull requests for users who describe a task in plain text.",
+  "all_traits": [
+    "generates-code",
+    "is-agentic",
+    "uses-llm"
+  ],
+  "areas": [
+    "audit-logging",
+    "fallback-patterns",
+    "human-oversight",
+    "input-validation",
+    "monitoring",
+    "output-sanitization",
+    "prompt-security",
+    "rate-limiting"
+  ],
+  "char_count": 95761,
+  "mode": "full"
+}

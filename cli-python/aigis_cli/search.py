@@ -5,6 +5,9 @@ from pathlib import Path
 import frontmatter
 
 CONTENT_DIR = Path(__file__).resolve().parent / "content"
+# Areas live in content/skills/areas (v2.0 moved them out of content/implement,
+# which made search and --list return no areas before v3.0).
+AREAS_DIR = "skills/areas"
 
 
 def _load_file_meta(directory: str) -> list[dict]:
@@ -34,7 +37,7 @@ def search(query: str) -> list[dict]:
     query_lower = query.lower()
     results: list[dict] = []
 
-    all_files = _load_file_meta("implement") + _load_file_meta("templates")
+    all_files = _load_file_meta(AREAS_DIR) + _load_file_meta("templates")
 
     for f in all_files:
         matched_controls: list[str] = []
@@ -64,6 +67,6 @@ def search(query: str) -> list[dict]:
 
 def list_all() -> dict[str, list[dict]]:
     return {
-        "implement": [{"id": f["id"], "title": f["title"]} for f in _load_file_meta("implement")],
+        "implement": [{"id": f["id"], "title": f["title"]} for f in _load_file_meta(AREAS_DIR)],
         "templates": [{"id": f["id"], "title": f["title"]} for f in _load_file_meta("templates")],
     }

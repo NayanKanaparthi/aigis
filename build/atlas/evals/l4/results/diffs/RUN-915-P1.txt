@@ -1,0 +1,163 @@
+
+
+=== NEW FILE email_tool.py ===
+"""send_email_reply tool: lets the assistant email the customer on their behalf.
+
+Guardrails (enforced here in code, not in the prompt):
+  * The recipient is NEVER a model argument. It is looked up server-side from the
+    authenticated request's customer_id, so injected text cannot redirect mail.
+  * Arguments are validated against a strict schema (exact fields, types, length caps,
+    no CR/LF in the subject => no SMTP header injection).
+  * Per-customer rate limit and a one-send-per-request cap.
+  * Every attempt is audit-logged (trace id, customer id, outcome; never the body).
+  * Fails closed: missing SMTP config or unknown customer => the email is not sent.
+
+SMTP settings come from env vars:
+  SMTP_HOST (required), SMTP_PORT (default 587), SMTP_USER, SMTP_PASSWORD,
+  SMTP_FROM (required), SMTP_SECURITY = starttls (default) | ssl | none
+"""
+import json
+import logging
+import os
+import smtplib
+import ssl
+import threading
+import time
+from collections import defaultdict, deque
+from email.message import EmailMessage
+from email.utils import parseaddr
+
+log = logging.getLogger("email_tool")
+
+SUBJECT_MAX = 200
+BODY_MAX = 4000
+RATE_MAX = int(os.environ.get("EMAIL_RATE_MAX", "3"))          # emails ...
+RATE_WINDOW = int(os.environ.get("EMAIL_RATE_WINDOW_S", "3600"))  # ... per window, per customer
+
+TOOL_SCHEMA = {
+    "name": "send_email_reply",
+    "description": (
+        "Send an email to the customer you are currently helping. Use it only when an "
+        "email is genuinely useful (e.g. the customer asks for written confirmation, or "
+        "the answer contains details they will want to keep). The recipient is fixed to "
+        "the customer's address on file; you cannot choose it. Do not include secrets, "
+        "payment details or other customers' information. At most one email per conversation turn."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "subject": {"type": "string", "maxLength": SUBJECT_MAX},
+            "body": {"type": "string", "maxLength": BODY_MAX},
+        },
+        "required": ["subject", "body"],
+        "additionalProperties": False,
+    },
+}
+
+
+class ToolDenied(Exception):
+    pass
+
+
+def lookup_customer_email(customer_id: str) -> str | None:
+    """Return the customer's address on file, or None.
+
+    TODO: wire this to the real customer database. Until then it reads an optional
+    JSON file ({"<customer_id>": "<email>"}) named by CUSTOMER_EMAILS_FILE, and
+    otherwise returns None, so no email is ever sent (fail closed).
+    """
+    path = os.environ.get("CUSTOMER_EMAILS_FILE")
+    if not path:
+        return None
+    try:
+        with open(path) as f:
+            return json.load(f).get(customer_id)
+    except (OSError, ValueError):
+        return None
+
+
+_sends: dict[str, deque] = defaultdict(deque)
+_lock = threading.Lock()
+
+
+def _rate_ok(customer_id: str) -> bool:
+    now = time.time()
+    with _lock:
+        q = _sends[customer_id]
+        while q and now - q[0] > RATE_WINDOW:
+            q.popleft()
+        if len(q) >= RATE_MAX:
+            return False
+        q.append(now)
+        return True
+
+
+def _validate(args) -> tuple[str, str]:
+    if not isinstance(args, dict) or set(args) != {"subject", "body"}:
+        raise ToolDenied("bad arguments")
+    subject, body = args["subject"], args["body"]
+    if type(subject) is not str or type(body) is not str:
+        raise ToolDenied("bad argument type")
+    subject = subject.strip()
+    if not subject or not body.strip():
+        raise ToolDenied("subject and body must be non-empty")
+    if len(subject) > SUBJECT_MAX or len(body) > BODY_MAX:
+        raise ToolDenied("too long")
+    if "\r" in subject or "\n" in subject:
+        raise ToolDenied("subject must be a single line")
+    return subject, body
+
+
+def _smtp_send(msg: EmailMessage) -> None:
+    host = os.environ.get("SMTP_HOST")
+    if not host or not os.environ.get("SMTP_FROM"):
+        raise ToolDenied("email is not configured")
+    port = int(os.environ.get("SMTP_PORT", "587"))
+    security = os.environ.get("SMTP_SECURITY", "starttls").lower()
+    user, password = os.environ.get("SMTP_USER"), os.environ.get("SMTP_PASSWORD")
+    ctx = ssl.create_default_context()
+    if security == "ssl":
+        server = smtplib.SMTP_SSL(host, port, timeout=15, context=ctx)
+    else:
+        server = smtplib.SMTP(host, port, timeout=15)
+    with server:
+        if security == "starttls":
+            server.starttls(context=ctx)
+        if user:
+            server.login(user, password or "")
+        server.send_message(msg)
+
+
+def send_email_reply(customer_id: str, args, trace_id: str, state: dict) -> dict:
+    """Run the tool. Returns the {"ok": bool, "data": str} envelope; never raises.
+
+    `customer_id` comes from the authenticated request, not from the model.
+    `state` is a per-request dict used to enforce one send per request.
+    """
+    outcome = "sent"
+    try:
+        if state.get("sent"):
+            raise ToolDenied("an email was already sent in this turn")
+        subject, body = _validate(args)
+        to_addr = lookup_customer_email(customer_id)
+        if not to_addr or "@" not in parseaddr(to_addr)[1]:
+            raise ToolDenied("no email address on file for this customer")
+        if not _rate_ok(customer_id):
+            raise ToolDenied("email rate limit reached")
+        msg = EmailMessage()
+        msg["From"] = os.environ.get("SMTP_FROM", "")
+        msg["To"] = to_addr
+        msg["Subject"] = subject
+        msg.set_content(body)
+        _smtp_send(msg)
+        state["sent"] = True
+        return {"ok": True, "data": "Email sent to the customer."}
+    except ToolDenied as e:
+        outcome = f"denied: {e}"
+        return {"ok": False, "data": f"Email not sent: {e}."}
+    except Exception:  # SMTP/network errors: don't leak details to the model
+        outcome = "error"
+        log.exception("smtp failure trace=%s", trace_id)
+        return {"ok": False, "data": "Email not sent: delivery failed."}
+    finally:
+        log.info("send_email_reply trace=%s customer=%s outcome=%s", trace_id, customer_id, outcome)

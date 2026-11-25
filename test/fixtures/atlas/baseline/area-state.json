@@ -1,0 +1,377 @@
+{
+  "audit-logging": {
+    "controls": {
+      "owasp": [],
+      "nist": [
+        "MEASURE-2.8",
+        "MANAGE-4.1",
+        "MANAGE-4.3"
+      ],
+      "iso42001": [
+        "Clause-9.1",
+        "Annex-A.6"
+      ],
+      "eu_ai_act": [
+        "Art-12",
+        "Art-12(1)",
+        "Art-12(2)"
+      ]
+    },
+    "body_sha256": "2f00e7fdabde1b6808d326ba721162588c276af1333768b6fc0064ed0fe057a1",
+    "non_atlas_frontmatter_sha256": "51b1be0da7dd043daf91fc7ecbcf77f2fea90227472b342bf26fb690e91a9828"
+  },
+  "bias-monitoring": {
+    "controls": {
+      "owasp": [],
+      "nist": [
+        "MAP-2.3",
+        "MEASURE-2.11",
+        "MEASURE-3.1"
+      ],
+      "iso42001": [
+        "Clause-6.1",
+        "Annex-C"
+      ],
+      "eu_ai_act": [
+        "Art-10(2)(f)",
+        "Art-10(5)"
+      ]
+    },
+    "body_sha256": "f886b504c00e8c80a127b2c31de26584f4de4aa2222b63fb6a3ce69714ceb139",
+    "non_atlas_frontmatter_sha256": "153fbbc7f1ced02f8b3a1f361fb4948bb5d1e2d17439c6f7799d044e5f20e930"
+  },
+  "confidence-scoring": {
+    "controls": {
+      "owasp": [
+        "LLM09"
+      ],
+      "nist": [
+        "MAP-2.2",
+        "MEASURE-2.5",
+        "MEASURE-2.9"
+      ],
+      "iso42001": [
+        "Annex-A.8"
+      ],
+      "eu_ai_act": [
+        "Art-15(1)",
+        "Art-15(2)",
+        "Art-15(3)"
+      ]
+    },
+    "body_sha256": "725c1e50f24b76be11195563306e7f6ad8dcdd91fee9535b71d4aedf84e3705e",
+    "non_atlas_frontmatter_sha256": "83e46197c09f380624fa2d0faec7afbe42307e04682c9121a7f5e76f2acae9cd"
+  },
+  "data-integrity": {
+    "controls": {
+      "owasp": [
+        "LLM04"
+      ],
+      "nist": [
+        "MAP-2.3",
+        "MEASURE-2.6"
+      ],
+      "iso42001": [
+        "Annex-A.7"
+      ],
+      "eu_ai_act": [
+        "Art-10",
+        "Art-10(2)",
+        "Art-10(3)",
+        "Art-10(4)"
+      ]
+    },
+    "body_sha256": "3eefd304d0a9e8247871a7378c545a25de23c628e01b3ac7b2ba359ef863c53e",
+    "non_atlas_frontmatter_sha256": "1100c01fa5616811b7357271b56f0760de52c6151113cf45a4abd1f71cb86b93"
+  },
+  "explainability": {
+    "controls": {
+      "owasp": [],
+      "nist": [
+        "MEASURE-2.8",
+        "MEASURE-2.9"
+      ],
+      "iso42001": [
+        "Annex-A.8",
+        "Clause-7.4"
+      ]
+    },
+    "body_sha256": "6af5833e34704c462ff03678ddc3573a5da78960cf9e111ff1eff623af606ac5",
+    "non_atlas_frontmatter_sha256": "acbbbd111872a8e126d8667e665a4d4b1dfd6396c9ea9ce9bb08515b6efc473f"
+  },
+  "fallback-patterns": {
+    "controls": {
+      "owasp": [],
+      "nist": [
+        "MEASURE-2.6",
+        "MANAGE-2.3",
+        "MANAGE-2.4"
+      ],
+      "iso42001": [
+        "Clause-8.2"
+      ],
+      "eu_ai_act": [
+        "Art-15(4)"
+      ]
+    },
+    "body_sha256": "87ac2f39f315d5b60a149be4775736a2de79680c60211ddca3f0a984a6f273d2",
+    "non_atlas_frontmatter_sha256": "3b7570e6d2be410b7c1c0ce0472f73a5b5d75fcff2db971f84550b3b88d3004a"
+  },
+  "human-oversight": {
+    "controls": {
+      "owasp": [
+        "LLM06"
+      ],
+      "nist": [
+        "MAP-3.5",
+        "MANAGE-1.3",
+        "MANAGE-4.1"
+      ],
+      "iso42001": [
+        "Annex-A.9",
+        "Clause-8.4"
+      ],
+      "eu_ai_act": [
+        "Art-14",
+        "Art-14(4)"
+      ]
+    },
+    "body_sha256": "bc09cb73804ebe14f94c5096edf7f740778d1730a207d5534c0137e17e668d29",
+    "non_atlas_frontmatter_sha256": "6ad95d389bcb6279008f5f6aad8d64cdeeaab9acbe81b59b6135d8f5a443c65f"
+  },
+  "input-validation": {
+    "controls": {
+      "owasp": [
+        "LLM01"
+      ],
+      "nist": [
+        "MEASURE-2.7",
+        "MANAGE-1.3"
+      ],
+      "iso42001": [
+        "Clause-8.2",
+        "Annex-A.6"
+      ],
+      "eu_ai_act": [
+        "Art-15(5)"
+      ]
+    },
+    "body_sha256": "2f379ed531639973d2fa025093417857aafc1692a02740f365e5860b27a8ac0a",
+    "non_atlas_frontmatter_sha256": "dafe9d8b8e39e30f6436f29198370fd3a2de592829ee13a04a58087ad0ec22aa"
+  },
+  "monitoring": {
+    "controls": {
+      "owasp": [],
+      "nist": [
+        "MEASURE-2.4",
+        "MEASURE-3.1",
+        "MANAGE-4.1",
+        "MANAGE-4.2"
+      ],
+      "iso42001": [
+        "Clause-9.1",
+        "Clause-10"
+      ],
+      "eu_ai_act": [
+        "Art-72",
+        "Art-72(1)",
+        "Art-72(2)",
+        "Art-72(3)",
+        "Art-72(4)"
+      ]
+    },
+    "body_sha256": "d0a4b5ea80e7c591a69906bfdf45308c28a6f6f2b172044fe43b870076bf6bf1",
+    "non_atlas_frontmatter_sha256": "5092da8bbbc076019e6768a306d6eefde042ed5157c6744e8b40c688a6fd9539"
+  },
+  "output-sanitization": {
+    "controls": {
+      "owasp": [
+        "LLM05"
+      ],
+      "nist": [
+        "MEASURE-2.6",
+        "MEASURE-2.7"
+      ],
+      "iso42001": [
+        "Clause-8.2"
+      ]
+    },
+    "body_sha256": "b8b04a4e3856ba6eb08ba0d1b811b468ab4639167ea8b0dea1f4ded06a381f0b",
+    "non_atlas_frontmatter_sha256": "8543b349e36a133aa77aa43672d097a9a5c3f78bda6ab6d04025d776c1d0fc01"
+  },
+  "pii-handling": {
+    "controls": {
+      "owasp": [
+        "LLM02"
+      ],
+      "nist": [
+        "MAP-2.1",
+        "MEASURE-2.10"
+      ],
+      "iso42001": [
+        "Annex-A.7",
+        "Annex-A.4"
+      ]
+    },
+    "body_sha256": "4eba581c593ad3a1c26bcc3473669a66a4138c56c72c63f858a59230a37ebc10",
+    "non_atlas_frontmatter_sha256": "b96b2f62d70fc6c328f0e55702aab7342ec4b6f8bde4d87ef220de5c5a2ca4e1"
+  },
+  "prompt-security": {
+    "controls": {
+      "owasp": [
+        "LLM07"
+      ],
+      "nist": [
+        "MEASURE-2.7",
+        "MEASURE-2.8"
+      ],
+      "iso42001": [
+        "Clause-8.2"
+      ],
+      "eu_ai_act": [
+        "Art-15(5)"
+      ]
+    },
+    "body_sha256": "2f8fa1701bfd58b2f242da1ae815b8acee3d006181f5f4fa170432cef9cac2fd",
+    "non_atlas_frontmatter_sha256": "52b5f29f25d5891afa585c7b5ca90d2987cbf97acc5aa013f40a1d0712503472"
+  },
+  "rag-security": {
+    "controls": {
+      "owasp": [
+        "LLM08"
+      ],
+      "nist": [
+        "MEASURE-2.7"
+      ],
+      "iso42001": [
+        "Clause-8.2",
+        "Annex-A.7"
+      ]
+    },
+    "body_sha256": "67480bf781663c9eb42df0c427512ece8713e6f35674c76f523cbb07db23e833",
+    "non_atlas_frontmatter_sha256": "d69eaa78c195a20b51608d33db7a69526888e5b0fb80e8e1870f35396f29fb99"
+  },
+  "rate-limiting": {
+    "controls": {
+      "owasp": [
+        "LLM10"
+      ],
+      "nist": [
+        "MEASURE-2.6",
+        "MANAGE-2.4"
+      ],
+      "iso42001": [
+        "Clause-8.2"
+      ]
+    },
+    "body_sha256": "e0f291f5e0577b65cc7c3605670e170fdf8fdb513ffab52f289c6b581842b5d0",
+    "non_atlas_frontmatter_sha256": "e23c32d33663b3d1a68abd549d91f42960658c8c26becf5af32fd155ff106a50"
+  },
+  "supply-chain": {
+    "controls": {
+      "owasp": [
+        "LLM03"
+      ],
+      "nist": [
+        "GOVERN-6.1",
+        "GOVERN-6.2",
+        "MANAGE-3.1",
+        "MANAGE-3.2"
+      ],
+      "iso42001": [
+        "Annex-A.10"
+      ]
+    },
+    "body_sha256": "c82a5f9bbc27ea3e0588408778ae7567cab78e2d2dd293299aa399e4e911e058",
+    "non_atlas_frontmatter_sha256": "d1fe1e7c259e09df2946509d3cfb5f968e7ec0af047bdcdc95326d4854a04ccc"
+  },
+  "eu-ai-act-art-9-risk-management": {
+    "controls": {
+      "owasp": [],
+      "nist": [
+        "GOVERN-1.1",
+        "GOVERN-1.2",
+        "MANAGE-1.1",
+        "MANAGE-2.1"
+      ],
+      "iso42001": [
+        "Clause-6.1",
+        "Clause-6.2",
+        "Clause-8.1"
+      ],
+      "eu_ai_act": [
+        "Art-9",
+        "Art-9(2)",
+        "Art-9(5)",
+        "Art-9(7)"
+      ]
+    },
+    "body_sha256": "7747078235792272f9b7e1cc5a48840788dafa3fe32ded982000dc6f6322f4c6",
+    "non_atlas_frontmatter_sha256": "cb5caadcacf39077219a75cb411d6bb9ffe902df391fa50111631889dd2d087c"
+  },
+  "eu-ai-act-art-13-deployer-transparency": {
+    "controls": {
+      "owasp": [],
+      "nist": [
+        "MAP-3.4",
+        "MAP-4.1",
+        "MEASURE-2.9"
+      ],
+      "iso42001": [
+        "Clause-7.4",
+        "Annex-A.8"
+      ],
+      "eu_ai_act": [
+        "Art-13",
+        "Art-13(1)",
+        "Art-13(2)",
+        "Art-13(3)"
+      ]
+    },
+    "body_sha256": "b1493e12fc54d6735570e9a24fd866c0ea52a665edfe79df818c22ff56dcb7ea",
+    "non_atlas_frontmatter_sha256": "fd0f8570700ab48dfaea813d3ef04bd75f4d67afbd384828434d58b8a2905030"
+  },
+  "eu-ai-act-art-50-transparency-disclosure": {
+    "controls": {
+      "owasp": [],
+      "nist": [
+        "MEASURE-3.3"
+      ],
+      "iso42001": [
+        "Annex-A.8"
+      ],
+      "eu_ai_act": [
+        "Art-50",
+        "Art-50(1)",
+        "Art-50(2)",
+        "Art-50(3)",
+        "Art-50(4)"
+      ]
+    },
+    "body_sha256": "4f9ec145458250384ca64979d5d092d380f640a95ec7f24d7acbcc38f15cd8eb",
+    "non_atlas_frontmatter_sha256": "36304eadb76dcb08827f5df40f3f576baff1009f0ffda961c7648e4530a4ecb7"
+  },
+  "eu-ai-act-art-73-incident-reporting": {
+    "controls": {
+      "owasp": [],
+      "nist": [
+        "MANAGE-4.1",
+        "MANAGE-4.3"
+      ],
+      "iso42001": [
+        "Clause-10.1",
+        "Clause-10.2"
+      ],
+      "eu_ai_act": [
+        "Art-73",
+        "Art-73(1)",
+        "Art-73(2)",
+        "Art-73(3)",
+        "Art-73(7)",
+        "Art-73(8)"
+      ]
+    },
+    "body_sha256": "dca5446b181949c4b2111a69900a2858a6ecc76c3b43324bfd2b81c7c935c883",
+    "non_atlas_frontmatter_sha256": "0a0bc903254d723990340fefd9b335b900b969ad37b42b88fb3c0c14447e605c"
+  }
+}

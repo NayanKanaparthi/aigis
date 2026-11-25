@@ -6,6 +6,7 @@ controls:
   nist: [MEASURE-2.7, MANAGE-1.3]
   iso42001: [Clause-8.2, Annex-A.6]
   eu_ai_act: [Art-15(5)]
+  atlas: [AML.M0020, AML.M0036]
 min_risk_tier: all
 system_traits: [uses-llm, accepts-user-input]
 ---

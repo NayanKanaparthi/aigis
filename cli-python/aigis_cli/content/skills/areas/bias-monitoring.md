@@ -6,6 +6,7 @@ controls:
   nist: [MAP-2.3, MEASURE-2.11, MEASURE-3.1]
   iso42001: [Clause-6.1, Annex-C]
   eu_ai_act: [Art-10(2)(f), Art-10(5)]
+  atlas: []
 min_risk_tier: medium
 system_traits: [influences-decisions, handles-health, handles-financial, generates-content, handles-minors]
 ---

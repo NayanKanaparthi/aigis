@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 
 import frontmatter
 
+from . import atlas
 from .classify import classify
 from .keywords import detect_traits_from_text
 from .fetch import get_infra
@@ -241,6 +242,7 @@ def _prepare(description: str, decisions: dict, extra_jurisdictions: list[str] |
 
     return {
         "normalized": normalized,
+        "all_traits": all_traits_with_jurisdiction,    # v3.0: the trait set passed to classify (sorted)
         "raw_input": description,
         "detection": detection,
         "low_conf_with_slugs": low_conf_with_slugs,
@@ -256,8 +258,49 @@ def _prepare(description: str, decisions: dict, extra_jurisdictions: list[str] |
     }
 
 
-def _make_meta(prep: dict, brief: str, mode: str, cap: int | None, ts: str, version: str, fell_back: bool) -> dict:
-    return {
+def _threats_command_for(traits: list[str]) -> str:
+    """v3.0: `aigis threats --traits <csv>` for the trait set passed to classify, ascending."""
+    return f"aigis threats --traits {','.join(sorted(traits))}"
+
+
+def _prepare_atlas(prep: dict) -> dict | None:
+    """v3.0 (SPEC S4.4a): ATLAS data for a brief, or None when the catalog is
+    unavailable (fail-soft, S4.5: then none of the brief additions is printed)."""
+    def _fn():
+        summary = atlas.summarize_areas(prep["areas"])
+        return {
+            "version": summary["version"],
+            "disclaimer": summary["disclaimer"],
+            "mitigations": [m["id"] for m in summary["mitigations"]],
+            "threats_command": _threats_command_for(prep["all_traits"]),
+        }
+    return atlas.with_atlas(_fn, None)
+
+
+def _render_threat_model_section(atlas_meta: dict) -> list[str]:
+    """v3.0 (SPEC S4.4a): the "Threat model (MITRE ATLAS)" section, placed immediately before "Verification"."""
+    n = len(atlas_meta["mitigations"])
+    s: list[str] = []
+    s.append("## Threat model (MITRE ATLAS)")
+    s.append("")
+    s.append("None of the areas above maps to an ATLAS mitigation." if n == 0
+             else f"The areas above help implement {n} ATLAS mitigations.")
+    s.append("")
+    s.append("Do this before you finish, without waiting to be asked:")
+    s.append("")
+    s.append(f"1. Run `{atlas_meta['threats_command']}`. It lists attacker techniques for this system's entry points (Realized first), the mitigations MITRE links to each, the Aigis areas that help implement each one (in part), and gaps.")
+    s.append("2. For every area it names that is not in this brief, run `aigis get <area>`, implement it and verify it.")
+    s.append("3. Tell the user about every gap (a mitigation with no mapped Aigis area). Never report a gap as handled.")
+    s.append("4. Rerun it when tools, write access, memory or data sources change.")
+    s.append("")
+    s.append(atlas_meta["disclaimer"])
+    s.append("")
+    return s
+
+
+def _make_meta(prep: dict, brief: str, mode: str, cap: int | None, ts: str, version: str, fell_back: bool,
+               atlas_meta: dict | None = None) -> dict:
+    meta = {
         "mode": mode,
         "auto_fallback": fell_back,
         "normalized_description": prep["normalized"],
@@ -286,9 +329,12 @@ def _make_meta(prep: dict, brief: str, mode: str, cap: int | None, ts: str, vers
         "generated_at": ts,
         "version": version,
     }
+    if atlas_meta:
+        meta["atlas"] = {**atlas_meta, "mitigations": list(atlas_meta["mitigations"])}
+    return meta
 
 
-def _render_common_sections(*, normalized, version, ts, mode_note, cls, resolved, areas, infra_ids):
+def _render_common_sections(*, normalized, version, ts, mode_note, cls, resolved, areas, infra_ids, atlas_meta=None):
     s: list[str] = []
     s.append("# Aigis governance brief")
     s.append("")
@@ -322,12 +368,16 @@ def _render_common_sections(*, normalized, version, ts, mode_note, cls, resolved
     s.append("3. For each area below, follow the procedure step by step. Honor every **verification checkpoint** — those are not suggestions.")
     s.append("4. Run `aigis verify <area> --auto .` after implementing each area. Fix any FAIL or OVERCLAIM before moving on.")
     s.append("5. For uncertain traits (⚠ above), pause before implementing the dependent area and ask the user to confirm it applies.")
+    if atlas_meta:
+        s.append('6. Run the threat model in the "Threat model (MITRE ATLAS)" section before you finish, and act on what it lists.')
     s.append("")
     return s
 
 
-def _render_verification(*, areas, resolved, cls):
+def _render_verification(*, areas, resolved, cls, atlas_meta=None):
     s: list[str] = []
+    if atlas_meta:
+        s.extend(_render_threat_model_section(atlas_meta))
     s.append("## Verification")
     s.append("")
     s.append("After implementing the areas above, the agent should confirm:")
@@ -335,6 +385,8 @@ def _render_verification(*, areas, resolved, cls):
     s.append("- [ ] Every area's verification checkpoints pass.")
     for area in areas:
         s.append(f"- [ ] `aigis verify {area} --auto .` returns no FAIL or OVERCLAIM.")
+    if atlas_meta:
+        s.append("- [ ] `aigis threats` was run; every area it named is implemented or skipped with a written reason; every gap was reported to the user.")
     s.append("- [ ] If any area was added or removed from the recommended set, document the reason in the PR description.")
     if resolved["uncertain_traits"]:
         plural = "" if len(resolved["uncertain_traits"]) == 1 else "s"
@@ -372,9 +424,11 @@ def build_compact(description: str, decisions: dict | None = None, *,
     else:
         mode_note = f'Compact mode: pointer-only. Run `aigis build "{prep["normalized"]}" --full` to inline procedure content.'
 
+    atlas_meta = _prepare_atlas(prep)
     s = _render_common_sections(
         normalized=prep["normalized"], version=version, ts=ts, mode_note=mode_note,
         cls=prep["cls"], resolved=prep["resolved"], areas=prep["areas"], infra_ids=prep["infra_ids"],
+        atlas_meta=atlas_meta,
     )
 
     s.append(f"## Areas ({len(prep['areas'])})")
@@ -398,9 +452,9 @@ def build_compact(description: str, decisions: dict | None = None, *,
             s.append(f"- `aigis infra {i}` — {title}")
         s.append("")
 
-    s.extend(_render_verification(areas=prep["areas"], resolved=prep["resolved"], cls=prep["cls"]))
+    s.extend(_render_verification(areas=prep["areas"], resolved=prep["resolved"], cls=prep["cls"], atlas_meta=atlas_meta))
     brief = "\n".join(s)
-    return {"brief": brief, "meta": _make_meta(prep, brief, "compact", None, ts, version, fell_back_from_full)}
+    return {"brief": brief, "meta": _make_meta(prep, brief, "compact", None, ts, version, fell_back_from_full, atlas_meta)}
 
 
 def build_full(description: str, decisions: dict | None = None, *,
@@ -414,9 +468,11 @@ def build_full(description: str, decisions: dict | None = None, *,
     ts = _iso_ms(timestamp)
     version = version_string or _read_version()
 
+    atlas_meta = _prepare_atlas(prep)
     s = _render_common_sections(
         normalized=prep["normalized"], version=version, ts=ts, mode_note=None,
         cls=prep["cls"], resolved=prep["resolved"], areas=prep["areas"], infra_ids=prep["infra_ids"],
+        atlas_meta=atlas_meta,
     )
 
     # v2.1: for non-EU users, strip `## EU AI Act extensions` sections from
@@ -457,11 +513,11 @@ def build_full(description: str, decisions: dict | None = None, *,
             s.append("---")
             s.append("")
 
-    s.extend(_render_verification(areas=prep["areas"], resolved=prep["resolved"], cls=prep["cls"]))
+    s.extend(_render_verification(areas=prep["areas"], resolved=prep["resolved"], cls=prep["cls"], atlas_meta=atlas_meta))
     brief = "\n".join(s)
     if len(brief) > char_cap:
         raise BriefTooLargeError(len(brief), char_cap, prep["areas"])
-    return {"brief": brief, "meta": _make_meta(prep, brief, "full", char_cap, ts, version, False)}
+    return {"brief": brief, "meta": _make_meta(prep, brief, "full", char_cap, ts, version, False, atlas_meta)}
 
 
 def build_brief(description: str, decisions: dict | None = None, *,
@@ -528,4 +584,15 @@ def build_list(description: str, extra_jurisdictions: list[str] | None = None, t
         lines.append(f"Documentation templates ({len(prep['cls']['templates'])}):")
         for t in prep["cls"]["templates"]:
             lines.append(f"  aigis template {t}")
+    # v3.0 (SPEC S4.4, AC22): point at the threat model. Omitted when the ATLAS
+    # catalog is unavailable, because the command it names would fail.
+    def _threats_command():
+        atlas.load_catalog()
+        return _threats_command_for(prep["all_traits"])
+
+    threats_command = atlas.with_atlas(_threats_command, None)
+    if threats_command:
+        lines.append("")
+        lines.append("Threat model:")
+        lines.append(f"  {threats_command}")
     return "\n".join(lines) + "\n"

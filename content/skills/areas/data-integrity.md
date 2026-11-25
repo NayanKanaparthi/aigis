@@ -6,6 +6,7 @@ controls:
   nist: [MAP-2.3, MEASURE-2.6]
   iso42001: [Annex-A.7]
   eu_ai_act: [Art-10, Art-10(2), Art-10(3), Art-10(4)]
+  atlas: [AML.M0007, AML.M0014, AML.M0025]
 min_risk_tier: all
 system_traits: [uses-rag, uses-finetuned]
 ---

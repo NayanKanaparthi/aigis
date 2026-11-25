@@ -1,0 +1,19 @@
+const {spawnSync}=require('child_process');
+const h=require('./atlas-test-helpers');
+const {assert,fs,path,ROOT,DS1,DS3,NEW_AREA_IDS,baseline,parseJsonOutput,requireFile,run,runCases}=h;
+function stripFrontmatter(raw){if(!raw.startsWith('---\n'))return raw.trim();const end=raw.indexOf('\n---\n',4);return raw.slice(end+5).trim();}
+runCases([
+ ['T-REL-02',()=>{for(const rel of ['content/index/atlas.json','content/index/atlas-NOTICE.md','content/index/atlas-entry-points.json','content/templates/threat-model.md','lib/atlas.js','lib/threats.js'])requireFile(rel,`${rel} missing from source tree`);const r=spawnSync('npm',['pack','--dry-run','--json'],{cwd:ROOT,encoding:'utf8'});assert.strictEqual(r.status,0,r.stderr);const parsed=JSON.parse(r.stdout);const files=parsed[0].files.map((x)=>x.path);for(const rel of ['content/index/atlas.json','content/index/atlas-NOTICE.md','content/index/atlas-entry-points.json','content/templates/threat-model.md','lib/atlas.js','lib/threats.js'])assert.ok(files.includes(rel),`${rel} missing from npm pack`);for(const file of files)assert.ok(!/^(build|test|\.context|\.claude|cli-python)\//.test(file)&&!file.endsWith('.tgz'),`private file packed: ${file}`);}],
+ ['T-RT-04',()=>{
+  // DS3 does not resolve is-agentic in this tree (baseline traits: accepts-user-input, is-multimodal, uses-llm), so it must gain no new area.
+  const oldDs3=JSON.parse(baseline('sur-build-ds3-json').stdout);assert.ok(!oldDs3.meta.all_traits.includes('is-agentic'),'baseline DS3 traits changed');
+  const ds3=parseJsonOutput(run(['build',DS3,'--json']),'build DS3');assert.deepStrictEqual(ds3.meta.areas,oldDs3.meta.areas,'DS3 areas changed');assert.deepStrictEqual(ds3.meta.all_traits,oldDs3.meta.all_traits);assert.ok(ds3.meta.char_count-oldDs3.meta.char_count<=1500,`DS3 grew by ${ds3.meta.char_count-oldDs3.meta.char_count}`);
+  // An agentic description (captured from the pre-feature product): baseline areas plus the two new ones.
+  const old=baseline('rt04-agentic-build');assert.ok(old.all_traits.includes('is-agentic'));
+  const out=parseJsonOutput(run(['build',old.description,'--json']),'build agentic'),full=parseJsonOutput(run(['build',old.description,'--json','--full']),'build agentic --full');const expected=[...new Set([...old.areas,...NEW_AREA_IDS])].sort();assert.deepStrictEqual(out.meta.areas,expected);assert.deepStrictEqual(full.meta.areas,expected);assert.deepStrictEqual(out.meta.all_traits,old.all_traits);
+  let allowance=1500;for(const id of NEW_AREA_IDS){const raw=fs.readFileSync(requireFile(`content/skills/areas/${id}.md`,`${id} area file missing`),'utf8'),body=stripFrontmatter(raw),index=out.meta.areas.indexOf(id)+1;allowance+=`### ${index}. ${id}\n\n${body}\n\n---\n\n`.length;}
+  assert.ok(full.meta.char_count-old.char_count<=allowance,`agentic full build grew by ${full.meta.char_count-old.char_count}, cap ${allowance}`);
+  if(full.meta.char_count<=120000){assert.strictEqual(out.meta.mode,'full');assert.strictEqual(out.meta.auto_fallback,false);}else{assert.strictEqual(out.meta.mode,'compact','over 120,000 characters must fall back to compact');assert.strictEqual(out.meta.auto_fallback,true);}
+  const nonAgent=parseJsonOutput(run(['build',DS1,'--json']),'build DS1');for(const id of NEW_AREA_IDS)assert.ok(!nonAgent.meta.areas.includes(id),`DS1 unexpectedly includes ${id}`);}],
+ ['T-RT-05',()=>{const cls=parseJsonOutput(run(['classify','--traits','is-agentic','--json']),'classify agentic');for(const id of NEW_AREA_IDS)assert.ok(cls.implement_files.includes(id),`${id} not routed`);for(const id of cls.implement_files){for(const args of [['get',id],['verify',id]]){const r=run(args);assert.strictEqual(r.status,0,`${args.join(' ')}: ${r.stderr}`);}}const agenticDescription=baseline('rt04-agentic-build').description,report=run(['report','--from-classify',agenticDescription]);assert.strictEqual(report.status,0,report.stderr);}],
+]);

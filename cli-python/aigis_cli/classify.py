@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+from . import atlas
+
+_AREAS_DIR = Path(__file__).resolve().parent / "content" / "skills" / "areas"
+
 ALL_TRAITS = [
     "uses-llm", "uses-rag", "uses-finetuned", "uses-thirdparty-api", "is-agentic", "is-multimodal",
     "processes-pii", "handles-financial", "handles-health", "handles-proprietary", "handles-minors",
@@ -14,7 +20,7 @@ TRAIT_FILES: dict[str, list[str]] = {
     "uses-rag": ["rag-security", "data-integrity"],
     "uses-finetuned": ["data-integrity", "supply-chain"],
     "uses-thirdparty-api": ["supply-chain"],
-    "is-agentic": ["human-oversight", "rate-limiting", "fallback-patterns", "audit-logging"],
+    "is-agentic": ["human-oversight", "rate-limiting", "fallback-patterns", "audit-logging", "agent-permissions", "agent-tool-safety"],
     "is-multimodal": ["input-validation", "output-sanitization", "pii-handling"],
     "processes-pii": ["pii-handling", "audit-logging"],
     "handles-financial": ["pii-handling", "audit-logging", "bias-monitoring"],
@@ -57,9 +63,48 @@ FILE_CONTROLS: dict[str, dict[str, list[str]]] = {
     "explainability": {"owasp": [], "nist": ["MEASURE-2.8", "MEASURE-2.9"], "iso": ["Annex-A.8", "Clause-7.4"]},
 }
 
+# v3.0 (SPEC S4.6): the two agent areas have no FILE_CONTROLS entry; their
+# owasp / nist / iso42001 ids are read from frontmatter. Limited to this fixed
+# list so the EU areas (no FILE_CONTROLS entry either) keep contributing nothing.
+FRONTMATTER_CONTROL_AREAS = ["agent-permissions", "agent-tool-safety"]
+
+
+def _read_frontmatter_controls(area_id: str) -> dict | None:
+    try:
+        import frontmatter
+        filepath = _AREAS_DIR / f"{area_id}.md"
+        if not filepath.exists():
+            return None
+        c = (frontmatter.loads(filepath.read_text(encoding="utf-8")).metadata or {}).get("controls") or {}
+
+        def _list(v):
+            return [x for x in v if isinstance(x, str)] if isinstance(v, list) else []
+
+        return {"owasp": _list(c.get("owasp")), "nist": _list(c.get("nist")), "iso": _list(c.get("iso42001"))}
+    except Exception:
+        return None
+
+
+def _atlas_for_areas(area_ids: list[str], traits: list[str]) -> dict | None:
+    """v3.0 (SPEC S4.1): ATLAS citation for a classify result. None when the
+    catalog is unavailable (fail-soft, S4.5): the caller then adds no ATLAS key."""
+    def _fn():
+        summary = atlas.summarize_areas(area_ids)
+        return {
+            "ids": [m["id"] for m in summary["mitigations"]],
+            "block": {
+                "version": summary["version"],
+                "disclaimer": summary["disclaimer"],
+                "techniques_addressed": summary["techniques_addressed"],
+                "threats_command": f"aigis threats --traits {','.join(sorted(traits))}",
+            },
+        }
+    return atlas.with_atlas(_fn, None)
+
 
 def classify(trait_list: list[str]) -> dict:
-    ts = set(trait_list)
+    # Insertion-ordered set (dict keys), so `traits` keeps the input order like Node's Set.
+    ts = dict.fromkeys(trait_list)
     warnings: list[str] = []
 
     invalid = [t for t in trait_list if t not in ALL_TRAITS]
@@ -71,7 +116,7 @@ def classify(trait_list: list[str]) -> dict:
     # Constraint C1: is-internal + is-external
     if "is-internal" in ts and "is-external" in ts:
         warnings.append("Both is-internal and is-external selected. Treating as is-external (stricter).")
-        ts.discard("is-internal")
+        ts.pop("is-internal", None)
 
     # Step 1: trait-based file selection
     files: set[str] = set()
@@ -81,7 +126,7 @@ def classify(trait_list: list[str]) -> dict:
 
     # Step 2: risk tier
     sens_data = bool(
-        ts & {"processes-pii", "handles-financial", "handles-health", "handles-proprietary", "handles-minors"}
+        ts.keys() & {"processes-pii", "handles-financial", "handles-health", "handles-proprietary", "handles-minors"}
     )
 
     tier = "LOW"
@@ -176,17 +221,18 @@ def classify(trait_list: list[str]) -> dict:
     all_nist: set[str] = set()
     all_iso: set[str] = set()
     for f in files:
-        c = FILE_CONTROLS.get(f)
+        c = FILE_CONTROLS.get(f) or (_read_frontmatter_controls(f) if f in FRONTMATTER_CONTROL_AREAS else None)
         if c:
             all_owasp.update(c["owasp"])
             all_nist.update(c["nist"])
             all_iso.update(c["iso"])
 
-    return {
+    implement_files = sorted(files)
+    result = {
         "risk_tier": tier,
         "reason": reason,
         "traits": list(ts),
-        "implement_files": sorted(files),
+        "implement_files": implement_files,
         "templates": list(dict.fromkeys(templates)),
         "guardrails_fired": guardrails_fired,
         "warnings": warnings,
@@ -196,3 +242,11 @@ def classify(trait_list: list[str]) -> dict:
             "iso": sorted(all_iso),
         },
     }
+
+    # v3.0: MITRE ATLAS (additive; omitted entirely when the catalog is unavailable).
+    atlas_info = _atlas_for_areas(implement_files, result["traits"])
+    if atlas_info:
+        result["controls"]["atlas"] = atlas_info["ids"]
+        result["atlas"] = atlas_info["block"]
+
+    return result

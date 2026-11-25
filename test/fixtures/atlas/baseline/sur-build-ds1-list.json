@@ -1,0 +1,10 @@
+{
+  "args": [
+    "build",
+    "Build me a customer support chatbot that uses Claude to answer questions about our product. It should remember conversation history.",
+    "--list"
+  ],
+  "status": 0,
+  "stdout": "Description: build me a customer support chatbot that uses claude to answer questions about our product. it should remember conversation history\nRisk tier: MEDIUM\n\nConfirmed traits (3):\n  accepts-user-input, uses-llm, uses-thirdparty-api\n\nUncertain traits (1):\n  [t-customer-support] accepts-user-input, is-external  ← \"customer support\"\n\nPre-build flags (run non-interactively):\n  aigis build \"build me a customer support chatbot that uses claude to answer questions about our product. it should remember conversation history\" --confirm t-customer-support\n  aigis build \"build me a customer support chatbot that uses claude to answer questions about our product. it should remember conversation history\" --reject t-customer-support\n\nRecommended areas (8):\n  aigis get audit-logging\n  aigis get confidence-scoring\n  aigis get input-validation\n  aigis get monitoring\n  aigis get output-sanitization\n  aigis get prompt-security\n  aigis get rate-limiting\n  aigis get supply-chain\n\nReferenced infrastructure (3):\n  aigis infra logging\n  aigis infra secrets\n  aigis infra rate-limiting\n\nDocumentation templates (2):\n  aigis template intended-purpose-doc\n  aigis template third-party-assessment\n",
+  "stderr": ""
+}

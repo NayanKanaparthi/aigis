@@ -1,0 +1,51 @@
+{
+  "D1": {
+    "status": 0,
+    "implement_files": [
+      "audit-logging",
+      "input-validation",
+      "monitoring",
+      "output-sanitization",
+      "prompt-security"
+    ]
+  },
+  "D2": {
+    "status": 1,
+    "implement_files": null
+  },
+  "D3": {
+    "status": 1,
+    "implement_files": null
+  },
+  "D4": {
+    "status": 1,
+    "implement_files": null
+  },
+  "D5": {
+    "status": 0,
+    "implement_files": [
+      "data-integrity",
+      "supply-chain"
+    ]
+  },
+  "D6": {
+    "status": 1,
+    "implement_files": null
+  },
+  "D7": {
+    "status": 1,
+    "implement_files": null
+  },
+  "D8": {
+    "status": 1,
+    "implement_files": null
+  },
+  "D9": {
+    "status": 1,
+    "implement_files": null
+  },
+  "D10": {
+    "status": 1,
+    "implement_files": null
+  }
+}

@@ -1,0 +1,356 @@
+# GRAPH: MITRE ATLAS in Aigis (feature id: atlas)   rev 4 (15:45: v3.0.0 and two new agent-security areas; 16:00: GATE A approved, agent-native use AC32)
+# Makers: Opus 5.5 (high). Checker: Fable 5.2. Test writers and second labeler: GPT-5.6 Sol, fresh sessions.
+# Every file the feature edits has exactly ONE owning node. No file is listed twice. Locked tests are `reads`.
+# Mirror rule: a node that owns a file under content/ also owns its copy under cli-python/aigis_cli/content/
+# and syncs it before its fast-suite run (the existing content-sync check is part of `npm test`).
+# Per-file test rule: a node is done when its own test files are green, every test that was green before
+# is still green, and the checker approves its rubric items. Test files of unbuilt nodes are expected red.
+# INT owns no product file. If integration needs a product edit, it goes back to the owning node.
+# Times assume pre-build starts 16:15 and the rev 3 delta is approved by 16:40. If that approval is later,
+# streams E, F, G and everything after them move by the same amount.
+
+feature: atlas
+version_target: 3.0.0
+base_commit: 07ef537
+stop_times_et:
+  gate_a: "16:15"                 # original scope
+  delta_approved: "16:40"         # rev 3 scope change
+  tests_locked: "17:00"           # T0; T0b locks at 17:15
+  gate_a2_new_area_citations: "19:15"
+  cut_decisions_final: "20:30"
+  feature_freeze: "21:00"
+  integration_done: "22:15"
+  gate_b: "22:45"                 # realistic; 23:15 if the content fix loop or GATE A2 slips by 30 minutes
+  latest_feature_freeze: "22:30"  # owner accepted a ship as late as about 01:00; this window is reserve, not scope
+  latest_integration_green: "23:45"
+  latest_gate_b: "00:15"          # after this: tag a release candidate and publish in the morning
+
+pre_build:            # none of them write product code
+  - id: T0
+    role: test writer, original scope (GPT-5.6 Sol, fresh session)
+    depends_on: [GATE_A]
+    owns_files:
+      - test/atlas-catalog.test.js
+      - test/atlas-lib.test.js
+      - test/atlas-frontmatter.test.js
+      - test/atlas-surfaces.test.js
+      - test/atlas-failsoft.test.js
+      - test/atlas-regression.test.js
+      - test/atlas-routing.test.js
+      - test/atlas-threats.test.js
+      - test/atlas-version.test.js
+      - test/atlas-docs.test.js
+      - test/atlas-honesty.test.js
+      - test/atlas-python-parity.test.js
+      - test/atlas-release.test.js
+      - test/fixtures/atlas/baseline/**
+      - test/fixtures/atlas/areas/**
+      - test/fixtures/atlas/project/**
+      - test/fixtures/atlas/bad-catalogs/**
+      - build/atlas/TESTLOCK
+    reads: [build/atlas/TESTPLAN.md, build/atlas/SPEC.md, build/atlas/gold/**]
+    goal: "Test-acceptance gate (BUILD-SYSTEM §4.3): existing 11 checks green, every new test red for the expected reason, each AC mapped, hashes in TESTLOCK"
+    timebox_min: 45
+  - id: T0b
+    role: test writer, new-area scope (GPT-5.6 Sol, second fresh session, 16:40 to 17:15)
+    depends_on: [DELTA_APPROVED]
+    owns_files:
+      - test/atlas-area-permissions.test.js
+      - test/atlas-area-tool-safety.test.js
+      - test/atlas-verify-new.test.js
+      - test/fixtures/atlas/newareas/**      # bad-agent projects, wildcard-scope project, log-only-gate project
+      - build/atlas/TESTLOCK-newareas
+    reads: [build/atlas/TESTPLAN.md, build/atlas/SPEC.md]
+    goal: "Same acceptance gate for the new-area tests; locked before NA1, NA2, NV start"
+    timebox_min: 35
+  - id: E0
+    role: eval harness and baseline (Opus 5.5 session that is not a feature maker; checker reviews)
+    depends_on: [GATE_A]
+    owns_files:
+      - build/atlas/evals/oracle.py
+      - build/atlas/evals/run-evals.js
+      - build/atlas/evals/check-gold.py
+      - build/atlas/evals/e2e.sh
+      - build/atlas/evals/dev.json           # 10 v2 descriptions with ground-truth traits and the needs-agent-security label
+      - build/atlas/evals/heldout.json       # H1..H8; never shown to makers
+      - build/atlas/evals/results/baseline.json
+    reads: [build/atlas/EVALS.md]
+    goal: "Baseline measured on 07ef537 for dev and held-out, including per-description area lists for the routing guard; oracle reproduces the pinned counts"
+    timebox_min: 45
+  - id: G0
+    role: gold labels for the 15 existing areas and the entry points (second labeler blind; orchestrator merges; Nayan approves)
+    depends_on: [GATE_A]
+    owns_files:
+      - build/atlas/gold/area-mitigations.json
+      - build/atlas/gold/entry-points.json
+      - build/atlas/gold/APPROVAL.md
+    reads: [build/atlas/EVALS.md]
+    goal: "Both gold files approved by Nayan and pass check-gold.py; deadline 17:00"
+    timebox_min: 45
+
+mid_build_gates:
+  - id: G1
+    name: gold citations for the two new areas (GATE A2)
+    role: second labeler GPT-5.6 Sol, blind to SPEC S7 targets and EVALS appendix C; orchestrator adjudicates; Nayan approves
+    depends_on: [NA1, NA2]          # needs the checker-approved area bodies, because evidence is quoted step headings
+    owns_files:
+      - build/atlas/gold/new-areas.json
+      - build/atlas/gold/APPROVAL-new-areas.md
+    reads: [build/atlas/EVALS.md, content/skills/areas/agent-permissions.md, content/skills/areas/agent-tool-safety.md, /tmp/atlas-src/ATLAS-2026.10.yaml, /tmp/frameworks/**]
+    window: "18:25 to 19:15 (label 20 min, adjudicate 15 min, Nayan 15 min)"
+    goal: "new-areas.json approved: ATLAS, OWASP, NIST and ISO rows for both areas, every quote verbatim, check-gold.py green"
+    if_late: "EVALS §9.5: no unapproved citation ships"
+
+nodes:
+  - id: N1
+    name: catalog, generator, notice
+    stream: A
+    depends_on: [T0]
+    owns_files:
+      - scripts/build-atlas-index.js
+      - content/index/atlas.json
+      - content/index/atlas-NOTICE.md
+      - cli-python/aigis_cli/content/index/atlas.json
+      - cli-python/aigis_cli/content/index/atlas-NOTICE.md
+    reads: [test/atlas-catalog.test.js, /tmp/atlas-src/ATLAS-2026.10.yaml, /tmp/atlas-src/LICENSE, /tmp/atlas-apache/LICENSE-2.0.txt]
+    exposes: "content/index/atlas.json with the shape in SPEC S1.1; `node scripts/build-atlas-index.js --source <path> [--check]`"
+    spec: [S0, S1]
+    tests: [T-CAT-01, T-CAT-02, T-CAT-03, T-CAT-04, T-CAT-05, T-CAT-06, T-CAT-07, T-CAT-08, T-CAT-09, T-CAT-10]
+    goal: [AC1, AC2, AC3]
+    rubric: [R-N1-1, R-N1-2, R-N1-3, R-N1-4]
+    timebox_min: 35
+
+  - id: N2
+    name: lib/atlas.js
+    stream: A
+    depends_on: [N1]
+    owns_files: [lib/atlas.js]
+    reads: [test/atlas-lib.test.js, test/fixtures/atlas/**, content/index/atlas.json]
+    exposes: "PINNED, DISCLAIMER, AtlasCatalogError, loadCatalog, loadEntryPoints, technique, mitigation, mitigationsForTechnique (direct MITRE links only), techniquesForMitigations, compareTechniques, areaMitigations, mitigationAreas, summarizeAreas, withAtlas (SPEC S2)"
+    spec: [S0, S2]
+    tests: [T-LIB-01, T-LIB-02, T-LIB-03, T-LIB-04, T-LIB-05, T-LIB-06, T-LIB-07, T-LIB-08, T-LIB-09, T-LIB-10, T-LIB-11, T-LIB-12, T-LIB-13, T-LIB-14, T-CAT-11]
+    goal: [AC2]
+    rubric: [R-N2-1, R-N2-2, R-N2-3]
+    timebox_min: 45
+
+  - id: N3
+    name: labels for the 15 existing areas, entry points, validator
+    stream: B
+    depends_on: [N1, G0]
+    owns_files:
+      - content/skills/areas/audit-logging.md          # frontmatter line only, for all 15 below
+      - content/skills/areas/bias-monitoring.md
+      - content/skills/areas/confidence-scoring.md
+      - content/skills/areas/data-integrity.md
+      - content/skills/areas/explainability.md
+      - content/skills/areas/fallback-patterns.md
+      - content/skills/areas/human-oversight.md
+      - content/skills/areas/input-validation.md
+      - content/skills/areas/monitoring.md
+      - content/skills/areas/output-sanitization.md
+      - content/skills/areas/pii-handling.md
+      - content/skills/areas/prompt-security.md
+      - content/skills/areas/rag-security.md
+      - content/skills/areas/rate-limiting.md
+      - content/skills/areas/supply-chain.md
+      - content/index/atlas-entry-points.json
+      - "cli-python/aigis_cli/content/skills/areas/<the same 15 file names>"
+      - cli-python/aigis_cli/content/index/atlas-entry-points.json
+      - scripts/validate-area-frontmatter.js
+      - scripts/area-frontmatter.schema.json
+      - scripts/area-controls-baseline.json
+      - docs/frontmatter-schema.md
+    reads: [test/atlas-frontmatter.test.js, test/frontmatter-schema.test.js, build/atlas/gold/**, content/index/atlas.json]
+    exposes: "controls.atlas in area frontmatter; content/index/atlas-entry-points.json (SPEC S3.3)"
+    spec: [S0, S3]
+    tests: [T-FM-01, T-FM-02, T-FM-03, T-FM-04, T-FM-05, T-FM-06, T-FM-07]
+    goal: [AC4]
+    rubric: [R-N3-1, R-N3-2, R-N3-3, R-N3-4]
+    timebox_min: 40
+
+  - id: N4
+    name: citation surfaces and routing (lib only)
+    stream: A
+    depends_on: [N2, N3]
+    owns_files: [lib/classify.js, lib/auto-verify.js, lib/report.js, lib/build.js]
+    reads: [test/atlas-surfaces.test.js, test/atlas-failsoft.test.js, test/atlas-regression.test.js, test/atlas-routing.test.js, test/fixtures/atlas/**, lib/atlas.js]
+    exposes: "classify().controls.atlas and .atlas; autoVerifyArea().cited_controls.atlas and .atlas; report atlas keys; brief section and meta.atlas (SPEC S4); TRAIT_FILES['is-agentic'] routes to agent-permissions and agent-tool-safety, with frontmatter fallback for their owasp/nist/iso controls (SPEC S4.6)"
+    spec: [S0, S4]
+    tests: [T-SUR-01, T-SUR-02, T-SUR-03, T-SUR-04, T-SUR-05, T-SUR-06, T-SUR-07, T-SUR-08, T-SUR-09, T-SUR-10, T-SUR-11, T-SUR-12, T-FS-01, T-FS-02, T-FS-03, T-FS-04, T-FS-05, T-REG-01, T-REG-02, T-REG-03, T-REG-04, T-REG-05, T-RT-01, T-RT-02, T-RT-03]
+    goal: [AC5, AC6, AC7, AC8, AC15, AC22, AC23, AC27, AC32]
+    rubric: [R-N4-1, R-N4-2, R-N4-3, R-N4-4, R-N4-5]
+    timebox_min: 60
+
+  - id: N5
+    name: aigis threats, CLI entry file, version strings
+    stream: B
+    depends_on: [N2, N3]
+    owns_files:
+      - lib/threats.js
+      - bin/aigis.js                 # whole file, including the .version('...') line
+      - package.json                 # version field only
+      - package-lock.json            # version fields only
+      - cli-python/pyproject.toml    # version field only
+    reads: [test/atlas-threats.test.js, test/atlas-version.test.js, lib/atlas.js, lib/build.js, lib/keywords.js, lib/classify.js, lib/jurisdiction.js]
+    exposes: "resolveThreatTraits, buildThreatModel, formatThreatsText, formatThreatsJSON; CLI `aigis threats` (SPEC S5); version 3.0.0 in all five places, changed in one commit"
+    spec: [S0, S5]
+    tests: [T-THR-01, T-THR-02, T-THR-03, T-THR-04, T-THR-05, T-THR-06, T-THR-07, T-THR-08, T-THR-09, T-THR-10, T-THR-11, T-THR-12, T-THR-13, T-THR-14, T-THR-15, T-THR-17, T-THR-18, T-THR-19, T-THR-20, T-REL-01]
+    goal: [AC9, AC10, AC11, AC19, AC21, AC23]
+    rubric: [R-N5-1, R-N5-2, R-N5-3, R-N5-4, R-N5-5, R-N5-6]
+    timebox_min: 60
+    why_version_here: "bin/aigis.js holds a version literal that the frozen version-agreement check parses, so all five strings must change in one commit by the node that owns bin/aigis.js. Regression tests mask the version."
+
+  - id: N6
+    name: core skill, template, README (launch), changelog
+    stream: C
+    depends_on: [N1, N3]
+    finalize_after: [N5, PY, G1]   # N6 is not done until its reconcile pass has run on the final cut state and the final gold
+    passes:
+      - { name: draft,     window: "18:15 to 19:05", scope: "everything in SPEC S6 and S6.7, written for the all-SHOULDs-shipped, both-areas-shipped state" }
+      - { name: reconcile, window: "20:30 to 20:45", scope: "SPEC S6.6: fixed edits for whatever was cut, final numbers from the approved gold, rerun T-DOC-*; only README.md, cli-python/README.md, CHANGELOG.md, IMPROVEMENTS.md may change" }
+    owns_files:
+      - content/skills/core.md               # cut-independent: not touched in the reconcile pass
+      - content/templates/threat-model.md
+      - content/index/audit-scan.md          # one inserted phase (SPEC S6.8); cut-independent
+      - cli-python/aigis_cli/content/index/audit-scan.md
+      - cli-python/aigis_cli/content/skills/core.md
+      - cli-python/aigis_cli/content/templates/threat-model.md
+      - README.md
+      - cli-python/README.md
+      - CHANGELOG.md
+      - CONTRIBUTING.md
+      - IMPROVEMENTS.md
+    reads: [test/atlas-docs.test.js, build/atlas/gold/**, content/index/atlas.json]
+    exposes: "aigis template threat-model"
+    spec: [S0, S6]
+    tests: [T-DOC-01, T-DOC-02, T-DOC-03, T-DOC-04, T-DOC-05, T-DOC-06, T-DOC-07, T-DOC-08, T-DOC-09, T-DOC-10, T-DOC-11]
+    goal: [AC12, AC13, AC14, AC31, AC32]
+    rubric: [R-N6-1, R-N6-2, R-N6-3, R-N6-4, R-N6-5, R-N6-6]
+    timebox_min: 50      # draft; plus 15 for reconcile
+
+  - id: NA1
+    name: new area agent-permissions (content authoring)
+    stream: E
+    depends_on: [T0b]
+    passes:
+      - { name: author, window: "17:15 to 18:25", scope: "SPEC S7.0 and S7.1: body and frontmatter with empty control arrays; Fable content review against RUBRIC C-1..C-11; fix loop" }
+      - { name: label,  window: "19:15 to 19:25", scope: "SPEC S7.5: write the controls from the approved gold/new-areas.json into the frontmatter; nothing else changes" }
+    owns_files:
+      - content/skills/areas/agent-permissions.md
+      - cli-python/aigis_cli/content/skills/areas/agent-permissions.md
+    reads: [test/atlas-area-permissions.test.js, content/skills/areas/fallback-patterns.md, content/skills/areas/human-oversight.md, /tmp/atlas-src/ATLAS-2026.10.yaml]
+    exposes: "aigis get agent-permissions; step headings S1..S7 exactly as SPEC S7.1"
+    spec: [S0, S7.0, S7.1, S7.5]
+    tests: [T-NA-01, T-NA-02, T-NA-03, T-NA-04, T-NA-05, T-NA-06, T-NA-07]
+    goal: [AC24, AC25, AC28]
+    rubric: [C-1, C-2, C-3, C-4, C-5, C-6, C-7, C-8, C-9, C-10, R-NA-1]
+    timebox_min: 70
+
+  - id: NA2
+    name: new area agent-tool-safety (content authoring)
+    stream: F
+    depends_on: [T0b]
+    passes:
+      - { name: author, window: "17:15 to 18:25", scope: "SPEC S7.0 and S7.2; same review as NA1" }
+      - { name: label,  window: "19:15 to 19:25", scope: "SPEC S7.5" }
+    owns_files:
+      - content/skills/areas/agent-tool-safety.md
+      - cli-python/aigis_cli/content/skills/areas/agent-tool-safety.md
+    reads: [test/atlas-area-tool-safety.test.js, content/skills/areas/input-validation.md, content/skills/areas/human-oversight.md, /tmp/atlas-src/ATLAS-2026.10.yaml]
+    exposes: "aigis get agent-tool-safety; step headings S1..S7 exactly as SPEC S7.2"
+    spec: [S0, S7.0, S7.2, S7.5]
+    tests: [T-NB-01, T-NB-02, T-NB-03, T-NB-04, T-NB-05, T-NB-06, T-NB-07]
+    goal: [AC24, AC25, AC28]
+    rubric: [C-1, C-2, C-3, C-4, C-5, C-6, C-7, C-8, C-9, C-10, R-NA-1]
+    timebox_min: 70
+
+  - id: NV
+    name: verify assets for the new areas (checklists, auto-verify rules, recognizers, index files)
+    stream: G
+    depends_on: [T0b]              # builds from the SPEC S7.3 contract in parallel with NA1 and NA2
+    finalize_after: [NA1, NA2]     # join check 18:25 to 18:45: each area's own complete example must pass its rules
+    owns_files:
+      - content/verify/checklist-agent-permissions.md
+      - content/verify/checklist-agent-tool-safety.md
+      - content/index/auto-verify-rules.json
+      - content/index/context-rules.json
+      - content/index/taxonomy.md
+      - cli-python/aigis_cli/content/verify/checklist-agent-permissions.md
+      - cli-python/aigis_cli/content/verify/checklist-agent-tool-safety.md
+      - cli-python/aigis_cli/content/index/auto-verify-rules.json
+      - cli-python/aigis_cli/content/index/context-rules.json
+      - cli-python/aigis_cli/content/index/taxonomy.md
+      - lib/special-recognizers.js
+    reads: [test/atlas-verify-new.test.js, test/fixtures/atlas/newareas/**, content/verify/checklist-human-oversight.md]
+    exposes: "aigis verify <new area> [--auto]; recognizer wildcard_tool_scope (MUST) and untrusted_gate_log_only (SHOULD) in REGISTRY"
+    spec: [S0, S7.3, S7.4]
+    tests: [T-NV-01, T-NV-02, T-NV-03, T-NV-04, T-NV-05, T-NV-06, T-NV-07, T-NV-08]
+    goal: [AC26, AC30]
+    rubric: [C-11, R-NV-1, R-NV-2]
+    timebox_min: 70      # plus 20 for the join check
+
+  - id: PY
+    name: Python package
+    stream: D
+    depends_on: [N2, N3]
+    passes:
+      - { name: routing-parity, required: true,  window: "18:25 to 18:55", scope: "SPEC S7.6: TRAIT_FILES, frontmatter fallback, the new recognizer(s) in classify.py and auto_verify.py. MUST (AC29)." }
+      - { name: atlas-port,     required: false, window: "18:55 to 20:25", scope: "SPY: ATLAS fields and `aigis threats`. SHOULD (AC20), all or nothing." }
+    end_states:
+      shipped: "both passes checker-approved by 20:30; T-PY-02 and T-PY-03 print RAN and pass"
+      cut_complete: "pass 1 merged at its tagged commit; nothing of pass 2 in the tree (no atlas.py, no threats.py, report.py, build.py and cli.py identical to the base commit, classify.py and auto_verify.py identical to the pass-1 tag); T-PY-03 passes; T-PY-02 prints `CUT python port`; N6 reconcile adds the README note"
+    owns_files:
+      - cli-python/aigis_cli/atlas.py
+      - cli-python/aigis_cli/threats.py
+      - cli-python/aigis_cli/classify.py
+      - cli-python/aigis_cli/auto_verify.py
+      - cli-python/aigis_cli/report.py
+      - cli-python/aigis_cli/build.py
+      - cli-python/aigis_cli/cli.py
+    reads: [test/atlas-python-parity.test.js, lib/atlas.js, lib/threats.js, lib/classify.js, lib/special-recognizers.js]
+    exposes: "Python classify routes like Node; Python verify --auto runs the new recognizers; optionally the full ATLAS contract"
+    spec: [S0, S7.6, S2, S4, S5, SPY]
+    tests: [T-PY-02, T-PY-03]
+    goal: [AC20, AC29]
+    rubric: [R-PY-2, R-PY-3]
+    timebox_min: 120     # 30 required + 90 optional
+
+integration_node: INT
+integration:
+  depends_on: [N1, N2, N3, N4, N5, N6, NA1, NA2, NV, PY]   # PY in either end state; N6, NA1, NA2 after their last pass
+  merge_order: [N1, N2, N3, NA1, NA2, NV, N4, N5, PY, N6]
+  owns_files:                              # no product files
+    - build/atlas/REVIEW.md
+    - build/atlas/evals/results/**         # except baseline.json (E0)
+  spec: [SINT]
+  tests: [T-HON-01, T-PY-01, T-REL-02, T-RT-04, T-RT-05, E2E-01, E2E-02, E2E-03, E2E-04, E2E-05, E2E-06, E2E-07, E2E-08, E2E-09, EV-M1, EV-M2, EV-M3, EV-M5, EV-M6, EV-RT]
+  goal: [AC14, AC16, AC17, AC18, AC27, AC32]
+  rubric: [R-INT-1, R-INT-2, R-INT-3, R-INT-4, R-INT-5, R-INT-6, R-INT-7, R-INT-8, R-PY-1]
+  timebox_min: 75
+
+streams:                 # parallel worktrees; a stream is one maker session at a time
+  A: [N1, N2, N4]        # 17:00 -> 17:35 -> 18:20 -> 19:20
+  B: [N3, N5]            # 17:35 -> 18:15, then N5 18:20 -> 19:20
+  C: [N6]                # draft 18:15 -> 19:05; reconcile 20:30 -> 20:45
+  D: [PY]                # pass 1 18:25 -> 18:55 (required); pass 2 18:55 -> 20:25 (optional)
+  E: [NA1]               # author 17:15 -> 18:25; label 19:15 -> 19:25
+  F: [NA2]               # author 17:15 -> 18:25; label 19:15 -> 19:25
+  G: [NV]                # 17:15 -> 18:25; join check 18:25 -> 18:45
+  gates: [G1]            # 18:25 -> 19:15, needs Nayan for about 15 minutes around 19:00
+
+critical_path: [T0b, NA1 or NA2, G1, label pass, N6 reconcile]    # the new scope, not the original chain, now sets the freeze time
+should_cut_order: [AC21, AC30, AC19, AC20, AC22]
+must_fallbacks_needing_nayan:       # pre-agreed at the delta approval so a late night decision is one word
+  - "M0031 memory section (agent-tool-safety step 6) dropped if it fails content review twice; AML.M0031 stays a printed gap."
+  - "One area only: if either new area is not checker-approved by 20:30, ship the approved one and leave the other's mitigations as printed gaps. If only one can ship, agent-tool-safety is the one to keep."
+cut_rules:
+  - "AC19 and AC21 are decided when N5 is approved. AC22 when N4 is approved. AC30 when NV is approved. AC20 at 20:30 at the latest."
+  - "After 20:30 nothing changes state. N6 reconcile runs on that final state and must finish by 20:45."
+
+file_conflict_notes:
+  - "bin/aigis.js: N5 only, whole file. Version strings: N5 only, one commit."
+  - "lib/classify.js: N4 only, including the routing lines. lib/special-recognizers.js: NV only."
+  - "content/index/auto-verify-rules.json, context-rules.json, taxonomy.md: NV only. NA1 and NA2 own exactly one area file each."
+  - "cli-python/aigis_cli/classify.py and auto_verify.py: PY only, pass 1 then pass 2, with a tag after pass 1 so pass 2 can be dropped cleanly."
+  - "README.md, cli-python/README.md, CHANGELOG.md, IMPROVEMENTS.md: N6 only, in both passes."
+  - "scripts/area-controls-baseline.json: N3 only. The two new areas are not added to the no-deletion baseline in this release (same as the EU areas in 2.1); logged in IMPROVEMENTS."

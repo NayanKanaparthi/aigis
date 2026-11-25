@@ -1,0 +1,8 @@
+{
+  "args": [
+    "traits"
+  ],
+  "status": 0,
+  "stdout": "Available traits (22):\n\n  AI architecture:\n  uses-llm, uses-rag, uses-finetuned, uses-thirdparty-api, is-agentic, is-multimodal\n\n  Data sensitivity:\n  processes-pii, handles-financial, handles-health, handles-proprietary, handles-minors\n\n  Impact scope:\n  influences-decisions, accepts-user-input, is-external, is-internal, is-high-volume\n\n  Output type:\n  generates-code, generates-content, multi-model-pipeline\n\n  Jurisdiction:\n  jurisdiction-eu, jurisdiction-us-regulated, jurisdiction-global\n\n",
+  "stderr": ""
+}

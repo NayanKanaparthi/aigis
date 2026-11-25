@@ -1,0 +1,93 @@
+
+
+=== NEW FILE db.py ===
+"""Read-only, customer-scoped data access for the assistant's tools.
+
+ASSUMED SCHEMA (adjust the SQL below to match your database):
+  orders(id, customer_id, status, total, currency, carrier, tracking_number, created_at, shipped_at, delivered_at)
+  support_tickets(id, customer_id, subject, body, status, created_at)
+
+Data minimisation: only the columns needed to answer order/ticket questions are
+selected. No names, emails or addresses are read from the customers table.
+"""
+import os
+
+import psycopg
+from psycopg.rows import dict_row
+
+from pii import redact_pii
+
+MAX_ORDERS = 10
+MAX_TICKETS = 5
+MAX_TICKET_TEXT = 1000  # chars per field; bounds prompt size and injection payload size
+
+
+def _connect():
+    conn = psycopg.connect(os.environ["DATABASE_URL"], row_factory=dict_row)
+    conn.read_only = True  # the assistant can never write, even if a query were altered
+    return conn
+
+
+def get_orders(customer_id: str) -> list[dict]:
+    with _connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, status, total, currency, carrier, tracking_number,
+                   created_at, shipped_at, delivered_at
+            FROM orders
+            WHERE customer_id = %s
+            ORDER BY created_at DESC
+            LIMIT %s
+            """,
+            (customer_id, MAX_ORDERS),
+        ).fetchall()
+    return [{k: (str(v) if v is not None else None) for k, v in r.items()} for r in rows]
+
+
+def get_tickets(customer_id: str) -> list[dict]:
+    with _connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, subject, body, status, created_at
+            FROM support_tickets
+            WHERE customer_id = %s
+            ORDER BY created_at DESC
+            LIMIT %s
+            """,
+            (customer_id, MAX_TICKETS),
+        ).fetchall()
+    # Customer-written free text: redact PII and truncate before it can reach the prompt.
+    return [
+        {
+            "id": str(r["id"]),
+            "status": r["status"],
+            "created_at": str(r["created_at"]),
+            "subject": redact_pii(r["subject"] or "")[:MAX_TICKET_TEXT],
+            "body": redact_pii(r["body"] or "")[:MAX_TICKET_TEXT],
+        }
+        for r in rows
+    ]
+
+
+=== NEW FILE pii.py ===
+"""Non-reversible PII redaction for text that is sent to the LLM or written to logs."""
+import re
+
+PII_PATTERNS = {
+    "ssn": re.compile(r"\b\d{3}-\d{2}-\d{4}\b"),
+    "email": re.compile(r"\b[\w.+-]+@[\w-]+(?:\.[\w-]+)+\b"),
+    "phone": re.compile(r"(?<!\w)(?:\+?\d{1,3}[\s.-]?)?(?:\(\d{3}\)|\d{3})[\s.-]?\d{3}[\s.-]?\d{4}\b"),
+    "credit_card": re.compile(r"\b\d(?:[ -]?\d){12,18}\b"),
+    "address": re.compile(
+        r"\b\d{1,6}\s+(?:[A-Za-z0-9.]+\s){1,4}"
+        r"(?:St|Street|Ave|Avenue|Rd|Road|Blvd|Boulevard|Ln|Lane|Dr|Drive|Ct|Court|Way)\b\.?",
+        re.IGNORECASE,
+    ),
+}
+
+
+def redact_pii(text: str) -> str:
+    # Order matters: SSN and card numbers before the looser phone pattern.
+    for name in ("ssn", "credit_card", "email", "phone", "address"):
+        text = PII_PATTERNS[name].sub(f"[REDACTED_{name.upper()}]", text)
+    return text

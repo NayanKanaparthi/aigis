@@ -1,0 +1,134 @@
+
+
+=== NEW FILE email_tool.py ===
+"""send_customer_email tool: lets the assistant email the customer it is talking to.
+
+Guardrails ([X] [X] / [X] / [X]):
+- The model never supplies the recipient. The address is looked up server-side
+  from the authenticated customer_id, so prompt injection cannot redirect mail.
+- Subject/body are validated (length, no header injection).
+- Per-customer and global rate limits; env kill switch checked on every call.
+- Every attempt is audit-logged without raw PII (hashes + lengths only).
+- Outgoing mail carries an AI-generated disclosure footer.
+
+SMTP settings (env): SMTP_HOST, SMTP_PORT (587), SMTP_USERNAME, SMTP_PASSWORD,
+SMTP_FROM, SMTP_STARTTLS (true). Kill switch: EMAIL_SENDING_ENABLED (true).
+Customer directory: JSON file {"<customer_id>": "<email>"} at CUSTOMER_DIRECTORY_FILE
+(replace lookup_customer_email with your real customer store).
+"""
+import hashlib
+import json
+import logging
+import os
+import smtplib
+import threading
+import time
+from collections import defaultdict, deque
+from email.message import EmailMessage
+from email.utils import parseaddr
+
+audit_log = logging.getLogger("[X].audit")
+
+MAX_SUBJECT = 200
+MAX_BODY = 5000
+PER_CUSTOMER_LIMIT = (3, 3600)  # max emails, per window seconds
+GLOBAL_LIMIT = (100, 60)
+AI_FOOTER = "\n\n--\nThis message was written by Acme Store's AI support assistant."
+
+EMAIL_TOOL = {
+    "name": "send_customer_email",
+    "description": (
+        "Send an email to the customer you are currently helping. The recipient is "
+        "fixed to the customer's address on file; you cannot choose it. Use only when "
+        "the customer asks for something to be emailed, or a written record (e.g. "
+        "order confirmation, instructions) is clearly useful. Never include other "
+        "customers' data or secrets."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "subject": {"type": "string", "maxLength": MAX_SUBJECT},
+            "body": {"type": "string", "maxLength": MAX_BODY},
+        },
+        "required": ["subject", "body"],
+        "additionalProperties": False,
+    },
+}
+
+_lock = threading.Lock()
+_sent = defaultdict(deque)
+_sent_global = deque()
+
+
+def lookup_customer_email(customer_id: str) -> str | None:
+    path = os.environ.get("CUSTOMER_DIRECTORY_FILE")
+    if not path:
+        return None
+    with open(path) as f:
+        return json.load(f).get(customer_id)
+
+
+def _allow(q: deque, limit: tuple[int, int], now: float) -> bool:
+    max_n, window = limit
+    while q and now - q[0] > window:
+        q.popleft()
+    return len(q) < max_n
+
+
+def _audit(event: str, trace_id: str, customer_id: str, **fields):
+    audit_log.info(json.dumps({"event_type": event, "trace_id": trace_id,
+                               "customer_id": customer_id, **fields}))
+
+
+def send_customer_email(customer_id: str, subject: str, body: str, trace_id: str) -> dict:
+    """Execute the tool. Returns a dict safe to hand back to the model."""
+    digest = hashlib.sha256(body.encode()).hexdigest()[:16]
+    meta = {"body_sha256": digest, "body_len": len(body), "subject_len": len(subject)}
+
+    def refuse(reason: str, msg: str) -> dict:
+        _audit("email_refused", trace_id, customer_id, reason=reason, **meta)
+        return {"sent": False, "error": msg}
+
+    if os.environ.get("EMAIL_SENDING_ENABLED", "true").lower() != "true":
+        return refuse("kill_switch", "Email sending is currently disabled.")
+    if not isinstance(subject, str) or not isinstance(body, str) \
+            or not subject.strip() or not body.strip():
+        return refuse("invalid", "Subject and body must be non-empty text.")
+    if len(subject) > MAX_SUBJECT or len(body) > MAX_BODY or "\n" in subject or "\r" in subject:
+        return refuse("invalid", "Subject/body too long or subject contains line breaks.")
+
+    to_addr = lookup_customer_email(customer_id)
+    if not to_addr or not parseaddr(to_addr)[1] or "\n" in to_addr:
+        return refuse("no_recipient", "No valid email address on file for this customer.")
+
+    cfg = {k: os.environ.get(k) for k in ("SMTP_HOST", "SMTP_FROM")}
+    if not all(cfg.values()):
+        return refuse("smtp_unconfigured", "Email service is not configured.")
+
+    now = time.time()
+    with _lock:
+        if not (_allow(_sent[customer_id], PER_CUSTOMER_LIMIT, now)
+                and _allow(_sent_global, GLOBAL_LIMIT, now)):
+            return refuse("rate_limited", "Email rate limit reached; do not retry.")
+        _sent[customer_id].append(now)
+        _sent_global.append(now)
+
+    msg = EmailMessage()
+    msg["From"], msg["To"], msg["Subject"] = cfg["SMTP_FROM"], to_addr, subject.strip()
+    msg["X-Trace-Id"] = trace_id
+    msg.set_content(body.strip() + AI_FOOTER)
+
+    try:
+        with smtplib.SMTP(cfg["SMTP_HOST"], int(os.environ.get("SMTP_PORT", "587")),
+                          timeout=10) as smtp:
+            if os.environ.get("SMTP_STARTTLS", "true").lower() == "true":
+                smtp.starttls()
+            if os.environ.get("SMTP_USERNAME"):
+                smtp.login(os.environ["SMTP_USERNAME"], os.environ.get("SMTP_PASSWORD", ""))
+            smtp.send_message(msg)
+    except (smtplib.SMTPException, OSError) as exc:
+        return refuse("smtp_error", f"Email could not be sent ({type(exc).__name__}).")
+
+    _audit("email_sent", trace_id, customer_id,
+           recipient_domain=to_addr.rsplit("@", 1)[-1], **meta)
+    return {"sent": True}

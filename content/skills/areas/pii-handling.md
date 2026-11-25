@@ -5,6 +5,7 @@ controls:
   owasp: [LLM02]
   nist: [MAP-2.1, MEASURE-2.10]
   iso42001: [Annex-A.7, Annex-A.4]
+  atlas: [AML.M0020, AML.M0024]
 min_risk_tier: all
 system_traits: [processes-pii, handles-financial, handles-health, handles-minors]
 ---

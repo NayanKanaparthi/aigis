@@ -1,0 +1,11 @@
+{
+  "args": [
+    "classify",
+    "--traits",
+    "is-internal",
+    "--json"
+  ],
+  "status": 0,
+  "stdout": "{\n  \"risk_tier\": \"LOW\",\n  \"reason\": \"no high/medium triggers\",\n  \"traits\": [\n    \"is-internal\"\n  ],\n  \"implement_files\": [],\n  \"templates\": [],\n  \"guardrails_fired\": [],\n  \"warnings\": [],\n  \"controls\": {\n    \"owasp\": [],\n    \"nist\": [],\n    \"iso\": []\n  },\n  \"filtered_by_jurisdiction\": {\n    \"user_jurisdictions\": [],\n    \"dropped_count\": 0\n  }\n}\n",
+  "stderr": ""
+}

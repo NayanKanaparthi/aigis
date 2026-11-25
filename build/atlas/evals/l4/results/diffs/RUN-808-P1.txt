@@ -1,0 +1,217 @@
+
+
+=== NEW FILE email_tool.py ===
+"""send_email_reply tool: lets the assistant email a reply to the customer.
+
+Security properties (enforced here in code, not in the prompt):
+- The recipient is NEVER a model argument. It is looked up server-side from the
+  authenticated request's customer_id.
+- Arguments are schema-validated (exact fields, types, length caps) before execution.
+- Per-customer rate limit and an env kill switch (EMAIL_TOOL_ENABLED).
+- Audit log records the event, never the body or the full address.
+- Tool results are a fixed {"ok", "data"} envelope with no SMTP error details.
+
+SMTP settings come from env vars: SMTP_HOST, SMTP_PORT (default 587),
+SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM, SMTP_SECURITY (starttls|ssl|none,
+default starttls).
+"""
+import hashlib
+import logging
+import os
+import re
+import smtplib
+import ssl
+import threading
+import time
+from collections import defaultdict, deque
+from email.message import EmailMessage
+
+log = logging.getLogger("audit.email")
+
+MAX_SUBJECT = 200
+MAX_BODY = 4000
+RATE_LIMIT = int(os.environ.get("EMAIL_RATE_LIMIT", "3"))  # sends per customer per window
+RATE_WINDOW_SECONDS = int(os.environ.get("EMAIL_RATE_WINDOW_SECONDS", "3600"))
+
+TOOL_SCHEMA = {
+    "name": "send_email_reply",
+    "description": (
+        "Send an email to the customer you are currently helping, at the address "
+        "on file. Use it only when an email is genuinely useful, e.g. the customer "
+        "asks for written confirmation or details they will want to keep. You cannot "
+        "choose the recipient. Do not include secrets or other customers' data."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "subject": {"type": "string", "maxLength": MAX_SUBJECT},
+            "body": {"type": "string", "maxLength": MAX_BODY},
+        },
+        "required": ["subject", "body"],
+        "additionalProperties": False,
+    },
+}
+
+_ARG_SCHEMA = {"subject": (str, MAX_SUBJECT), "body": (str, MAX_BODY)}
+_CONTROL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f​-‏‪-‮⁠-⁤﻿]")
+
+_sent = defaultdict(deque)  # customer_id -> send timestamps (in-memory; use Redis if multi-worker)
+_lock = threading.Lock()
+
+
+class ToolDenied(Exception):
+    pass
+
+
+def lookup_customer_email(customer_id: str) -> str | None:
+    """Return the customer's address on file. REPLACE with your customer store.
+
+    Fails closed (returns None) until wired up, so no email is ever sent to an
+    address the model or the request body supplied.
+    """
+    return None
+
+
+def _fp(value: str) -> str:
+    return hashlib.sha256(value.encode()).hexdigest()[:12]
+
+
+def _validate(args) -> dict:
+    if not isinstance(args, dict) or set(args) != set(_ARG_SCHEMA):
+        raise ToolDenied("bad arguments")
+    for key, (typ, cap) in _ARG_SCHEMA.items():
+        v = args[key]
+        if type(v) is not typ or not v.strip() or len(v) > cap:
+            raise ToolDenied(f"bad argument: {key}")
+    subject = _CONTROL.sub("", args["subject"]).replace("\r", " ").replace("\n", " ").strip()
+    body = _CONTROL.sub(lambda m: m.group(0) if m.group(0) in "\n\t" else "", args["body"])
+    if not subject:
+        raise ToolDenied("bad argument: subject")
+    return {"subject": subject, "body": body.strip()}
+
+
+def _check_rate(customer_id: str) -> None:
+    now = time.monotonic()
+    with _lock:
+        q = _sent[customer_id]
+        while q and now - q[0] > RATE_WINDOW_SECONDS:
+            q.popleft()
+        if len(q) >= RATE_LIMIT:
+            raise ToolDenied("rate limited")
+        q.append(now)
+
+
+def _send_smtp(to_addr: str, subject: str, body: str) -> None:
+    host = os.environ["SMTP_HOST"]
+    port = int(os.environ.get("SMTP_PORT", "587"))
+    security = os.environ.get("SMTP_SECURITY", "starttls").lower()
+    sender = os.environ["SMTP_FROM"]
+    user, pw = os.environ.get("SMTP_USERNAME"), os.environ.get("SMTP_PASSWORD")
+
+    msg = EmailMessage()
+    msg["From"], msg["To"], msg["Subject"] = sender, to_addr, subject
+    msg.set_content(body)
+
+    ctx = ssl.create_default_context()
+    if security == "ssl":
+        server = smtplib.SMTP_SSL(host, port, context=ctx, timeout=15)
+    else:
+        server = smtplib.SMTP(host, port, timeout=15)
+    with server:
+        if security == "starttls":
+            server.starttls(context=ctx)
+        if user and pw:
+            server.login(user, pw)
+        server.send_message(msg)
+
+
+def _result(ok: bool, data: str) -> dict:
+    return {"ok": ok, "data": data}
+
+
+def run_send_email_reply(customer_id: str, args) -> dict:
+    """Execute the tool for the authenticated customer_id. Always returns an envelope."""
+    cid = _fp(customer_id)
+    if os.environ.get("EMAIL_TOOL_ENABLED", "true").lower() != "true":
+        log.warning("email_denied reason=disabled customer=%s", cid)
+        return _result(False, "Email is currently unavailable.")
+    try:
+        clean = _validate(args)
+        to_addr = lookup_customer_email(customer_id)
+        if not to_addr or "\n" in to_addr or "\r" in to_addr:
+            raise ToolDenied("no address on file")
+        _check_rate(customer_id)
+        _send_smtp(to_addr, clean["subject"], clean["body"])
+    except ToolDenied as e:
+        log.warning("email_denied reason=%s customer=%s", e, cid)
+        return _result(False, "Email could not be sent.")
+    except Exception:  # SMTP/config errors: log type only, don't leak details to the model
+        log.exception("email_failed customer=%s", cid)
+        return _result(False, "Email could not be sent.")
+    log.info(
+        "email_sent customer=%s to=%s subject_len=%d body_len=%d",
+        cid, _fp(to_addr), len(clean["subject"]), len(clean["body"]),
+    )
+    return _result(True, "Email sent to the customer's address on file.")
+
+
+=== NEW FILE tests/test_email_tool.py ===
+import email_tool as et
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def setup(monkeypatch):
+    sent = []
+    monkeypatch.setattr(et, "lookup_customer_email", lambda cid: "c@example.com")
+    monkeypatch.setattr(et, "_send_smtp", lambda to, s, b: sent.append((to, s, b)))
+    et._sent.clear()
+    monkeypatch.setenv("EMAIL_TOOL_ENABLED", "true")
+    return sent
+
+
+def test_sends_to_address_on_file(setup):
+    assert et.run_send_email_reply("1", {"subject": "Hi", "body": "Yo"})["ok"]
+    assert setup[0][0] == "c@example.com"
+
+
+def test_model_cannot_pick_recipient(setup):
+    r = et.run_send_email_reply("1", {"subject": "a", "body": "b", "to": "evil@x.com"})
+    assert not r["ok"] and not setup
+
+
+@pytest.mark.parametrize("args", [
+    {"subject": "a"}, {"subject": 1, "body": "b"}, {"subject": "a", "body": "x" * 4001},
+    {"subject": "   ", "body": "b"}, "nope",
+])
+def test_bad_args_denied(setup, args):
+    assert not et.run_send_email_reply("1", args)["ok"] and not setup
+
+
+def test_subject_header_injection_stripped(setup):
+    et.run_send_email_reply("1", {"subject": "a\r\nBcc: evil@x.com", "body": "b"})
+    assert "\n" not in setup[0][1] and "\r" not in setup[0][1]
+
+
+def test_no_address_fails_closed(setup, monkeypatch):
+    monkeypatch.setattr(et, "lookup_customer_email", lambda cid: None)
+    assert not et.run_send_email_reply("1", {"subject": "a", "body": "b"})["ok"] and not setup
+
+
+def test_rate_limited(setup):
+    for _ in range(et.RATE_LIMIT):
+        assert et.run_send_email_reply("1", {"subject": "a", "body": "b"})["ok"]
+    assert not et.run_send_email_reply("1", {"subject": "a", "body": "b"})["ok"]
+    assert et.run_send_email_reply("2", {"subject": "a", "body": "b"})["ok"]
+
+
+def test_kill_switch(setup, monkeypatch):
+    monkeypatch.setenv("EMAIL_TOOL_ENABLED", "false")
+    assert not et.run_send_email_reply("1", {"subject": "a", "body": "b"})["ok"] and not setup
+
+
+def test_smtp_error_not_leaked(setup, monkeypatch):
+    def boom(*a): raise RuntimeError("smtp password=hunter2")
+    monkeypatch.setattr(et, "_send_smtp", boom)
+    r = et.run_send_email_reply("1", {"subject": "a", "body": "b"})
+    assert not r["ok"] and "hunter2" not in r["data"]

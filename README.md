@@ -2,7 +2,9 @@
 
 **AI governance that ships with your code.**
 
-Aigis sits between you and your coding agent (Cursor, Claude Code, GitHub Copilot, Windsurf) and gives the agent curated AI governance patterns mapped to NIST AI RMF, OWASP Top 10 for LLMs, ISO/IEC 42001, and the EU AI Act.
+Aigis now understands how attackers attack AI systems and helps your agent build defenses against them.
+
+Aigis sits between you and your coding agent (Cursor, Claude Code, GitHub Copilot, Windsurf) and gives the agent curated AI governance patterns mapped to NIST AI RMF, OWASP Top 10 for LLMs, ISO/IEC 42001, and the EU AI Act, with threat modeling from MITRE ATLAS.
 
 You don't run Aigis. Your agent does. After one setup command, you describe what you're building and your agent picks the right governance patterns, implements them, and verifies the result — all in the same chat where you write code.
 
@@ -64,6 +66,39 @@ Both surfaces read a single `.aigisrc.json` config:
 
 The CI workflow runs `aigis verify` on every PR; the pre-commit hook runs it before each commit. Configure once, both run.
 
+## What's new in v3.0
+
+- **Two new areas for agentic systems.** `agent-permissions` covers agent identity, tool permissions and authority limits. `agent-tool-safety` covers tool invocation safety, validation of tool inputs and outputs, and scope drift.
+- **`aigis classify` recommends both new areas when a system is agentic** (`is-agentic`). Builds, audits and reports for agentic projects include them too.
+- **3.0 is additive: no command, flag or JSON key was removed or renamed.**
+- Aigis now ships 21 governance areas and 17 verify checklists.
+- **MITRE ATLAS mitigations cited** by `aigis classify`, `aigis verify --auto`, `aigis report` and `aigis build`, next to the existing OWASP, NIST and ISO citations.
+- **`aigis threats`** builds a threat model from your traits: attacker techniques for your entry points, the mitigations MITRE links to each, the Aigis areas that help implement each one (in part), and the gaps.
+- **`aigis template threat-model`**, a fill-in threat model worksheet.
+- **Your agent is instructed to threat-model on its own.** The core skill that `aigis init` writes tells the agent when to run `aigis threats` without being asked, and `aigis audit --scan` has a new threat model phase.
+- **Pinned ATLAS v2026.10 data, offline.** The catalog ships inside the package. No network calls.
+
+## Threat modeling with MITRE ATLAS
+
+OWASP says what can go wrong. MITRE ATLAS says how an attacker does it. NIST AI RMF says how you govern it.
+
+```bash
+aigis threats --traits uses-llm,uses-rag,is-agentic
+aigis threats "<description>"
+```
+
+`--traits` is the reliable path. The description path only finds traits the resolver recognizes.
+
+What you get: the techniques for your entry points, Realized first (seen in real attacks); the mitigations MITRE links to each technique; the Aigis areas that help implement each mitigation (in part); and the gaps, mitigations with no mapped Aigis area. `--redteam` adds test stubs, `--json` is for scripts.
+
+When: designing an AI feature; adding a capability (tools, write access, memory, a new data source); before launch; after an incident. Your agent is instructed to do this at those moments without being asked, and you can run it yourself at any time.
+
+What ships: a pinned subset of ATLAS v2026.10 (16 tactics, 221 techniques, 44 mitigations, counts from 77 case studies). No network calls. Aigis areas currently map to 21 of the 44 mitigations.
+
+The mapping from areas to mitigations is ours. The links from mitigations to techniques are MITRE's. The entry points come from a reviewed map of 9 traits to 29 techniques.
+
+Limits: MITRE ATLAS is a threat catalog, not a standard. Nobody is "ATLAS compliant". It does not score risk, and it does not cover bias or fairness. A cited mitigation means the area helps implement it (in part). The technique list is a starting point based on your traits, not proof of coverage.
+
 ## What's new in v2.1
 
 - **EU AI Act mapping** — Articles 9, 10, 12, 13, 14, 15, 50, 72, 73 mapped to runnable governance patterns, plus an Annex IV technical documentation template
@@ -111,6 +146,11 @@ aigis report --from-classify "<desc>" --jurisdiction eu --output audit.md
 aigis audit --scan                           # discovery prompt for auditing existing code
 aigis audit --traits <list>                  # scoped audit with deterministic denominator
 
+# Threat modeling (MITRE ATLAS)
+aigis threats --traits <list>                # techniques, MITRE mitigations, Aigis areas, gaps
+aigis threats "<description>" --redteam      # same from a description, plus red-team test stubs
+aigis template threat-model                  # threat model worksheet
+
 # Misc
 aigis search --list                          # list all available areas
 aigis traits                                 # list classification traits
@@ -125,15 +165,28 @@ Run `aigis --help` for full options.
 - **Not a security audit.** `aigis verify` is heuristic regex over your source. It catches common misimplementations; it doesn't replace SAST, code review, or penetration testing.
 - **Doesn't run your code or call your APIs.** The agent does the work. Aigis provides the brief, the verifier, and the audit doc.
 - **Local. No cloud. No telemetry.** Aigis ships nothing back to a server. Your descriptions, your code, and your verify results stay on your machine.
+- **Not a penetration test.** `aigis threats` lists known techniques for your traits. It does not attack or test your system.
 
 ## Benchmark results
 
+### v3.0 (real coding agent, Aigis 2.1.1 vs 3.0)
+
+Claude Code built two agent features in the same sample app from plain requests that never mentioned Aigis or security (6 runs per version). A blind judge from a different vendor graded the code for nine agent-safety defenses:
+
+- Defenses present: 51% with Aigis 2.1.1, **80% with Aigis 3.0** (worst v3.0 run 67%, typical v2.1.1 run 50%)
+- Agent ran a threat model on its own: 0/6 vs **6/6**; told the user about uncovered gaps: 1/6 vs **6/6**
+- Every MITRE ATLAS id and link Aigis prints matched MITRE's data (9,604 checked)
+
+Small sample (one agent, one app, two requests). Full method, per-defense tables and limits: [`BENCHMARKS.md`](BENCHMARKS.md).
+
+### v2.0
+
 v2.0 was benchmarked at every iteration. Final numbers, against the same 10 descriptions:
 
-- Baseline (no Aigis): P=0.737, R=0.905, F1=0.790
+- Baseline (Aigis v1.0.3): P=0.737, R=0.905, F1=0.790
 - v2.0 (`aigis build`): P=0.847, R=0.851, F1=0.837
 
-F1 beats baseline by +0.047. v2.1 ships `--tight` as a flag-gated experiment; promotion to default in v2.2 is pending a confirmation benchmark. Methodology, per-run tables, and the v2.1 manual end-to-end test live in the [`benchmarks/`](https://github.com/NayanKanaparthi/aigis) directory.
+F1 beats baseline by +0.047. v2.1 ships `--tight` as a flag-gated experiment; promotion to default is pending a confirmation benchmark. Methodology, per-run tables, and the v2.1 manual end-to-end test live in the [`benchmarks/`](https://github.com/NayanKanaparthi/aigis) directory.
 
 ## Supported agents
 
@@ -152,4 +205,4 @@ See `CONTRIBUTING.md` for the full contributor workflow, including how to add ne
 
 ## License
 
-MIT
+MIT. Bundles a subset of MITRE ATLAS data under Apache-2.0; see `content/index/atlas-NOTICE.md` for the Apache-2.0 license notice.

@@ -1,0 +1,565 @@
+{
+ "adjudicator": "claude-opus-subagent",
+ "A": [
+  {
+   "area": "confidence-scoring",
+   "mitigation": "AML.M0020",
+   "mitigation_name": "Generative AI Guardrails",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Pattern 2 extracts claims and checks each against retrieved source documents, flagging ungrounded ones, which is exactly the groundedness check this sentence describes.",
+   "atlas_quote": "Compare model responses against trusted source material or approved knowledge bases to detect unsupported or hallucinated claims.",
+   "area_evidence": "### Pattern 2: RAG-based grounding verification"
+  },
+  {
+   "area": "fallback-patterns",
+   "mitigation": "AML.M0036",
+   "mitigation_name": "Limit AI Workload Resource Consumption",
+   "from": "second_only",
+   "decision": "exclude",
+   "reason": "The circuit breaker trips on provider failures for reliability and the kill switch is an operator toggle; neither bounds the resources a single workload can consume, so this is shared vocabulary, not the same control.",
+   "atlas_quote": "Use timeouts, cost ceilings, circuit breakers, and safe termination conditions to prevent individual workloads from exhausting shared resources.",
+   "area_evidence": "### Step 2 — Implement a circuit breaker with three states"
+  },
+  {
+   "area": "human-oversight",
+   "mitigation": "AML.M0020",
+   "mitigation_name": "Generative AI Guardrails",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Pattern 1's dispatcher checks every tool call against an allowlist before execution and requires human approval for write and externally visible tools, matching the tool and action guardrail sentence.",
+   "atlas_quote": "Validate tool calls, tool arguments, permissions, and tool outputs before execution or before results are returned to the model. Require human approval for high-impact, irreversible, privileged, or externally visible actions",
+   "area_evidence": "### Pattern 1: Principle of least privilege for tools"
+  },
+  {
+   "area": "human-oversight",
+   "mitigation": "AML.M0030",
+   "mitigation_name": "Restrict AI Agent Tool Invocation on Untrusted Data",
+   "from": "second_only",
+   "decision": "exclude",
+   "reason": "M0030's object is restricting tool invocation once untrusted data enters context; the area's approval gate is unconditional on data provenance (the second labeler concedes this), and the planner lists M0030 as an uncovered gap.",
+   "atlas_quote": "For high consequence actions, consider always requiring user confirmation.",
+   "area_evidence": "### Pattern 1: Principle of least privilege for tools"
+  },
+  {
+   "area": "human-oversight",
+   "mitigation": "AML.M0036",
+   "mitigation_name": "Limit AI Workload Resource Consumption",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Pattern 3 caps the number of tool actions an agent can take per window and blocks beyond the cap, which is a direct limit on agent tool calls.",
+   "atlas_quote": "Agentic AI systems should limit iterations, retries, tool calls, parallel tasks, delegation depth, and downstream spending.",
+   "area_evidence": "### Pattern 3: Action rate limiting"
+  },
+  {
+   "area": "human-oversight",
+   "mitigation": "AML.M0037",
+   "mitigation_name": "AI Agent Authority Expansion Controls",
+   "from": "second_only",
+   "decision": "exclude",
+   "reason": "A static tool allowlist is already cited as M0028; M0037 is about runtime acquisition of tokens, credentials and discovered targets and sub-agent propagation, none of which the area addresses.",
+   "atlas_quote": "The maximum authority available to the agent should be explicitly granted prior to runtime.",
+   "area_evidence": "### Pattern 1: Principle of least privilege for tools"
+  },
+  {
+   "area": "input-validation",
+   "mitigation": "AML.M0036",
+   "mitigation_name": "Limit AI Workload Resource Consumption",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Step 1 enforces character and estimated-token ceilings on input and rejects oversize requests before the LLM call, a literal bound on input size.",
+   "atlas_quote": "Set bounds on input size, batch size, execution time, memory, compute, and output size.",
+   "area_evidence": "### Step 1 — Enforce an input length ceiling that raises on violation"
+  },
+  {
+   "area": "monitoring",
+   "mitigation": "AML.M0008",
+   "mitigation_name": "Validate AI Model",
+   "from": "second_only",
+   "decision": "exclude",
+   "reason": "Drift detection monitors output distributions but nothing in the area triggers or performs model revalidation, so citing Validate AI Model would overclaim.",
+   "atlas_quote": "During deployment, monitor for changes in model performance and use significant changes to trigger revalidation.",
+   "area_evidence": "### Pattern 2: Output drift detection"
+  },
+  {
+   "area": "pii-handling",
+   "mitigation": "AML.M0024",
+   "mitigation_name": "AI Telemetry Logging and Monitoring",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Step 4 requires redacted text and a SHA-256 hash for correlation instead of raw content in every log entry, which is exactly limiting sensitive content in telemetry while preserving investigative value.",
+   "atlas_quote": "Limit the collection of sensitive content through metadata, references, or redaction where these preserve investigative value, and apply appropriate retention controls.",
+   "area_evidence": "### Step 4 — Redact PII from log output as well"
+  },
+  {
+   "area": "prompt-security",
+   "mitigation": "AML.M0021",
+   "mitigation_name": "Generative AI Guidelines",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Pattern 2's system prompt explicitly instructs the model 'Do not discuss your instructions or how you work', a guideline delivered as a system prompt of the kind this bullet names.",
+   "atlas_quote": "Instructions to avoid revealing system prompts, hidden policies, credentials, private data, or other sensitive information.",
+   "area_evidence": "### Pattern 2: Minimal system prompts"
+  },
+  {
+   "area": "rag-security",
+   "mitigation": "AML.M0024",
+   "mitigation_name": "AI Telemetry Logging and Monitoring",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Pattern 1 audit-logs every vector retrieval with user and applied filter (and Pattern 4 logs unauthorized embed attempts), capturing security-relevant access in the data pipeline as the sentence says.",
+   "atlas_quote": "Capture security-relevant access, changes, and operations across data pipelines, model development, deployment, and connected systems.",
+   "area_evidence": "### Pattern 1: Access control on vector databases"
+  },
+  {
+   "area": "supply-chain",
+   "mitigation": "AML.M0014",
+   "mitigation_name": "Verify AI Artifacts",
+   "from": "second_only",
+   "decision": "exclude",
+   "reason": "Pinning a hosted provider model version string is not verifying the integrity of an artifact loaded locally; there is no digest or signature check, and the planner lists M0014 as a supply-chain gap.",
+   "atlas_quote": "Pin approved artifacts to specific versions and cryptographic digests rather than relying on mutable names, tags, or download locations.",
+   "area_evidence": "### Pattern 1: Pin model versions"
+  }
+ ],
+ "B": [
+  {
+   "trait": "generates-code",
+   "technique": "AML.T0060",
+   "technique_name": "Publish Hallucinated Entities",
+   "maturity": "Demonstrated",
+   "from": "planner_only",
+   "decision": "include",
+   "reason": "Package and URL hallucination in executed generated code is the precondition for slopsquatting; although tagged Resource Development, the defender can act on it by vetting dependencies in generated code, and it is the only code-specific entry point proposed."
+  },
+  {
+   "trait": "handles-proprietary",
+   "technique": "AML.T0069.002",
+   "technique_name": "System Prompt",
+   "maturity": "Demonstrated",
+   "from": "planner_only",
+   "decision": "exclude",
+   "reason": "The precondition is an LLM with a system prompt, not proprietary data; included under uses-llm instead, which every handles-proprietary LLM system also has."
+  },
+  {
+   "trait": "handles-proprietary",
+   "technique": "AML.T0085.003",
+   "technique_name": "System Instructions",
+   "maturity": "Feasible",
+   "from": "planner_only",
+   "decision": "exclude",
+   "reason": "Feasible with no case studies and duplicates the Demonstrated system-prompt extraction (T0069.002) kept under uses-llm."
+  },
+  {
+   "trait": "is-agentic",
+   "technique": "AML.T0080.000",
+   "technique_name": "Memory",
+   "maturity": "Realized",
+   "from": "planner_only",
+   "decision": "include",
+   "reason": "Agent memory is the precondition for persistent context poisoning; Realized with case studies, and preferred over the parent T0080."
+  },
+  {
+   "trait": "is-agentic",
+   "technique": "AML.T0086",
+   "technique_name": "Exfiltration via AI Agent Tool Invocation",
+   "maturity": "Realized",
+   "from": "planner_only",
+   "decision": "include",
+   "reason": "Write-capable agent tools are the exfiltration channel; Realized with many case studies."
+  },
+  {
+   "trait": "is-agentic",
+   "technique": "AML.T0101",
+   "technique_name": "Data Destruction via AI Agent Tool Invocation",
+   "maturity": "Realized",
+   "from": "planner_only",
+   "decision": "include",
+   "reason": "Mutating agent tools are the precondition for data destruction; Realized."
+  },
+  {
+   "trait": "is-external",
+   "technique": "AML.T0024",
+   "technique_name": "Exfiltration via AI Inference API",
+   "maturity": "Realized",
+   "from": "planner_only",
+   "decision": "include",
+   "reason": "Public access to the inference API is the precondition for exfiltration through model responses; Realized."
+  },
+  {
+   "trait": "is-external",
+   "technique": "AML.T0029",
+   "technique_name": "Denial of AI Service",
+   "maturity": "Demonstrated",
+   "from": "planner_only",
+   "decision": "include",
+   "reason": "A publicly reachable AI endpoint is the precondition for request flooding and compute exhaustion; Demonstrated, and it covers the cost/DoS surface."
+  },
+  {
+   "trait": "is-external",
+   "technique": "AML.T0034",
+   "technique_name": "Cost Harvesting",
+   "maturity": "Feasible",
+   "from": "planner_only",
+   "decision": "exclude",
+   "reason": "Feasible parent with no case studies; the compute-exhaustion entry point is already covered by the Demonstrated T0029."
+  },
+  {
+   "trait": "processes-pii",
+   "technique": "AML.T0085.002",
+   "technique_name": "Conversation Context and Memory",
+   "maturity": "Demonstrated",
+   "from": "planner_only",
+   "decision": "include",
+   "reason": "PII held in conversation context and memory is what this collection technique targets; Demonstrated and the most specific ATLAS fit for PII leakage."
+  },
+  {
+   "trait": "uses-finetuned",
+   "technique": "AML.T0010.002",
+   "technique_name": "Data Repository",
+   "maturity": "Realized",
+   "from": "planner_only",
+   "decision": "include",
+   "reason": "Fine-tuning pulls training data from data repositories that can be compromised; Realized."
+  },
+  {
+   "trait": "uses-finetuned",
+   "technique": "AML.T0010.003",
+   "technique_name": "Model Repository",
+   "maturity": "Realized",
+   "from": "planner_only",
+   "decision": "include",
+   "reason": "Custom models start from downloaded base models in model repositories; Realized with several case studies."
+  },
+  {
+   "trait": "uses-finetuned",
+   "technique": "AML.T0011.000",
+   "technique_name": "Unsafe AI Artifacts",
+   "maturity": "Realized",
+   "from": "planner_only",
+   "decision": "include",
+   "reason": "Loading self-managed model artifacts (serialized weights, templates) is the precondition for unsafe-artifact execution; Realized."
+  },
+  {
+   "trait": "uses-llm",
+   "technique": "AML.T0077",
+   "technique_name": "LLM Response Rendering",
+   "maturity": "Demonstrated",
+   "from": "planner_only",
+   "decision": "include",
+   "reason": "Rendering LLM output (Markdown, HTML, images) in a client is the precondition for response-rendering exfiltration; Demonstrated with case studies."
+  },
+  {
+   "trait": "uses-rag",
+   "technique": "AML.T0051.001",
+   "technique_name": "Indirect",
+   "maturity": "Realized",
+   "from": "planner_only",
+   "decision": "include",
+   "reason": "Retrieved documents are the canonical indirect prompt injection channel; Realized with the most case studies of any candidate."
+  },
+  {
+   "trait": "uses-thirdparty-api",
+   "technique": "AML.T0010.001",
+   "technique_name": "Software",
+   "maturity": "Realized",
+   "from": "planner_only",
+   "decision": "include",
+   "reason": "Calling a provider relies on AI SDKs and integration frameworks that the description names as supply-chain targets; Realized."
+  },
+  {
+   "trait": "uses-thirdparty-api",
+   "technique": "AML.T0109",
+   "technique_name": "AI Supply Chain Rug Pull",
+   "maturity": "Realized",
+   "from": "planner_only",
+   "decision": "include",
+   "reason": "Depending on third-party AI components is the precondition for a malicious update after adoption; Realized, and the supply-chain area's version pinning addresses it."
+  },
+  {
+   "trait": "accepts-user-input",
+   "technique": "AML.T0034.001",
+   "technique_name": "Resource-Intensive Queries",
+   "maturity": "Feasible",
+   "from": "second_only",
+   "decision": "exclude",
+   "reason": "Feasible with no case studies; compute-heavy queries are covered by Denial of AI Service (T0029) on is-external."
+  },
+  {
+   "trait": "accepts-user-input",
+   "technique": "AML.T0137.003",
+   "technique_name": "Extract Memorized Data",
+   "maturity": "Demonstrated",
+   "from": "second_only",
+   "decision": "exclude",
+   "reason": "Memorized-data extraction matters where the defender owns the training data; kept under uses-finetuned, redundant here."
+  },
+  {
+   "trait": "generates-code",
+   "technique": "AML.T0102",
+   "technique_name": "Generate Malicious Commands",
+   "maturity": "Realized",
+   "from": "second_only",
+   "decision": "exclude",
+   "reason": "Describes adversaries using LLMs to generate commands for their own malware (AI Attack Adaptation), not an attack on a code-generating system; the defender cannot act on it from this trait."
+  },
+  {
+   "trait": "generates-content",
+   "technique": "AML.T0061",
+   "technique_name": "LLM Prompt Self-Replication",
+   "maturity": "Demonstrated",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Externally published generated artifacts are where self-replicating prompts persist and are re-ingested by other LLMs; Demonstrated, distinct from propagation."
+  },
+  {
+   "trait": "generates-content",
+   "technique": "AML.T0067",
+   "technique_name": "LLM Trusted Output Components Manipulation",
+   "maturity": "Demonstrated",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Published responses expose links, citations and recommended actions to adversarial manipulation aimed at the audience's trust; Demonstrated."
+  },
+  {
+   "trait": "generates-content",
+   "technique": "AML.T0077",
+   "technique_name": "LLM Response Rendering",
+   "maturity": "Demonstrated",
+   "from": "second_only",
+   "decision": "exclude",
+   "reason": "Already included under uses-llm, which any LLM content generator also has; listing it twice adds noise."
+  },
+  {
+   "trait": "generates-content",
+   "technique": "AML.T0143",
+   "technique_name": "LLM Prompt Propagation",
+   "maturity": "Demonstrated",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Externally published content is a carrier that transfers injected instructions to later storage and AI consumers; Demonstrated."
+  },
+  {
+   "trait": "is-agentic",
+   "technique": "AML.T0034.002",
+   "technique_name": "Agentic Resource Consumption",
+   "maturity": "Feasible",
+   "from": "second_only",
+   "decision": "exclude",
+   "reason": "Feasible with no case studies; the six Realized/Demonstrated agentic techniques take priority under the cap."
+  },
+  {
+   "trait": "is-agentic",
+   "technique": "AML.T0080",
+   "technique_name": "AI Agent Context Poisoning",
+   "maturity": "Realized",
+   "from": "second_only",
+   "decision": "exclude",
+   "reason": "Parent of T0080.000; the Memory sub-technique is the precise fit and is included."
+  },
+  {
+   "trait": "is-agentic",
+   "technique": "AML.T0099",
+   "technique_name": "AI Agent Tool Data Poisoning",
+   "maturity": "Feasible",
+   "from": "second_only",
+   "decision": "exclude",
+   "reason": "Feasible with no case studies and its entry point is the indirect injection (T0051.001) already settled for this trait."
+  },
+  {
+   "trait": "is-external",
+   "technique": "AML.T0049",
+   "technique_name": "Exploit Public-Facing Application",
+   "maturity": "Realized",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Internet exposure is the precondition for exploiting the serving application itself (e.g. AI runtime RCEs); Realized with many AI case studies."
+  },
+  {
+   "trait": "is-external",
+   "technique": "AML.T0132",
+   "technique_name": "Misconfigured or Publicly Exposed AI Services",
+   "maturity": "Demonstrated",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Public exposure is the precondition for misconfigured or unauthenticated AI services being found and used; Demonstrated and AI-specific."
+  },
+  {
+   "trait": "is-multimodal",
+   "technique": "AML.T0051.001",
+   "technique_name": "Indirect",
+   "maturity": "Realized",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Images, audio and documents are an indirect injection channel that exists because the system ingests those modalities; Realized."
+  },
+  {
+   "trait": "is-multimodal",
+   "technique": "AML.T0068",
+   "technique_name": "LLM Prompt Obfuscation",
+   "maturity": "Realized",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "The description explicitly covers hiding instructions in images, audio and video frames; Realized."
+  },
+  {
+   "trait": "multi-model-pipeline",
+   "technique": "AML.T0061",
+   "technique_name": "LLM Prompt Self-Replication",
+   "maturity": "Demonstrated",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Chaining models lets one model's output re-introduce a self-replicating prompt to the next; Demonstrated and distinct from propagation."
+  },
+  {
+   "trait": "uses-finetuned",
+   "technique": "AML.T0137.003",
+   "technique_name": "Extract Memorized Data",
+   "maturity": "Demonstrated",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Fine-tuning on the defender's own data creates memorized content that can be extracted; Demonstrated."
+  },
+  {
+   "trait": "uses-llm",
+   "technique": "AML.T0051",
+   "technique_name": "LLM Prompt Injection",
+   "maturity": "Realized",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Any LLM integration has an instruction channel; the parent covers systems whose injection path is not captured by a more specific trait (e.g. batch document processing)."
+  },
+  {
+   "trait": "uses-llm",
+   "technique": "AML.T0054",
+   "technique_name": "LLM Jailbreak",
+   "maturity": "Realized",
+   "from": "second_only",
+   "decision": "exclude",
+   "reason": "Jailbreak needs adversary prompt access, already settled under accepts-user-input and reachable via T0051; duplicate noise."
+  },
+  {
+   "trait": "uses-llm",
+   "technique": "AML.T0069.002",
+   "technique_name": "System Prompt",
+   "maturity": "Demonstrated",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Every LLM application with a system prompt has this surface; Demonstrated, and it feeds tailored follow-on attacks."
+  },
+  {
+   "trait": "uses-llm",
+   "technique": "AML.T0085.003",
+   "technique_name": "System Instructions",
+   "maturity": "Feasible",
+   "from": "second_only",
+   "decision": "exclude",
+   "reason": "Feasible with no case studies and duplicates T0069.002 included for this trait."
+  },
+  {
+   "trait": "uses-llm",
+   "technique": "AML.T0137.003",
+   "technique_name": "Extract Memorized Data",
+   "maturity": "Demonstrated",
+   "from": "second_only",
+   "decision": "exclude",
+   "reason": "For a provider-hosted foundation model the memorized data is not the defender's; kept under uses-finetuned where it is."
+  },
+  {
+   "trait": "uses-rag",
+   "technique": "AML.T0066",
+   "technique_name": "Retrieval Content Crafting",
+   "maturity": "Demonstrated",
+   "from": "second_only",
+   "decision": "exclude",
+   "reason": "Content crafting is adversary-side staging (AI Attack Adaptation); the defender-actionable step is RAG Poisoning (T0070), already settled."
+  },
+  {
+   "trait": "uses-rag",
+   "technique": "AML.T0082",
+   "technique_name": "RAG Credential Harvesting",
+   "maturity": "Demonstrated",
+   "from": "second_only",
+   "decision": "include",
+   "reason": "Indexing internal documents is the precondition for retrieving credentials through the model; Demonstrated."
+  },
+  {
+   "trait": "uses-thirdparty-api",
+   "technique": "AML.T0040",
+   "technique_name": "AI Model Inference API Access",
+   "maturity": "Realized",
+   "from": "second_only",
+   "decision": "exclude",
+   "reason": "Adversary access to the shared provider model is staging the defender cannot act on from this trait, like reconnaissance."
+  }
+ ],
+ "final_counts": {
+  "A": 24,
+  "B": 39
+ },
+ "per_trait_B": {
+  "accepts-user-input": [
+   "AML.T0051.000",
+   "AML.T0054",
+   "AML.T0068"
+  ],
+  "generates-code": [
+   "AML.T0060"
+  ],
+  "generates-content": [
+   "AML.T0061",
+   "AML.T0067",
+   "AML.T0143"
+  ],
+  "is-agentic": [
+   "AML.T0051.001",
+   "AML.T0053",
+   "AML.T0080.000",
+   "AML.T0086",
+   "AML.T0101",
+   "AML.T0110"
+  ],
+  "is-external": [
+   "AML.T0024",
+   "AML.T0029",
+   "AML.T0049",
+   "AML.T0093",
+   "AML.T0132"
+  ],
+  "is-multimodal": [
+   "AML.T0051.001",
+   "AML.T0068",
+   "AML.T0129"
+  ],
+  "multi-model-pipeline": [
+   "AML.T0061",
+   "AML.T0143"
+  ],
+  "processes-pii": [
+   "AML.T0085.002"
+  ],
+  "uses-finetuned": [
+   "AML.T0010.002",
+   "AML.T0010.003",
+   "AML.T0011.000",
+   "AML.T0020",
+   "AML.T0137.003"
+  ],
+  "uses-llm": [
+   "AML.T0051",
+   "AML.T0069.002",
+   "AML.T0077"
+  ],
+  "uses-rag": [
+   "AML.T0051.001",
+   "AML.T0070",
+   "AML.T0071",
+   "AML.T0082",
+   "AML.T0085.000"
+  ],
+  "uses-thirdparty-api": [
+   "AML.T0010.001",
+   "AML.T0109"
+  ]
+ }
+}

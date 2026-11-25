@@ -1,0 +1,352 @@
+{
+ "labeler": "claude-sonnet-5-5",
+ "rows": [
+  {
+   "area": "agent-permissions",
+   "framework": "atlas",
+   "id": "AML.M0026",
+   "name": "Manage AI Agent Service Access",
+   "quote": "Limit service AI agents--agents using independently assigned service or workload permissions--to explicitly authorized workflows.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 1 — Declare each agent identity as service or user-delegated ⚠ CRITICAL",
+    "### Step 2 — Bind every service identity to an explicit list of authorized workflows"
+   ],
+   "confidence": "high",
+   "note": "Service identities, AUTHORIZED_WORKFLOWS, initiator checks."
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "atlas",
+   "id": "AML.M0027",
+   "name": "Manage User-Delegated AI Agent Access",
+   "quote": "Limit user-delegated AI agents to explicitly authorized tasks and permissions.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 3 — Cap a delegated agent at the intersection of the user's permissions and the task scope"
+   ],
+   "confidence": "high",
+   "note": "Delegated ops = user permissions intersected with task scope."
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "atlas",
+   "id": "AML.M0028",
+   "name": "Enforce Access Controls for AI Agent Tools",
+   "quote": "Limit AI agent tool access to each caller's authorized, task-required operations and resources, including when tools are shared across agents, users, or tenants.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 4 — Authorize every tool call per caller inside the tool layer ⚠ CRITICAL"
+   ],
+   "confidence": "high",
+   "note": "Dispatcher authorize_tool_call, caller from session, resource root, shared tools use caller-scoped credentials."
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "atlas",
+   "id": "AML.M0037",
+   "name": "AI Agent Authority Expansion Controls",
+   "quote": "The maximum authority available to the agent should be explicitly granted prior to runtime.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 5 — Fix the maximum authority before the run and block self-granting"
+   ],
+   "confidence": "high",
+   "note": "MAX_AUTHORITY, self-granting dropped, sub-agent subset."
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "atlas",
+   "id": "AML.M0043",
+   "name": "AI Agent External Resource Lifecycle Management",
+   "quote": "Organizations should control external resources created or acquired by AI agents during execution by treating those resources as attributable, lifecycle-managed assets.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 6 — Register, attribute and expire every external resource the agent creates"
+   ],
+   "confidence": "high",
+   "note": "register_agent_resource + external sweeper with TTL and revocation."
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "atlas",
+   "id": "AML.M0030",
+   "name": "Restrict AI Agent Tool Invocation on Untrusted Data",
+   "quote": "It is recommended that tool invocation be restricted or limited when untrusted data enters the LLM's context.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 2 — Restrict tool invocation while untrusted data is in context ⚠ CRITICAL"
+   ],
+   "confidence": "high",
+   "note": "Taint plus side-effect tool denied unless approved."
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "atlas",
+   "id": "AML.M0029",
+   "name": "Human In-the-Loop for AI Agent Actions",
+   "quote": "Systems should require the user or another human stakeholder to approve AI agent actions before the agent takes them.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 2 — Restrict tool invocation while untrusted data is in context ⚠ CRITICAL"
+   ],
+   "confidence": "medium",
+   "note": "Step 2 requires approval_granted for tainted side-effect and always_approve tools; the approval UI itself is out of scope (human-oversight)."
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "atlas",
+   "id": "AML.M0033",
+   "name": "Input and Output Validation for AI Agent Components",
+   "quote": "Implement validation on inputs and outputs for the tools and data sources used by AI agents.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 3 — Validate tool arguments against a schema before execution",
+    "### Step 4 — Validate and sanitize tool outputs and retrieved data before they re-enter the context"
+   ],
+   "confidence": "high",
+   "note": "Arg schema validation and output sanitization in code outside the model."
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "atlas",
+   "id": "AML.M0038",
+   "name": "AI Agent Scope Drift Detection",
+   "quote": "Continuously evaluate whether an AI Agent's planned actions remain consistent with its current authorized objective throughout execution.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 5 — Check each planned action against the authorized objective"
+   ],
+   "confidence": "high",
+   "note": "check_scope_drift before every call; pause, deny, escalate."
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "atlas",
+   "id": "AML.M0031",
+   "name": "Memory Hardening",
+   "quote": "Enforce memory access controls: Authenticate memory operations and authorize them within the appropriate user, tenant, agent, and session scope.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 6 — If the agent has persistent memory: harden what gets written and recalled"
+   ],
+   "confidence": "high",
+   "note": "Persistent memory step: per-write provenance, tenant/user filtered queries, rollback."
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "atlas",
+   "id": "AML.M0036",
+   "name": "Limit AI Workload Resource Consumption",
+   "quote": "Agentic AI systems should limit iterations, retries, tool calls, parallel tasks, delegation depth, and downstream spending.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 5 — Check each planned action against the authorized objective"
+   ],
+   "confidence": "medium",
+   "note": "Only the step budget in Step 5 maps; no timeouts or cost ceilings."
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "atlas",
+   "id": "AML.M0020",
+   "name": "Generative AI Guardrails",
+   "quote": "Tool and action guardrails: Validate tool calls, tool arguments, permissions, and tool outputs before execution or before results are returned to the model.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 2 — Restrict tool invocation while untrusted data is in context ⚠ CRITICAL",
+    "### Step 3 — Validate tool arguments against a schema before execution",
+    "### Step 4 — Validate and sanitize tool outputs and retrieved data before they re-enter the context"
+   ],
+   "confidence": "high",
+   "note": "Rule-based tool guardrails in the dispatcher; no input/output moderation of user prompts."
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "atlas",
+   "id": "AML.M0037",
+   "name": "AI Agent Authority Expansion Controls",
+   "quote": "Additional resources, identities, services, and targets discovered during execution should be treated as outside the authorized boundary unless they are independently validated and added to scope.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 5 — Check each planned action against the authorized objective"
+   ],
+   "confidence": "medium",
+   "note": "Drift covers a step that creates credentials, changes permissions or contacts a new party; main authority control is in agent-permissions."
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "owasp",
+   "id": "LLM01",
+   "name": "Prompt Injection",
+   "quote": "Provide the application with its own API tokens for extensible functionality, and handle these functions in code rather than providing them to the model.",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 1 — Declare each agent identity as service or user-delegated ⚠ CRITICAL",
+    "### Step 4 — Authorize every tool call per caller inside the tool layer ⚠ CRITICAL"
+   ],
+   "confidence": "medium",
+   "note": "Limits impact of injection, does not prevent it (area says so)."
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "owasp",
+   "id": "LLM01",
+   "name": "Prompt Injection",
+   "quote": "Separate and clearly denote untrusted content to limit its influence on user prompts.",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 1 — Label every item entering the model context as trusted or untrusted ⚠ CRITICAL",
+    "### Step 4 — Validate and sanitize tool outputs and retrieved data before they re-enter the context"
+   ],
+   "confidence": "high",
+   "note": "Trust labels and tainted context. Step 2 also matches OWASP item 5 (human approval)."
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "owasp",
+   "id": "LLM02",
+   "name": "Sensitive Information Disclosure",
+   "quote": "Limit access to sensitive data based on the principle of least privilege.",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 4 — Authorize every tool call per caller inside the tool layer ⚠ CRITICAL"
+   ],
+   "confidence": "medium",
+   "note": "Tenant and user resource root, other-user and other-tenant denied."
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "owasp",
+   "id": "LLM02",
+   "name": "Sensitive Information Disclosure",
+   "quote": "Techniques like pattern matching can detect and redact confidential content before processing.",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 4 — Validate and sanitize tool outputs and retrieved data before they re-enter the context"
+   ],
+   "confidence": "high",
+   "note": "Secrets and personal data redacted from tool output before Context.add."
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "owasp",
+   "id": "LLM05",
+   "name": "Improper Output Handling",
+   "quote": "Treat the model as any other user, adopting a zero-trust approach, and apply proper input",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 4 — Authorize every tool call per caller inside the tool layer ⚠ CRITICAL"
+   ],
+   "confidence": "medium",
+   "note": "Path normalization, % and backslash denial and undeclared-arg denial on model-supplied resource and args; authorization is the main purpose of the step."
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "owasp",
+   "id": "LLM05",
+   "name": "Improper Output Handling",
+   "quote": "Treat the model as any other user, adopting a zero-trust approach, and apply proper input",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 3 — Validate tool arguments against a schema before execution"
+   ],
+   "confidence": "high",
+   "note": "Schema validation of model-produced tool arguments before execution (paths under root, URL hosts)."
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "owasp",
+   "id": "LLM06",
+   "name": "Excessive Agency",
+   "quote": "Limit the permissions that LLM extensions are granted to other systems to the minimum necessary in order to limit the scope of undesirable actions.",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 2 — Bind every service identity to an explicit list of authorized workflows",
+    "### Step 3 — Cap a delegated agent at the intersection of the user's permissions and the task scope",
+    "### Step 4 — Authorize every tool call per caller inside the tool layer ⚠ CRITICAL",
+    "### Step 5 — Fix the maximum authority before the run and block self-granting"
+   ],
+   "confidence": "high",
+   "note": "Least privilege per agent, task and caller; also covers execute-in-user-context and complete mediation items."
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "owasp",
+   "id": "LLM06",
+   "name": "Excessive Agency",
+   "quote": "Utilise human-in-the-loop control to require a human to approve high-impact actions before they are taken.",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 2 — Restrict tool invocation while untrusted data is in context ⚠ CRITICAL"
+   ],
+   "confidence": "high",
+   "note": "always_approve and tainted side-effect gating (excessive autonomy)."
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "owasp",
+   "id": "LLM07",
+   "name": "System Prompt Leakage",
+   "quote": "Ensure that security controls are enforced independently from the LLM",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 4 — Authorize every tool call per caller inside the tool layer ⚠ CRITICAL"
+   ],
+   "confidence": "high",
+   "note": "Authorization in code, not system prompt (area lists this as a common mistake)."
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "owasp",
+   "id": "LLM10",
+   "name": "Unbounded Consumption",
+   "quote": "Implement restrictions on the number of queued actions and total actions, while",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 5 — Check each planned action against the authorized objective"
+   ],
+   "confidence": "medium",
+   "note": "Only the Step 5 step budget; no rate limits or timeouts."
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "nist",
+   "id": "MEASURE-2.7",
+   "name": "MEASURE 2.7",
+   "quote": "AI system security and resilience – as identified in the MAP function – are evaluated and documented.",
+   "source": "nist-ai-100-1.txt",
+   "area_evidence": [
+    "### Step 7 — Prove the denials with negative tests"
+   ],
+   "confidence": "medium",
+   "note": "Negative tests against the real dispatcher evaluate the security of the tool layer only."
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "nist",
+   "id": "MEASURE-2.7",
+   "name": "MEASURE 2.7",
+   "quote": "AI system security and resilience – as identified in the MAP function – are evaluated and documented.",
+   "source": "nist-ai-100-1.txt",
+   "area_evidence": [
+    "### Step 7 — Prove it with injection and drift tests"
+   ],
+   "confidence": "medium",
+   "note": "Injection and drift tests evaluate the security of the tool layer only."
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "nist",
+   "id": "MANAGE-2.4",
+   "name": "MANAGE 2.4",
+   "quote": "deactivate AI systems that demonstrate performance or outcomes inconsistent with intended use.",
+   "source": "nist-ai-100-1.txt",
+   "area_evidence": [
+    "### Step 5 — Check each planned action against the authorized objective"
+   ],
+   "confidence": "medium",
+   "note": "On drift: pause, deny all calls, escalate, then resume or end the task."
+  }
+ ]
+}

@@ -1,0 +1,526 @@
+{
+ "atlas_version": "2026.10",
+ "sources": {
+  "owasp": "OWASP Top 10 for LLM Applications 2025",
+  "nist": "NIST AI 100-1 (AI RMF 1.0)"
+ },
+ "rows": [
+  {
+   "area": "agent-permissions",
+   "framework": "atlas",
+   "id": "AML.M0026",
+   "name": "Manage AI Agent Service Access",
+   "quote": "Limit service AI agents--agents using independently assigned service or workload permissions--to explicitly authorized workflows.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 1 \u2014 Declare each agent identity as service or user-delegated \u26a0 CRITICAL",
+    "### Step 2 \u2014 Bind every service identity to an explicit list of authorized workflows"
+   ],
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "atlas",
+   "id": "AML.M0027",
+   "name": "Manage User-Delegated AI Agent Access",
+   "quote": "Limit user-delegated AI agents to explicitly authorized tasks and permissions.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 3 \u2014 Cap a delegated agent at the intersection of the user's permissions and the task scope"
+   ],
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "atlas",
+   "id": "AML.M0028",
+   "name": "Enforce Access Controls for AI Agent Tools",
+   "quote": "Limit AI agent tool access to each caller's authorized, task-required operations and resources, including when tools are shared across agents, users, or tenants.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 4 \u2014 Authorize every tool call per caller inside the tool layer \u26a0 CRITICAL"
+   ],
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "atlas",
+   "id": "AML.M0037",
+   "name": "AI Agent Authority Expansion Controls",
+   "quote": "The maximum authority available to the agent should be explicitly granted prior to runtime.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 5 \u2014 Fix the maximum authority before the run and block self-granting"
+   ],
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "atlas",
+   "id": "AML.M0043",
+   "name": "AI Agent External Resource Lifecycle Management",
+   "quote": "Organizations should control external resources created or acquired by AI agents during execution by treating those resources as attributable, lifecycle-managed assets.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 6 \u2014 Register, attribute and expire every external resource the agent creates"
+   ],
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "atlas",
+   "id": "AML.M0030",
+   "name": "Restrict AI Agent Tool Invocation on Untrusted Data",
+   "quote": "It is recommended that tool invocation be restricted or limited when untrusted data enters the LLM's context.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 1 \u2014 Label every item entering the model context as trusted or untrusted \u26a0 CRITICAL",
+    "### Step 2 \u2014 Restrict tool invocation while untrusted data is in context \u26a0 CRITICAL"
+   ],
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "atlas",
+   "id": "AML.M0033",
+   "name": "Input and Output Validation for AI Agent Components",
+   "quote": "Implement validation on inputs and outputs for the tools and data sources used by AI agents.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 3 \u2014 Validate tool arguments against a schema before execution",
+    "### Step 4 \u2014 Validate and sanitize tool outputs and retrieved data before they re-enter the context"
+   ],
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "atlas",
+   "id": "AML.M0038",
+   "name": "AI Agent Scope Drift Detection",
+   "quote": "Continuously evaluate whether an AI Agent's planned actions remain consistent with its current authorized objective throughout execution.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 5 \u2014 Check each planned action against the authorized objective"
+   ],
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "atlas",
+   "id": "AML.M0031",
+   "name": "Memory Hardening",
+   "quote": "Record the source of all memory updates and preserve a history with known good versions. Quarantine or roll-back suspicious records.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 6 \u2014 If the agent has persistent memory: harden what gets written and recalled"
+   ],
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "adjudicated: both labelers; quote changed from the second labeler's access-control sentence (Step 6 filters by tenant and user but does not authenticate memory operations) to the provenance sentence, which Step 6 does exactly (source per write, versions, quarantine, rollback). Conditional step: applies only to agents with persistent memory.",
+   "decision": "include",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "atlas",
+   "id": "AML.M0020",
+   "name": "Generative AI Guardrails",
+   "quote": "Tool and action guardrails: Validate tool calls, tool arguments, permissions, and tool outputs before execution or before results are returned to the model.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 2 \u2014 Restrict tool invocation while untrusted data is in context \u26a0 CRITICAL",
+    "### Step 3 \u2014 Validate tool arguments against a schema before execution",
+    "### Step 4 \u2014 Validate and sanitize tool outputs and retrieved data before they re-enter the context"
+   ],
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: Steps 2-4 gate each tool call, schema-validate arguments before execution and sanitize tool outputs before they re-enter the context, which is this sentence for its named object (tool calls, arguments, outputs). Only the tool/action guardrail bullet is claimed, not input/output moderation.",
+   "decision": "include",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "atlas",
+   "id": "AML.M0029",
+   "name": "Human In-the-Loop for AI Agent Actions",
+   "quote": "Systems should require the user or another human stakeholder to approve AI agent actions before the agent takes them.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 2 \u2014 Restrict tool invocation while untrusted data is in context \u26a0 CRITICAL"
+   ],
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: Step 2 blocks always_approve (high-consequence) tools and tainted side-effect tools unless approval_granted comes from the approval service, so the action cannot run before a human approves. The approval UI itself is in human-oversight; in part only.",
+   "decision": "include",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "atlas",
+   "id": "AML.M0037",
+   "name": "AI Agent Authority Expansion Controls",
+   "quote": "Additional resources, identities, services, and targets discovered during execution should be treated as outside the authorized boundary unless they are independently validated and added to scope.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 5 \u2014 Check each planned action against the authorized objective"
+   ],
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: Step 5 treats any resource outside the recorded allowed set, any new party and any credential/permission-changing step as drift: calls are denied and a human must resume. That is this sentence for discovered targets. The pre-runtime authority grant is cited on agent-permissions, not here.",
+   "decision": "include",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "atlas",
+   "id": "AML.M0036",
+   "name": "Limit AI Workload Resource Consumption",
+   "quote": "Agentic AI systems should limit iterations, retries, tool calls, parallel tasks, delegation depth, and downstream spending.",
+   "source": "ATLAS-2026.10.yaml",
+   "area_evidence": [
+    "### Step 5 \u2014 Check each planned action against the authorized objective"
+   ],
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: only a per-task step budget used as a drift signal; no retry, parallelism, delegation-depth, time or spend limits, and the area lists rate limits as not covered. Citing resource-consumption limits would overclaim.",
+   "decision": "exclude",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "owasp",
+   "id": "LLM06",
+   "name": "Excessive Agency",
+   "quote": "Limit the permissions that LLM extensions are granted to other systems to the minimum necessary in order to limit the scope of undesirable actions.",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 2 \u2014 Bind every service identity to an explicit list of authorized workflows",
+    "### Step 3 \u2014 Cap a delegated agent at the intersection of the user's permissions and the task scope",
+    "### Step 4 \u2014 Authorize every tool call per caller inside the tool layer \u26a0 CRITICAL",
+    "### Step 5 \u2014 Fix the maximum authority before the run and block self-granting"
+   ],
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "owasp",
+   "id": "LLM01",
+   "name": "Prompt Injection",
+   "quote": "Provide the application with its own API tokens for extensible functionality, and handle these functions in code rather than providing them to the model.",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 1 \u2014 Declare each agent identity as service or user-delegated \u26a0 CRITICAL",
+    "### Step 4 \u2014 Authorize every tool call per caller inside the tool layer \u26a0 CRITICAL"
+   ],
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: Step 1 gives each agent its own credential kept out of model context and Step 4 enforces authorization in the dispatcher code; this is LLM01 mitigation 4 verbatim. OWASP frames it as limiting injection impact, which matches the area's own scope statement.",
+   "decision": "include",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "owasp",
+   "id": "LLM02",
+   "name": "Sensitive Information Disclosure",
+   "quote": "Limit access to sensitive data based on the principle of least privilege.",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 4 \u2014 Authorize every tool call per caller inside the tool layer \u26a0 CRITICAL"
+   ],
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); removal approved by owner",
+   "decision": "exclude",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "owasp",
+   "id": "LLM05",
+   "name": "Improper Output Handling",
+   "quote": "Treat the model as any other user, adopting a zero-trust approach, and apply proper input",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 4 \u2014 Authorize every tool call per caller inside the tool layer \u26a0 CRITICAL"
+   ],
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); removal approved by owner",
+   "decision": "exclude",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "owasp",
+   "id": "LLM07",
+   "name": "System Prompt Leakage",
+   "quote": "Ensure that security controls are enforced independently from the LLM",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 4 \u2014 Authorize every tool call per caller inside the tool layer \u26a0 CRITICAL"
+   ],
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: the area names 'Authorization lives in the system prompt' as a failure prevented by Step 4, which enforces authorization in the tool layer; LLM07 mitigation 4 says authorization bounds checks must not be delegated to the LLM through the system prompt.",
+   "decision": "include",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "owasp",
+   "id": "LLM01",
+   "name": "Prompt Injection",
+   "quote": "Separate and clearly denote untrusted content to limit its influence on user prompts.",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 1 \u2014 Label every item entering the model context as trusted or untrusted \u26a0 CRITICAL",
+    "### Step 4 \u2014 Validate and sanitize tool outputs and retrieved data before they re-enter the context"
+   ],
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "owasp",
+   "id": "LLM06",
+   "name": "Excessive Agency",
+   "quote": "Utilise human-in-the-loop control to require a human to approve high-impact actions before they are taken.",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 2 \u2014 Restrict tool invocation while untrusted data is in context \u26a0 CRITICAL"
+   ],
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "both labelers",
+   "decision": "include",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "owasp",
+   "id": "LLM02",
+   "name": "Sensitive Information Disclosure",
+   "quote": "Techniques like pattern matching can detect and redact confidential content before processing.",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 4 \u2014 Validate and sanitize tool outputs and retrieved data before they re-enter the context"
+   ],
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); removal approved by owner",
+   "decision": "exclude",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "owasp",
+   "id": "LLM05",
+   "name": "Improper Output Handling",
+   "quote": "Treat the model as any other user, adopting a zero-trust approach, and apply proper input",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 3 \u2014 Validate tool arguments against a schema before execution"
+   ],
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); removal approved by owner",
+   "decision": "exclude",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "owasp",
+   "id": "LLM10",
+   "name": "Unbounded Consumption",
+   "quote": "Implement restrictions on the number of queued actions and total actions, while",
+   "source": "owasp-llm-top10-2025.txt",
+   "area_evidence": [
+    "### Step 5 \u2014 Check each planned action against the authorized objective"
+   ],
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "adjudicated: the Step 5 step budget is a scope-drift signal, not a consumption control; no queue limits, rate limits, timeouts or cost caps, and the area lists rate limits as not covered. Excluded for the same reason as AML.M0036.",
+   "decision": "exclude",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "nist",
+   "id": "MEASURE-2.7",
+   "name": "AI system security and resilience \u2013 as identified in the MAP function \u2013 are evaluated and documented.",
+   "quote": "AI system security and resilience \u2013 as identified in the MAP function \u2013 are evaluated and documented.",
+   "source": "nist-ai-100-1.txt",
+   "area_evidence": [
+    "### Step 7 \u2014 Prove the denials with negative tests"
+   ],
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); removal approved by owner",
+   "decision": "exclude",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "nist",
+   "id": "MEASURE-2.7",
+   "name": "AI system security and resilience \u2013 as identified in the MAP function \u2013 are evaluated and documented.",
+   "quote": "AI system security and resilience \u2013 as identified in the MAP function \u2013 are evaluated and documented.",
+   "source": "nist-ai-100-1.txt",
+   "area_evidence": [
+    "### Step 7 \u2014 Prove it with injection and drift tests"
+   ],
+   "labelers": {
+    "planner": true,
+    "second": true
+   },
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); removal approved by owner",
+   "decision": "exclude",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-permissions",
+   "framework": "nist",
+   "id": "MANAGE-1.3",
+   "name": "Responses to the AI risks deemed high priority, as identified by the MAP function, are developed, planned, and documented. Risk response options can include mitigating, transferring, avoiding, or accepting.",
+   "quote": "Responses to the AI risks deemed high priority, as",
+   "source": "nist-ai-100-1.txt",
+   "area_evidence": [
+    "### Step 5 \u2014 Fix the maximum authority before the run and block self-granting"
+   ],
+   "labelers": {
+    "planner": true,
+    "second": false
+   },
+   "basis": "adjudicated: MANAGE 1.3 is a risk-management process outcome (responses to MAP-identified high-priority risks are developed, planned and documented). No step prioritizes risks or documents a risk response; the area only implements controls. Shared theme, not a step doing what the sentence says.",
+   "decision": "exclude",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "nist",
+   "id": "MANAGE-1.3",
+   "name": "Responses to the AI risks deemed high priority, as identified by the MAP function, are developed, planned, and documented. Risk response options can include mitigating, transferring, avoiding, or accepting.",
+   "quote": "Responses to the AI risks deemed high priority, as",
+   "source": "nist-ai-100-1.txt",
+   "area_evidence": [
+    "### Step 5 \u2014 Check each planned action against the authorized objective"
+   ],
+   "labelers": {
+    "planner": true,
+    "second": false
+   },
+   "basis": "adjudicated: MANAGE 1.3 is a risk-management process outcome (responses to MAP-identified high-priority risks are developed, planned and documented). No step prioritizes risks or documents a risk response; the area only implements controls. Shared theme, not a step doing what the sentence says.",
+   "decision": "exclude",
+   "decided_by": "nayan (approved as proposed)"
+  },
+  {
+   "area": "agent-tool-safety",
+   "framework": "nist",
+   "id": "MANAGE-2.4",
+   "name": "Mechanisms are in place and applied, and responsibilities are assigned and understood, to supersede, disengage, or deactivate AI systems that demonstrate performance or outcomes inconsistent with intended use.",
+   "quote": "deactivate AI systems that demonstrate performance or outcomes inconsistent with intended use.",
+   "source": "nist-ai-100-1.txt",
+   "area_evidence": [
+    "### Step 5 \u2014 Check each planned action against the authorized objective"
+   ],
+   "labelers": {
+    "planner": false,
+    "second": true
+   },
+   "basis": "removed after GPT-5.6 Sol final audit F1 (quote truncated or the guide does not do what the source requires); removal approved by owner",
+   "decision": "exclude",
+   "decided_by": "nayan (approved as proposed)"
+  }
+ ],
+ "approved_by": "Nayan Kanaparthi",
+ "approved_at": "2026-11-24T23:59:47Z",
+ "revision": "r2: 7 rows removed after final audit, re-approved"
+}

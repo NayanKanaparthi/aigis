@@ -5,6 +5,7 @@ controls:
   owasp: [LLM10]
   nist: [MEASURE-2.6, MANAGE-2.4]
   iso42001: [Clause-8.2]
+  atlas: [AML.M0004, AML.M0036]
 min_risk_tier: all
 system_traits: [is-external, is-high-volume, uses-llm]
 ---

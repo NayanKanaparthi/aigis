@@ -1,0 +1,23 @@
+## Findings
+
+| ID | Severity | Where | Problem | Fix |
+|---|---|---|---|---|
+| F1 | blocker | [new-areas.json](/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/check-na/build/atlas/gold/new-areas.json:308), [agent-permissions.md](/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/check-na/content/skills/areas/agent-permissions.md:42), [agent-tool-safety.md](/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/check-na/content/skills/areas/agent-tool-safety.md:43) | New-area gold contains overclaims: both LLM05 “quotes” end mid-sentence at “proper input”; both MEASURE-2.7 rows cite testing but never require the NIST-mandated documentation; the LLM05 basis says `..` is denied, but both examples accept an in-root `folder/../secret`; the LLM02 basis says personal data is regex-redacted, but the regex has no PII patterns. MANAGE-2.4 quotes only the final clause, hiding the responsibility-assignment requirement. | Use complete source sentences. Implement/document the missing behavior or remove the mappings. Reapprove gold and resync frontmatter. |
+| F2 | major | [auto-verify.js](/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/check-na/lib/auto-verify.js:400), [report.js](/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/check-na/lib/report.js:80) | Auto-verify prints “Controls satisfied” and report returns `PASS` while JUDGMENT checks remain unresolved. Both new areas always have two judgment checks, so this can claim satisfaction without proof. | Keep controls “in scope” until judgments are resolved; exclude such areas from `areas_fully_passing`. |
+| F3 | major | [README.md](/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/check-na/README.md:76), [threat-model.md](/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/check-na/content/templates/threat-model.md:59), [build.js](/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/check-na/lib/build.js:322) | Public text says an area “implements” each mitigation, contradicting the approved “implements in part” rule. “No Aigis area exists” also means only “no area is mapped.” | Say “helps implement in part” and “no mapped Aigis area” throughout README, changelog, core skill, template, build, and threats output. |
+| F4 | minor | [auto-verify.js](/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/check-na/lib/auto-verify.js:76), [report.js](/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/check-na/lib/report.js:23) | Node filesystem traversal is unsorted, yet report claims byte-identical determinism. Evidence selection can vary by directory enumeration order; Python sorts its traversal. | Sort directory entries and the final scanned-file list. |
+| F5 | minor | [SKILL.md](/Users/nayankanaparthi/conductor/workspaces/aigis:cli/miami/.context/wt/check-na/SKILL.md:10) | This packaged public file still says 15 areas and describes the old command workflow. | Update it for 21 areas/17 checklists and `aigis threats`. |
+| F6 | major | Release gates | Independent gates were not executable under the read-only reviewer sandbox. `npm test` reported `11/27 checks passed`; every reported failure was `EPERM` on temporary/file creation. `npm pack --dry-run --json` exited 255 for the same reason. | Rerun both successfully in writable CI before publishing. |
+
+Evidence:
+
+- `python3 -I` citation trace: `23/23`, `32/32`, `24/24`; total `79/79` strings occur in the correct pinned source after normalizing PDF line wraps. Manual review covered all 24 new-area rows, all 23 existing-area mappings, and all entry-point rows.
+- Frontmatter comparison: `23` control comparisons and `17` mirrors, `0` mismatches.
+- `node scripts/build-atlas-index.js ... --check`: `OK` with the pinned SHA.
+- Versions: all six checked locations are `3.0.0`.
+- Packlist fallback found 97 files, excluding `build/`, `test/`, `.context/`, and Python sources; no obvious secrets/private directories.
+- Post-`be9afad` history shows no surviving unjustified test weakening. The temporary search relaxation was restored; later changes strengthened behavioral tests or corrected oracle scope.
+
+## Ship: NO
+
+Required before publishing: resolve F1–F3 and reapprove changed gold, fix PASS/judgment semantics and deterministic traversal, update packaged `SKILL.md`, then obtain clean `npm test` and `npm pack --dry-run` results in writable CI.

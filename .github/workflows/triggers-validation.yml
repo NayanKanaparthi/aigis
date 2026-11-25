@@ -16,6 +16,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Install dependencies (lib/classify.js reads area frontmatter)
+        run: npm ci --no-audit --no-fund
       - name: Schema (shape, required keys, allowed values)
         run: node scripts/validate-triggers.js --schema
       - name: Trait validity (every trait appears in lib/classify.js ALL_TRAITS)

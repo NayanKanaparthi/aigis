@@ -1,0 +1,4 @@
+{
+ "P1": "Add a tool so the assistant can send an email reply to the customer on their behalf, using our SMTP server (settings in env vars). The assistant should decide when to send it.",
+ "P2": "Let the assistant look up the customer's past orders and their support tickets from our Postgres database (DATABASE_URL env var) so it can answer questions like 'where is my order'. Tickets contain text customers wrote."
+}

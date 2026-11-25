@@ -169,6 +169,18 @@ Run `aigis --help` for full options.
 
 ## Benchmark results
 
+### v3.0 (real coding agent, Aigis 2.1.1 vs 3.0)
+
+Claude Code built two agent features in the same sample app from plain requests that never mentioned Aigis or security (6 runs per version). A blind judge from a different vendor graded the code for nine agent-safety defenses:
+
+- Defenses present: 51% with Aigis 2.1.1, **80% with Aigis 3.0** (worst v3.0 run 67%, typical v2.1.1 run 50%)
+- Agent ran a threat model on its own: 0/6 vs **6/6**; told the user about uncovered gaps: 1/6 vs **6/6**
+- Every MITRE ATLAS id and link Aigis prints matched MITRE's data (9,604 checked)
+
+Small sample (one agent, one app, two requests). Full method, per-defense tables and limits: [`BENCHMARKS.md`](BENCHMARKS.md).
+
+### v2.0
+
 v2.0 was benchmarked at every iteration. Final numbers, against the same 10 descriptions:
 
 - Baseline (Aigis v1.0.3): P=0.737, R=0.905, F1=0.790

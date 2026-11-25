@@ -43,7 +43,7 @@ cd your-project
 aigis init cursor      # or: claude-code, codex, copilot, windsurf
 ```
 
-That's it. `aigis init` writes a single rules file (`.cursorrules` for Cursor, `.github/copilot-instructions.md` for Copilot, etc.) that teaches your agent the Aigis workflow. Your agent reads it on every interaction in this project.
+That's it. `aigis init` writes a single rules file (`.cursorrules` for Cursor, `.github/copilot-instructions.md` for Copilot, `AGENTS.md` for Codex, etc.) that teaches your agent the Aigis workflow. Your agent reads it on every interaction in this project.
 
 ![One command and you're done; your agent takes over.](https://github.com/NayanKanaparthi/aigis/raw/main/docs/screenshots/setup.png)
 
@@ -200,6 +200,7 @@ F1 beats baseline by +0.047. v2.1 ships `--tight` as a flag-gated experiment; pr
 
 - Claude Code
 - Codex: `aigis init codex` writes `AGENTS.md`, which Codex reads, and keeps any content you already have there
+  Codex reads only the first 32 KiB of `AGENTS.md` by default, so `aigis init codex` warns you if the file is larger; you can raise `project_doc_max_bytes` in `~/.codex/config.toml`.
 - Cursor
 - GitHub Copilot
 - Windsurf

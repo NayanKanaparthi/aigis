@@ -43,7 +43,7 @@ function runIn(lang, args, files = {}) {
     fs.writeFileSync(path.join(cwd, rel), text);
   }
   const r = RUNNERS[lang](args, cwd, home);
-  return { r, cwd, home, read: (rel) => fs.readFileSync(path.join(cwd, rel), 'utf8') };
+  return { r, cwd, home, read: (rel) => fs.readFileSync(path.join(cwd, rel), 'utf8'), bytes: (rel) => fs.readFileSync(path.join(cwd, rel)) };
 }
 
 function pythonReady() {
@@ -115,9 +115,9 @@ test('refresh replaces only the Aigis section, user content before and after unc
   assert.strictEqual(results[1], results[0]);
 });
 
-test('refresh on an Aigis-only file is byte-identical to the old whole-file refresh (cursor, copilot, claude-code)', () => {
+test('refresh on an Aigis-only file is byte-identical to the old whole-file refresh (cursor, windsurf, copilot, codex, claude-code)', () => {
   for (const lang of ['node', 'python']) {
-    for (const [ide, rel] of [['cursor', '.cursorrules'], ['copilot', '.github/copilot-instructions.md']]) {
+    for (const [ide, rel] of [['cursor', '.cursorrules'], ['windsurf', '.windsurfrules'], ['copilot', '.github/copilot-instructions.md'], ['codex', 'AGENTS.md']]) {
       const run = runIn(lang, ['init', ide, '--refresh'], { [rel]: STALE });
       assert.strictEqual(run.r.status, 0, `${lang} ${ide}: ${out(run.r)}`);
       assert.strictEqual(run.read(rel), FRESH, `${lang} ${ide}: not identical to old refresh output`);
@@ -134,10 +134,11 @@ test('refresh on an Aigis-only file is byte-identical to the old whole-file refr
   }
 });
 
-test('refresh refuses on two Aigis sections, a missing end marker or a missing header, and leaves the file untouched', () => {
+test('refresh refuses on two Aigis sections, a missing end marker, an end before the header or a missing header, and leaves the file untouched', () => {
   const bad = {
     'two sections': `# Mine\n\n${STALE}\n\n${STALE}`,
     'missing end marker': `# Mine\n\n${STALE.replace(END, '')}`,
+    'end before header': `# Mine\n${END}\n\n${STALE.replace(END, '')}`,
     'missing header': `# Mine\n\n${STALE.replace(HEADER_LINE, '# my edited header')}`,
   };
   for (const lang of ['node', 'python']) {
@@ -148,6 +149,68 @@ test('refresh refuses on two Aigis sections, a missing end marker or a missing h
       assert.match(out(run.r), /Nothing was changed/);
       assert.strictEqual(run.read('AGENTS.md'), text, `${lang} ${label}: file was modified`);
     }
+  }
+});
+
+test('a file that is not valid UTF-8 is never rewritten: refresh, append and up-to-date paths refuse cleanly', () => {
+  const latin1 = Buffer.from([0x63, 0x61, 0x66, 0xe9]); // "caf" + Latin-1 e-acute, invalid as UTF-8
+  const bad = {
+    refresh: [['init', 'codex', '--refresh'], Buffer.concat([latin1, Buffer.from(' notes\n\n' + STALE.slice(0, -1) + '\ntail\n')])],
+    append: [['init', 'codex'], Buffer.concat([latin1, Buffer.from(' notes\n')])],
+    'up to date': [['init', 'codex'], Buffer.concat([latin1, Buffer.from(' notes\n\n' + FRESH)])],
+  };
+  for (const lang of ['node', 'python']) {
+    for (const [label, [args, bytes]] of Object.entries(bad)) {
+      const run = runIn(lang, args, { 'AGENTS.md': bytes });
+      assert.strictEqual(run.r.status, 1, `${lang} ${label}: should exit 1, got ${run.r.status}`);
+      assert.match(out(run.r), /Could not (refresh|update) AGENTS\.md: the file is not valid UTF-8\./, `${lang} ${label}: no clear error`);
+      assert.match(out(run.r), /Nothing was changed/);
+      assert.ok(!/Traceback/.test(out(run.r)), `${lang} ${label}: traceback shown`);
+      assert.ok(run.bytes('AGENTS.md').equals(bytes), `${lang} ${label}: file bytes changed`);
+    }
+  }
+});
+
+test('refresh keeps a UTF-8 byte order mark and non-ASCII user text', () => {
+  const before = '\ufeff# Notes for café ☕\n\n';
+  const results = ['node', 'python'].map((lang) => {
+    const run = runIn(lang, ['init', 'codex', '--refresh'], { 'AGENTS.md': before + STALE });
+    assert.strictEqual(run.r.status, 0, `${lang}: ${out(run.r)}`);
+    assert.ok(run.bytes('AGENTS.md').equals(Buffer.from(before + FRESH, 'utf8')), `${lang}: bytes differ`);
+    return run.bytes('AGENTS.md');
+  });
+  assert.ok(results[1].equals(results[0]));
+});
+
+test('plain init on an incomplete Aigis section does not suggest --refresh', () => {
+  for (const lang of ['node', 'python']) {
+    const text = `# Mine\n\n${STALE.slice(0, STALE.indexOf('# --- AIGIS RESOLVER BLOCK START'))}`;
+    const run = runIn(lang, ['init', 'codex'], { 'AGENTS.md': text });
+    assert.strictEqual(run.r.status, 1, `${lang}: ${out(run.r)}`);
+    assert.match(out(run.r), /looks incomplete/, `${lang}: no incomplete hint`);
+    assert.match(out(run.r), /Remove the old Aigis section by hand/);
+    assert.ok(!out(run.r).includes('--refresh    '), `${lang}: still recommends --refresh`);
+    assert.strictEqual(run.read('AGENTS.md'), text);
+  }
+});
+
+test('init codex warns when AGENTS.md is over the 32 KiB Codex reads by default, and not when under', () => {
+  const big = '# Big notes\n' + 'x'.repeat(20000) + '\n';
+  for (const lang of ['node', 'python']) {
+    for (const args of [['init', 'codex'], ['init', 'codex', '--refresh']]) {
+      const files = { 'AGENTS.md': args.includes('--refresh') ? big + '\n\n' + STALE : big };
+      const run = runIn(lang, args, files);
+      assert.strictEqual(run.r.status, 0, `${lang} ${args.join(' ')}: ${out(run.r)}`);
+      const size = run.bytes('AGENTS.md').length;
+      assert.ok(size > 32768, `fixture too small: ${size}`);
+      assert.ok(out(run.r).includes(`AGENTS.md is ${size} bytes. Codex reads only the first 32 KiB (32768 bytes)`), `${lang} ${args.join(' ')}: no size warning`);
+      assert.match(out(run.r), /project_doc_max_bytes in ~\/\.codex\/config\.toml/);
+    }
+    const small = runIn(lang, ['init', 'codex']);
+    assert.ok(small.bytes('AGENTS.md').length <= 32768);
+    assert.ok(!/project_doc_max_bytes/.test(out(small.r)), `${lang}: warned on a small file`);
+    const cursor = runIn(lang, ['init', 'cursor'], { '.cursorrules': big });
+    assert.ok(!/project_doc_max_bytes/.test(out(cursor.r)), `${lang}: warned for a non-codex target`);
   }
 });
 

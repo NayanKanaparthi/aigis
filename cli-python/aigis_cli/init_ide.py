@@ -40,6 +40,9 @@ IDE_DESTINATIONS: dict[str, dict] = {
 
 AVAILABLE_IDES = "claude-code, codex, cursor, copilot, windsurf"
 
+# Codex reads at most `project_doc_max_bytes` of AGENTS.md (default 32 KiB) and drops the rest.
+CODEX_DEFAULT_MAX_BYTES = 32768
+
 
 def _short_question(prompt: str) -> str:
     m = re.match(r"^You mentioned [^.]+\.\s*(.+?)\s*\(yes / no / unsure\)\s*$", prompt)
@@ -125,6 +128,14 @@ def _replace_aigis_section(existing: str, content: str) -> tuple[str | None, str
     return existing[: heads[0]] + fresh + existing[ends[0] + len(RESOLVER_BLOCK_END):], None
 
 
+def _warn_if_codex_truncates(target: Path, display: str) -> None:
+    size = target.stat().st_size
+    if size <= CODEX_DEFAULT_MAX_BYTES:
+        return
+    console.print(f"[yellow]⚠ {display} is {size} bytes. Codex reads only the first 32 KiB ({CODEX_DEFAULT_MAX_BYTES} bytes) of {display} by default, so it may not see the end of the Aigis section.[/yellow]", soft_wrap=True)
+    console.print("[dim]  To let Codex read the whole file, raise project_doc_max_bytes in ~/.codex/config.toml.\n[/dim]", soft_wrap=True)
+
+
 def _write_or_refresh(target: Path, content: str, expected: str, refresh: bool, instruction: str, ide_name: str, display: str) -> None:
     if not target.exists():
         target.write_text(content, encoding="utf-8")
@@ -132,7 +143,15 @@ def _write_or_refresh(target: Path, content: str, expected: str, refresh: bool, 
         console.print(f"[dim]{instruction}\n[/dim]")
         return
 
-    existing = target.read_text(encoding="utf-8")
+    # Strict UTF-8 decode of the raw bytes: no newline translation, and never rewrite
+    # a file whose bytes we could not round-trip exactly.
+    try:
+        existing = target.read_bytes().decode("utf-8")
+    except UnicodeDecodeError:
+        verb = "refresh" if refresh else "update"
+        err_console.print(f"\n[red]Could not {verb} {display}: the file is not valid UTF-8.[/red]", soft_wrap=True)
+        err_console.print(f"Nothing was changed. Save the file as UTF-8, then re-run [green]aigis init {ide_name}[/green].\n", soft_wrap=True)
+        sys.exit(1)
     match = RESOLVER_BLOCK_RE.search(existing)
     has_core = "aigis-core" in existing
 
@@ -146,16 +165,12 @@ def _write_or_refresh(target: Path, content: str, expected: str, refresh: bool, 
 
     if refresh:
         # Replace only the Aigis section; everything before and after it is kept byte for byte.
-        # newline="" so line endings are neither translated on read nor on write.
-        with target.open("r", encoding="utf-8", newline="") as f:
-            raw = f.read()
-        text, error = _replace_aigis_section(raw, content)
+        text, error = _replace_aigis_section(existing, content)
         if error:
             err_console.print(f"\n[red]Could not refresh {display}: {error}.[/red]", soft_wrap=True)
             err_console.print(f"Nothing was changed. Remove the old Aigis section by hand, then re-run [green]aigis init {ide_name}[/green].\n", soft_wrap=True)
             sys.exit(1)
-        with target.open("w", encoding="utf-8", newline="") as f:
-            f.write(text)
+        target.write_bytes(text.encode("utf-8"))
         console.print(f"\n[green]✓ Refreshed {display} (resolver checksum: {expected[:12]}...)[/green]\n")
         console.print(f"[dim]{instruction}\n[/dim]")
         return
@@ -165,6 +180,13 @@ def _write_or_refresh(target: Path, content: str, expected: str, refresh: bool, 
         return
 
     console.print(f"\n[yellow]⚠ {display} already contains an aigis section.[/yellow]")
+    _, check_error = _replace_aigis_section(existing, content)
+    if check_error:
+        # --refresh would refuse this file too, so don't suggest it.
+        console.print(f"[dim]  The Aigis section looks incomplete or duplicated ({check_error}), so --refresh can't replace it safely.[/dim]", soft_wrap=True)
+        console.print(f"  Remove the old Aigis section by hand, then re-run [green]aigis init {ide_name}[/green].", soft_wrap=True)
+        console.print("")
+        sys.exit(1)
     if match:
         console.print(f"[dim]  Existing block checksum: {match.group(1)[:12]}...[/dim]")
         console.print(f"[dim]  Current triggers.json:   {expected[:12]}...[/dim]")
@@ -198,6 +220,8 @@ def init(ide: str, refresh: bool = False, ci: str | None = None, hook: bool = Fa
         target = Path.cwd() / dest["file"]
         target.parent.mkdir(parents=True, exist_ok=True)
         _write_or_refresh(target, content, checksum, refresh, dest["instruction"], ide_lower, dest["file"])
+        if ide_lower == "codex":
+            _warn_if_codex_truncates(target, dest["file"])
 
     # v2.1: optional activation surfaces — additive, opt-in via flags.
     if ci == "github":

@@ -74,7 +74,7 @@ function maskVolatile(text) {
     .replace(/(— generated )\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z/g, '$1<TIMESTAMP>')
     .replace(/^> Generated: [^\n]+$/gm, '> Generated: <TIMESTAMP>')
     .replace(/^> Aigis version: [^\n]+$/gm, '> Aigis version: <VERSION>')
-    .replace(/(?<![\d.])(?:2\.1\.1|2\.2\.0|3\.0\.0)(?![\d.])/g, '<VERSION>')
+    .replace(/(?<![\d.])(?:2\.1\.1|2\.2\.0|3\.0\.\d+)(?![\d.])/g, '<VERSION>')
     .replace(/"generated_at":\s*"[^"]+"/g, '"generated_at":"<TIMESTAMP>"');
 }
 function stripAtlas(value) {

@@ -22,15 +22,15 @@ You don't run Aigis. Your agent does. After one setup command, you describe what
 
 ### Results
 
-Tested with a real coding agent building agent features from plain requests, with Aigis 2.1.1 and with Aigis 3.0 (6 runs each), graded by a blind reviewer:
+Tested with a real coding agent building agent features from plain requests, with no Aigis, with Aigis 2.1.1 and with Aigis 3.0 (6 runs each), all graded in one blind pass:
 
-| | Aigis 2.1.1 | Aigis 3.0 |
-|---|---|---|
-| Agent-safety defenses present in the code | 51% | **80%** |
-| Agent ran a threat model on its own | 0 of 6 | **6 of 6** |
-| Agent told the user about uncovered gaps | 1 of 6 | **6 of 6** |
+| | No Aigis | Aigis 2.1.1 | Aigis 3.0 |
+|---|---|---|---|
+| Agent-safety defenses present in the code | 43% | 75% | **90%** |
+| Agent ran a threat model on its own | n/a | 0 of 6 | **6 of 6** |
+| Agent told the user about uncovered gaps | n/a | 1 of 6 | **6 of 6** |
 
-Every MITRE ATLAS reference Aigis prints matched MITRE's own data (9,604 checked). Small sample; method and limits in [`BENCHMARKS.md`](BENCHMARKS.md).
+Every MITRE ATLAS reference Aigis prints matched MITRE's own data (9,604 checked). Small sample; method, limits and a correction to the first published numbers in [`BENCHMARKS.md`](BENCHMARKS.md).
 
 ## Install
 

@@ -1,0 +1,144 @@
+diff --git a/app.py b/app.py
+index 87503d2..e72235e 100644
+--- a/app.py
++++ b/app.py
+@@ -1,8 +1,17 @@
+ """Customer support assistant for an online store.
+ 
+-POST /chat with {"customer_id": "...", "message": "..."} returns the assistant's reply.
++POST /chat with {"customer_id": "...", "message": "...", "customer_email": "..."}
++returns the assistant's reply. The assistant may decide to email the customer
++via the send_email_reply tool (SMTP settings come from env vars).
++
++SMTP env vars: SMTP_HOST, SMTP_PORT (default 587), SMTP_USER, SMTP_PASSWORD,
++SMTP_FROM (default SMTP_USER), SMTP_STARTTLS (default "true").
+ """
+ import os
++import smtplib
++from email.message import EmailMessage
++from typing import Optional
++
+ from fastapi import FastAPI
+ from pydantic import BaseModel
+ import anthropic
+@@ -10,20 +19,112 @@ import anthropic
+ app = FastAPI()
+ client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+ 
+-SYSTEM_PROMPT = "You are a helpful customer support assistant for Acme Store."
++SYSTEM_PROMPT = (
++    "You are a helpful customer support assistant for Acme Store. "
++    "You have a send_email_reply tool that emails the customer at the address "
++    "on file. Use it when an email is the right channel (e.g. the customer asks "
++    "for a written follow-up or confirmation, or the answer is long or has "
++    "details they'll want to keep). Don't use it for quick answers that can be "
++    "given in chat. Only send an email once per conversation turn, and tell the "
++    "customer in your chat reply that you sent it."
++)
++
++TOOLS = [
++    {
++        "name": "send_email_reply",
++        "description": (
++            "Send an email to the current customer from the Acme support "
++            "mailbox. The recipient is fixed to the customer's address on file; "
++            "you cannot choose it. Write the body as a complete, polite "
++            "plain-text email."
++        ),
++        "input_schema": {
++            "type": "object",
++            "properties": {
++                "subject": {"type": "string", "description": "Email subject line."},
++                "body": {"type": "string", "description": "Plain-text email body."},
++            },
++            "required": ["subject", "body"],
++        },
++    }
++]
++
++MAX_TOOL_ROUNDS = 5
+ 
+ 
+ class ChatRequest(BaseModel):
+     customer_id: str
+     message: str
++    customer_email: Optional[str] = None
++
++
++def send_email(to: str, subject: str, body: str) -> None:
++    """Send a plain-text email through the SMTP server configured in env vars."""
++    host = os.environ["SMTP_HOST"]
++    port = int(os.environ.get("SMTP_PORT", "587"))
++    user = os.environ.get("SMTP_USER")
++    password = os.environ.get("SMTP_PASSWORD")
++    sender = os.environ.get("SMTP_FROM") or user
++    if not sender:
++        raise RuntimeError("SMTP_FROM or SMTP_USER must be set")
++
++    # Reject header injection via newlines in the subject.
++    subject = " ".join(subject.splitlines()).strip()
++
++    msg = EmailMessage()
++    msg["From"] = sender
++    msg["To"] = to
++    msg["Subject"] = subject
++    msg.set_content(body)
++
++    with smtplib.SMTP(host, port, timeout=15) as smtp:
++        if os.environ.get("SMTP_STARTTLS", "true").lower() != "false":
++            smtp.starttls()
++        if user and password:
++            smtp.login(user, password)
++        smtp.send_message(msg)
++
++
++def run_tool(name: str, tool_input: dict, req: ChatRequest) -> tuple[str, bool]:
++    """Execute a tool call. Returns (result_text, is_error)."""
++    if name == "send_email_reply":
++        if not req.customer_email:
++            return "No email address on file for this customer; email not sent.", True
++        try:
++            send_email(req.customer_email, tool_input["subject"], tool_input["body"])
++        except Exception as e:  # report failure to the model so it can tell the customer
++            return f"Failed to send email: {e}", True
++        return "Email sent.", False
++    return f"Unknown tool: {name}", True
+ 
+ 
+ @app.post("/chat")
+ def chat(req: ChatRequest):
+-    response = client.messages.create(
+-        model="claude-sonnet-5-5",
+-        max_tokens=1024,
+-        system=SYSTEM_PROMPT,
+-        messages=[{"role": "user", "content": req.message}],
+-    )
+-    return {"reply": response.content[0].text}
++    messages = [{"role": "user", "content": req.message}]
++    for _ in range(MAX_TOOL_ROUNDS):
++        response = client.messages.create(
++            model="claude-sonnet-5-5",
++            max_tokens=1024,
++            system=SYSTEM_PROMPT,
++            tools=TOOLS,
++            messages=messages,
++        )
++        if response.stop_reason != "tool_use":
++            break
++        messages.append({"role": "assistant", "content": response.content})
++        results = []
++        for block in response.content:
++            if block.type == "tool_use":
++                text, is_error = run_tool(block.name, block.input, req)
++                results.append(
++                    {
++                        "type": "tool_result",
++                        "tool_use_id": block.id,
++                        "content": text,
++                        "is_error": is_error,
++                    }
++                )
++        messages.append({"role": "user", "content": results})
++
++    reply = "".join(b.text for b in response.content if b.type == "text")
++    return {"reply": reply}

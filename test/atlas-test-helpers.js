@@ -40,11 +40,18 @@ function requireGold(name) {
   assert.ok(value.approved_at, `${rel} approved_at missing`);
   return value;
 }
+// Every CLI run gets an empty HOME so the developer's own ~/.aigis (for example
+// local annotations, which `aigis get` appends) can never leak into results or baselines.
+let ISOLATED_HOME = null;
+function isolatedHome() {
+  if (!ISOLATED_HOME) ISOLATED_HOME = fs.mkdtempSync(path.join(require('os').tmpdir(), 'aigis-test-home-'));
+  return ISOLATED_HOME;
+}
 function run(args, opts = {}) {
   return spawnSync(process.execPath, [path.join(opts.root || ROOT, 'bin', 'aigis.js'), ...args], {
     cwd: opts.cwd || opts.root || ROOT,
     encoding: 'utf8',
-    env: { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0', ...(opts.env || {}) },
+    env: { ...process.env, HOME: isolatedHome(), USERPROFILE: isolatedHome(), NO_COLOR: '1', FORCE_COLOR: '0', ...(opts.env || {}) },
   });
 }
 function commandRecord(args, opts) {

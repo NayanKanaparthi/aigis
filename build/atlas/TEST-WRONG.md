@@ -18,3 +18,6 @@ From E0:
 
 From PY (opus-5-5, 16:57):
 11. T-PY-02: compares report and build JSON across two runs without masking `generated_at`, `meta.generated_at` and the brief "generated" line; can never pass. TESTPLAN says compare only the ATLAS parts.
+
+From release CI (orchestrator, 21:52):
+12. Test harness leaked the developer's own `~/.aigis/annotations.json` into baselines: `aigis get input-validation` appends local annotations, and the baseline was captured on the owner's Mac. Fixed by the orchestrator (test writer sessions closed; fix is harness isolation, no assertion changed): every test CLI run now gets an empty HOME, and the leaked annotation section was removed from the two affected baselines. TESTLOCK updated for the three files.

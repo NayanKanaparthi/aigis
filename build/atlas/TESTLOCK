@@ -12,7 +12,7 @@ dc38fb892e9a6ba4e1fbc1dccfebb3c389e1d205c804eb94fbfc68b53fa8e611  test/atlas-lib
 e1af804f112c4b16e704e03c70b0091ec5d67469956305c8fc376bae5a9de369  test/atlas-release.test.js
 cea09c9eef246c0bb001835f2998873261d44e4cd64d68a5674e60e2257f3d25  test/atlas-routing.test.js
 0cd047b30b8cc773c54a0d46e5329f775559bdd59b9bdea5265c92f95ed859e9  test/atlas-surfaces.test.js
-a86f4e834aad078b4a7670144e80bbd88a86b55d21d524b32703cabe6770266c  test/atlas-test-helpers.js
+b87e52678a336919c045ad361439e6f83e5e2e74fd439d621493316eb47b8970  test/atlas-test-helpers.js
 8ae6acd16eb4c20fde741bd62f4b537e7c25668ee4bf5e0d5401052d30f72b7a  test/atlas-threats.test.js
 16eb360f21371ab0ee4b88609c7697caec5918fab06a56341078349bcc6b1b22  test/atlas-verify-new.test.js
 af53c4fba06b92217504dd749b793a15a58506cfd4c990fc2f1f7f0c64010b0b  test/atlas-version.test.js
@@ -46,7 +46,7 @@ cffd9657fe44ba73e4198163a096e28c1d9c1c840a5add00485c23d3447684f2  test/fixtures/
 f01335a4fc43d33e7308bbc84ee42fedfbeec6151179cc45c04d215162f9cdee  test/fixtures/atlas/baseline/reg-get-area-explainability.json
 7c2166d4a5f924ed98d8d7a189a8fac0be8a746fc3b1a55bbb3f5e043a0f1329  test/fixtures/atlas/baseline/reg-get-area-fallback-patterns.json
 9ea996adb8c6a715d79ec3149282e95ddfb335fa8137831bca4b0f703147b9fc  test/fixtures/atlas/baseline/reg-get-area-human-oversight.json
-cb80423796e48b37aa153fc94db95de2476faf79d180e66af97c17bdf7421f1c  test/fixtures/atlas/baseline/reg-get-area-input-validation.json
+75cbf4f4d9406177803eefae734abe1016cf2768faf56a30291cbd95b5686e45  test/fixtures/atlas/baseline/reg-get-area-input-validation.json
 32e441c30b7129b4756e6a1cd4f154d5f49f6fed99433df25dfb5b0b11f35064  test/fixtures/atlas/baseline/reg-get-area-monitoring.json
 fa2456d9ad420c9a99e2b4ffd6fe464e8153827accc3451618bcf55f15d7b4c3  test/fixtures/atlas/baseline/reg-get-area-output-sanitization.json
 72b30105a37169bef8b937a8fc194871a8d45d29e3ac26a3464d80e6eabf0d6a  test/fixtures/atlas/baseline/reg-get-area-pii-handling.json
@@ -54,7 +54,7 @@ fa2456d9ad420c9a99e2b4ffd6fe464e8153827accc3451618bcf55f15d7b4c3  test/fixtures/
 bb9d625183eedfcf54bbb4f2dd852a435f664a4eabff8282f54f0cfd86d4cf78  test/fixtures/atlas/baseline/reg-get-area-rag-security.json
 896385612bbc3231b5f0e3c84c4e1a24aa2f1a48616dfaed61e75375e93d6d66  test/fixtures/atlas/baseline/reg-get-area-rate-limiting.json
 763bb158b8c0eacf4aefba50f98f6acc373668531e29ee196e8d007c9d2b5714  test/fixtures/atlas/baseline/reg-get-area-supply-chain.json
-cb80423796e48b37aa153fc94db95de2476faf79d180e66af97c17bdf7421f1c  test/fixtures/atlas/baseline/reg-get-input-validation.json
+75cbf4f4d9406177803eefae734abe1016cf2768faf56a30291cbd95b5686e45  test/fixtures/atlas/baseline/reg-get-input-validation.json
 59d31f98090a65b0cc169526c43ce40c9c68de67f4ece84961372616154ec114  test/fixtures/atlas/baseline/reg-get-rag-no-frontmatter.json
 27ab6b2f1588eed0f6d3237225601c4f1f64fc21820329cc99d3d25664014550  test/fixtures/atlas/baseline/reg-help.json
 d0c7160cd9347f7a24eb3571eed9bad4ccb6fede0bbc7181e5bfbe55f5260d16  test/fixtures/atlas/baseline/reg-infra-rate.json
